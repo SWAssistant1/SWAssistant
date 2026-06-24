@@ -5,13 +5,13 @@
   "manifest_version": 3,
   "permissions": [
     "tabs",
-   "scripting",
+    "scripting",
     "storage",
     "activeTab"
   ],
-"host_permissions": [
- "https://*.shinobiworld.pl/*"
-],
+  "host_permissions": [
+    "https://*.shinobiworld.pl/*"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
@@ -26,9 +26,9 @@
       "matches": [
         "https://*.shinobiworld.pl/*"
       ],
-   "run_at": "document_end",
+      "run_at": "document_end",
       "js": [
-    "content_script.js",
+        "content_script.js",
         "jquery.js"
       ]
     },
@@ -41,11 +41,16 @@
       ]
     }
   ],
-"web_accessible_resources": [
-  {
-    "resources": [ "content_script.js", "content_script1.js", "scripts/*.js", "main.js",  "scripts/*.js", "top_bar.js", "top_bar1.js", "jquery-3.7.1.min.js", "jquery-3.7.2.min.js"],
-    "matches": [ "https://*.shinobiworld.pl/*" ]
-  }
-]
-  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content_script.js",
+        "content_script1.js",
+        "scripts/*.js"
+      ],
+      "matches": [
+        "https://*.shinobiworld.pl/*"
+      ]
+    }
+  ]
 }
