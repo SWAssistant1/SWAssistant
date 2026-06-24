@@ -25,10 +25,6 @@
     {
       id: 'assistant-core',
       url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/assistant-core.js'
-    },
-    {
-      id: 'afo-panel',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/afo-panel.js'
     }
   ];
 
