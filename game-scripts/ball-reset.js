@@ -3,9 +3,31 @@ class ballReset {
         this.synergy = 6;
         this.hasStarted = false;
         this.bonsCombinations = [];
-        this.css = ` #ballResetPanel { position: absolute; top: 35px; right: 10px; z-index: 9999999; width: 445px; padding: 5px; background: #303131bd; border: solid #ffffff7a 1px; border-radius: 5px; display: none; user-select: none; } #ballResetPanel .controller { display: flex; flex-direction: column; align-items: stretch; margin-bottom: 2px; } #ballResetPanel .controller button { font-weight: bolder; border:solid black 1px; cursor: pointer; } #ballResetPanel .controller button.green { background: lime; color: black !important; } #ballResetPanel .controller button.red { background: red; color: black !important; } #ballResetPanel .controller button:first-child { border-bottom:none; background: #afd4f5; } #ballResetPanel .controller button:disabled { opacity: 1; background: gray; cursor: not-allowed; } #ballResetPanel .ballCombination { background: #dfdfdc5c; padding: 5px; margin-bottom: 2px; } #ballResetPanel .ballCombination .combinationID { text-align: center; background: black; color: white; font-weight: bolder; font-size: 16px; padding: 1px; margin-bottom: 2px; } #ballResetPanel .ballCombination select { margin-bottom: 2px; background: #ffffff99; border: solid #6f6f6f 1px; border-radius: 5px; color: black; } #ballResetPanel .ballCombination select:last-child { margin-bottom: 0px; } `;
-        this.innerHTML = ` <div id="ballResetPanel"> <div class="controller"> <button class="addCombination">DODAJ NOWĄ KOMBINACJE</button> <button class="startSearching green">SZUKAJ</button> </div> <div class="combinations">${this.bonsCombination(1)}</div> </div> `;
+        this.css = `
+            #ballResetPanel { position: absolute; top: 35px; right: 10px; z-index: 9999999; width: 445px; padding: 12px; background: rgba(22,22,26,0.96); border: 1px solid #e3402c; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display: none; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+            #ballResetPanel .closeBallReset { position: absolute; top: -10px; right: -10px; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; background: #c0392b; color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5); transition: filter .15s ease; }
+            #ballResetPanel .closeBallReset:hover { filter: brightness(1.15); }
+            #ballResetPanel .controller { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 8px; }
+            #ballResetPanel .controller button { font-weight: 700; border: none; border-radius: 6px; padding: 8px 0; cursor: pointer; transition: filter .15s ease; }
+            #ballResetPanel .controller button:hover { filter: brightness(1.1); }
+            #ballResetPanel .controller button.green { background: #27ae60; color: #fff !important; }
+            #ballResetPanel .controller button.red { background: #c0392b; color: #fff !important; }
+            #ballResetPanel .controller button:first-child { background: #e3402c; color: #fff !important; }
+            #ballResetPanel .controller button:disabled { opacity: .5; background: #555; cursor: not-allowed; filter: none; }
+            #ballResetPanel .ballCombination { background: rgba(255,255,255,0.04); border-radius: 6px; padding: 8px; margin-bottom: 6px; }
+            #ballResetPanel .ballCombination .combinationID { text-align: center; background: #e3402c; color: #fff; font-weight: 700; font-size: 14px; padding: 4px; border-radius: 4px; margin-bottom: 6px; }
+            #ballResetPanel .ballCombination select { width: 100%; margin-bottom: 6px; background: #2a2a30; border: 1px solid #3a3a42; border-radius: 4px; color: #eee; padding: 4px; transition: border-color .15s ease; }
+            #ballResetPanel .ballCombination select:focus { outline: none; border-color: #e3402c; }
+            #ballResetPanel .ballCombination select:last-child { margin-bottom: 0; }
+        `;
+        this.innerHTML = ` <div id="ballResetPanel"> <div class="closeBallReset">&times;</div> <div class="controller"> <button class="addCombination">DODAJ NOWĄ KOMBINACJE</button> <button class="startSearching green">SZUKAJ</button> </div> <div class="combinations">${this.bonsCombination(1)}</div> </div> `;
         $("body").append(`<style>${this.css}</style>${this.innerHTML}`);
+        $("body").on("click", "#ballResetPanel .closeBallReset", () => {
+            if (this.hasStarted) {
+                this.controller();
+            }
+            $("#ballResetPanel").hide();
+        });
         $("body").on("click", "#ballResetPanel .addCombination", () => {
             let lastID = parseInt($(".ballCombination:last").attr("combination"));
             lastID++;
