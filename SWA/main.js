@@ -1,15 +1,25 @@
 const scriptMap = {
-  skrypt1: 'scripts/skrypt11.js',
-  skrypt2: 'scripts/skrypt21.js',
-  skrypt3: 'scripts/skrypt31.js',
-  skrypt4: 'scripts/skrypt41.js',
-  skrypt5: 'scripts/skrypt51.js',
-  skrypt6: 'scripts/skrypt61.js',
-  skrypt7: 'scripts/skrypt71.js',
-  skrypt8: 'scripts/skrypt81.js',
-  skrypt9: 'scripts/skrypt91.js',
-  skrypt10: 'scripts/skrypt101.js',
+  skrypt1: 'scripts/skrypt1.js',
+  skrypt2: 'scripts/skrypt2.js',
+  skrypt3: 'scripts/skrypt3.js',
+  skrypt4: 'scripts/skrypt4.js',
+  skrypt5: 'scripts/skrypt5.js',
+  skrypt6: 'scripts/skrypt6.js',
+  skrypt7: 'scripts/skrypt7.js',
+  skrypt8: 'scripts/skrypt8.js',
+  skrypt9: 'scripts/skrypt9.js',
+  skrypt10: 'scripts/skrypt10.js',
 };
+
+function injectPageScript(scriptUrl) {
+  const script = document.createElement('script');
+  script.src = scriptUrl;
+  script.onload = function onLoad() {
+    this.remove();
+  };
+
+  (document.head || document.documentElement).appendChild(script);
+}
 
 const attachScriptHandler = (checkboxId, scriptFile) => {
   const checkbox = document.getElementById(checkboxId);
@@ -25,9 +35,12 @@ const attachScriptHandler = (checkboxId, scriptFile) => {
       return;
     }
 
+    const scriptUrl = chrome.runtime.getURL(scriptFile);
+
     chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: [scriptFile],
+      func: injectPageScript,
+      args: [scriptUrl],
     });
   });
 };
