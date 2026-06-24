@@ -118,7 +118,20 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                 this.baselinePower = undefined;
                 this.baselineLevel = undefined;
 
-                const item_css = `#ItemPanel { background: rgba(0,0,0,0.9); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 1px; border-radius: 5px; border-style: solid; border-width: 7px 8px 7px 7px; display:block; user-select: none; color: #333333; } #ItemPanel .sekcja { position: absolute; top: -27px; left: -7px; background: rgba(0,0,0,0.9); filter: hue-rotate(196deg); background-size: 100% 100%; width: 150px; cursor: all-scroll; } #ItemPanel .item_button {cursor:pointer;text-align:center; border-bottom:solid gray 1px; color: white;} #ItemPanel .gamee_input{text-align:center; border-bottom:solid gray 1px; color: white;} #ItemPanel .gamee_input input::placeholder {color: #4b4b4b;} #ItemPanel .gameee_input{text-align:center; border-bottom:solid gray 1px; color: white;} #ItemPanel .gameee_input input::placeholder {color: #4b4b4b;}`;
+                const item_css = `
+                    #ItemPanel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 10px; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+                    #ItemPanel .item_button { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; margin-bottom: 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; transition: background .15s ease, color .15s ease; }
+                    #ItemPanel .item_button:hover { background: rgba(227,64,44,0.28); color: #fff; }
+                    #ItemPanel .item_status { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
+                    #ItemPanel .item_status.red { background: #c0392b; color: #fff; }
+                    #ItemPanel .item_status.green { background: #27ae60; color: #fff; }
+                    #ItemPanel .gamee_input, #ItemPanel .gameee_input { text-align: center; margin-bottom: 6px; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.04); }
+                    #ItemPanel .gamee_input input, #ItemPanel .gameee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; transition: border-color .15s ease; }
+                    #ItemPanel .gamee_input input:focus, #ItemPanel .gameee_input input:focus { outline: none; border-color: #e3402c !important; }
+                    #ItemPanel .gamee_input input::placeholder, #ItemPanel .gameee_input input::placeholder { color: #6b6b72; }
+                    #ItemPanel .close_item { width: 100%; cursor: pointer; padding: 6px 0; border-radius: 6px; border: none; background: #e3402c; color: #fff; font-weight: 700; transition: background .15s ease; }
+                    #ItemPanel .close_item:hover { background: #c0392b; }
+                `;
                 const item_panel = `<div id="ItemPanel">
                     <div class="gamee_input insta_capt1"><input style="width: 150px; margin-left: -2px; background: grey; text-align: center; font-size: 16;" name="jakosc_capt" type="text" value="" placeholder="jakosc" /></div> <div class="item_button item_jakosc">jakosc<strong class="item_status red">Off</strong> </div>
                     
@@ -991,7 +1004,7 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                 $("body").on("click", ".qlink.get_titles_list", () => {
                     this.getTitlesList((html) => {
                         JQS.ldr.finish().fadeOut();
-                        GAME.komunikat2(`<table id="char_titles" class="fast_titles_table" style="margin:0 auto;">${html}</table>`);
+                        GAME.komunikat2(`<table id="char_titles_popup" class="fast_titles_table" style="margin:0 auto;">${html}</table>`);
                         option_bind();
                         tooltip_bind();
                     });
@@ -1840,6 +1853,9 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                 kom_close_bind();
             }
         }
+        $("body").off("click.swaKomClose").on("click.swaKomClose", ".kom .close_kom", function() {
+            $(this).closest(".kom").remove();
+        });
         GAME.cached_data = function () {
             var pos = $('#char_buffs').offset();
             pos.left -= 75;
