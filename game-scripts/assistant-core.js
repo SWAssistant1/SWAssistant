@@ -1230,7 +1230,7 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                 $("body").on("click", ".qlink.load_afo", () => {
                     if (typeof this.afo_is_loaded == 'undefined') {
                         this.afo_is_loaded = true;
-                        $.get("https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/afo-panel.js", (data) => {
+                        $.get("https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/afo-panel.js?t=" + Date.now(), (data) => {
                             $("body").append(`<script>${data}<\/script>`);
                             GAME.komunikat("załadowano afo!");
                         }).fail(() => {
