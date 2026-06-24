@@ -1234,8 +1234,11 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                             $("body").append(`<script>${data}<\/script>`);
                             GAME.komunikat("załadowano afo!");
                         }).fail(() => {
+                            this.afo_is_loaded = undefined;
                             GAME.komunikat("Wystąpił błąd w ładowaniu skryptu, odśwież stronę i spróbuj ponownie!");
                         });
+                    } else if ($("#main_Panel").length) {
+                        $("#main_Panel").show();
                     } else {
                         GAME.komunikat("Wystąpił błąd w ładowaniu skryptu, odśwież stronę i spróbuj ponownie!");
                     }
