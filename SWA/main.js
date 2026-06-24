@@ -1,14 +1,14 @@
-const scriptMap = {
-  skrypt1: 'scripts/skrypt1.js',
-  skrypt2: 'scripts/skrypt2.js',
-  skrypt3: 'scripts/skrypt3.js',
-  skrypt4: 'scripts/skrypt4.js',
-  skrypt5: 'scripts/skrypt5.js',
-  skrypt6: 'scripts/skrypt6.js',
-  skrypt7: 'scripts/skrypt7.js',
-  skrypt8: 'scripts/skrypt8.js',
-  skrypt9: 'scripts/skrypt9.js',
-  skrypt10: 'scripts/skrypt10.js',
+const automationRegistry = {
+  characterTraining: { scriptFile: 'scripts/character-training.js' },
+  respawn: { scriptFile: 'scripts/respawn.js' },
+  exp: { scriptFile: 'scripts/exp.js' },
+  wars: { scriptFile: 'scripts/wars.js' },
+  insta30: { scriptFile: 'scripts/insta30.js' },
+  missions: { scriptFile: 'scripts/missions.js' },
+  automation7: { scriptFile: 'scripts/automation-7.js' },
+  automation8: { scriptFile: 'scripts/automation-8.js' },
+  automation9: { scriptFile: 'scripts/automation-9.js' },
+  automation10: { scriptFile: 'scripts/automation-10.js' },
 };
 
 function injectPageScript(scriptUrl) {
@@ -45,6 +45,12 @@ const attachScriptHandler = (checkboxId, scriptFile) => {
   });
 };
 
-Object.entries(scriptMap).forEach(([checkboxId, scriptFile]) => {
-  attachScriptHandler(checkboxId, scriptFile);
+Object.entries(automationRegistry).forEach(([automationId, automation]) => {
+  const checkbox = document.querySelector(`[data-automation="${automationId}"]`);
+
+  if (!checkbox || !automation || !automation.scriptFile) {
+    return;
+  }
+
+  attachScriptHandler(checkbox.id, automation.scriptFile);
 });

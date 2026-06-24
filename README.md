@@ -51,6 +51,23 @@ A Chrome extension designed for educational purposes to interact with the Shinob
 2. Ensure the SWAssistant extension is active in your Chrome browser.
 3. Follow the in-extension prompts or features to interact with the game interface.
 
+## Automation Mapping
+
+The extension uses semantic automation IDs and semantic script filenames.
+
+| Automation ID | Script File |
+| --- | --- |
+| `characterTraining` | `SWA/scripts/character-training.js` |
+| `respawn` | `SWA/scripts/respawn.js` |
+| `exp` | `SWA/scripts/exp.js` |
+| `wars` | `SWA/scripts/wars.js` |
+| `insta30` | `SWA/scripts/insta30.js` |
+| `missions` | `SWA/scripts/missions.js` |
+| `automation7` | `SWA/scripts/automation-7.js` |
+| `automation8` | `SWA/scripts/automation-8.js` |
+| `automation9` | `SWA/scripts/automation-9.js` |
+| `automation10` | `SWA/scripts/automation-10.js` |
+
 ---
 
 ## Dependencies
