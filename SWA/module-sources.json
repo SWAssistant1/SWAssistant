@@ -1,0 +1,28 @@
+{
+  "modules": [
+    {
+      "id": "characters-manager",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/characters-manager.js"
+    },
+    {
+      "id": "ball-exp",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-exp.js"
+    },
+    {
+      "id": "ball-upgrade",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-upgrade.js"
+    },
+    {
+      "id": "ball-reset",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-reset.js"
+    },
+    {
+      "id": "ball-manager",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-manager.js"
+    },
+    {
+      "id": "assistant-core",
+      "url": "https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/assistant-core.js"
+    }
+  ]
+}

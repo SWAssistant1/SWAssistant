@@ -28,7 +28,7 @@
       ],
       "run_at": "document_end",
       "js": [
-        "content_script.js",
+        "content-script.js",
         "jquery.js"
       ]
     },
@@ -44,7 +44,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "content_script1.js",
+        "content-loader.js",
+        "module-sources.json",
         "scripts/*.js"
       ],
       "matches": [
