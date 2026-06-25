@@ -1,32 +1,25 @@
 (function bootstrapSwaLoader() {
   const bootScript = document.currentScript;
   const configUrl = bootScript ? bootScript.dataset.configUrl : '';
+  const branch = (bootScript && bootScript.dataset.branch) || 'main';
+
+  // Exposed so other dynamically fetched modules (e.g. assistant-core.js's
+  // own afo-panel.js loader) can target the same branch.
+  window.__SWA_BRANCH__ = branch;
+
   const fallbackModules = [
-    {
-      id: 'characters-manager',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/characters-manager.js'
-    },
-    {
-      id: 'ball-exp',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-exp.js'
-    },
-    {
-      id: 'ball-upgrade',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-upgrade.js'
-    },
-    {
-      id: 'ball-reset',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-reset.js'
-    },
-    {
-      id: 'ball-manager',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/ball-manager.js'
-    },
-    {
-      id: 'assistant-core',
-      url: 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/main/game-scripts/assistant-core.js'
-    }
+    { id: 'characters-manager', path: 'game-scripts/characters-manager.js' },
+    { id: 'ball-exp', path: 'game-scripts/ball-exp.js' },
+    { id: 'ball-upgrade', path: 'game-scripts/ball-upgrade.js' },
+    { id: 'ball-reset', path: 'game-scripts/ball-reset.js' },
+    { id: 'ball-manager', path: 'game-scripts/ball-manager.js' },
+    { id: 'assistant-core', path: 'game-scripts/assistant-core.js' }
   ];
+
+  function buildModuleUrl(moduleConfig) {
+    if (moduleConfig.url) return moduleConfig.url; // backwards compatibility
+    return 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/' + branch + '/' + moduleConfig.path;
+  }
 
   function injectModuleCode(moduleId, code) {
     const script = document.createElement('script');
@@ -39,7 +32,7 @@
   }
 
   async function fetchModuleCode(moduleConfig) {
-    const response = await fetch(moduleConfig.url, { cache: 'no-store' });
+    const response = await fetch(buildModuleUrl(moduleConfig), { cache: 'no-store' });
 
     if (!response.ok) {
       throw new Error(moduleConfig.id + ' HTTP ' + response.status);

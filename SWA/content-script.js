@@ -3,10 +3,11 @@ const requireNode = (node) => {
     return node;
 };
 
-function injectCode(src, configUrl) {
+function injectCode(src, configUrl, branch) {
     const script = document.createElement('script');
     script.src = src;
     script.dataset.configUrl = configUrl;
+    script.dataset.branch = branch;
     script.onload = function() {
         this.remove();
     };
@@ -14,7 +15,12 @@ function injectCode(src, configUrl) {
     requireNode(document.head || document.documentElement).appendChild(script);
 }
 
-injectCode(
-    chrome.runtime.getURL('/content-loader.js'),
-    chrome.runtime.getURL('/module-sources.json')
-);
+chrome.storage.local.get(['swa_branch'], (result) => {
+    const branch = (result.swa_branch || '').trim() || 'main';
+
+    injectCode(
+        chrome.runtime.getURL('/content-loader.js'),
+        chrome.runtime.getURL('/module-sources.json'),
+        branch
+    );
+});
