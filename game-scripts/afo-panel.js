@@ -125,14 +125,33 @@ if (typeof GAME === 'undefined') {} else {
                     #sety_Panel .eqs_equip { background: #27ae60; }
                     #sety_Panel .eqs_equip:hover { background: #2ecc71; }
                 `;
-                $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel, #sety_Panel").remove();
-                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> </div> `;
+                const csskarty = `
+                    #karty_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 1470px); z-index: 9999; width: 220px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+                    #karty_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
+                    #karty_Panel .eqs_row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; margin: 0 8px 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; }
+                    #karty_Panel .eqs_name { flex: 1; min-width: 0; background: #2a2a30; border: 1px solid #3a3a42; border-radius: 4px; color: #eee; padding: 3px 6px; font-size: 12px; }
+                    #karty_Panel .eqs_name:focus { outline: none; border-color: #e3402c; }
+                    #karty_Panel .eqs_save, #karty_Panel .eqs_equip { cursor: pointer; border: none; border-radius: 4px; padding: 4px 8px; margin-left: 6px; font-size: 12px; color: #fff; }
+                    #karty_Panel .eqs_save { background: #3a6fb5; }
+                    #karty_Panel .eqs_save:hover { background: #4d85d1; }
+                    #karty_Panel .eqs_equip { background: #27ae60; }
+                    #karty_Panel .eqs_equip:hover { background: #2ecc71; }
+                `;
+                $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel, #sety_Panel, #karty_Panel").remove();
+                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> </div> `;
                 const SETY_panel = ` <div id="sety_Panel" style="display:none;"> <div class="sekcja sety_dragg">SETY EKWIPUNKU</div>
                     <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Set 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
                     <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Set 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
                     <div class='eqs_row'><input class='eqs_name' data-idx='2' value='Set 3' /><button class='eqs_save' data-idx='2'>Zapisz</button><button class='eqs_equip' data-idx='2'>Załóż</button></div>
                     <div class='eqs_row'><input class='eqs_name' data-idx='3' value='Set 4' /><button class='eqs_save' data-idx='3'>Zapisz</button><button class='eqs_equip' data-idx='3'>Załóż</button></div>
                     <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Set 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
+                </div> `;
+                const KARTY_panel = ` <div id="karty_Panel" style="display:none;"> <div class="sekcja karty_dragg">SETY KART DUSZ</div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Karty 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Karty 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='2' value='Karty 3' /><button class='eqs_save' data-idx='2'>Zapisz</button><button class='eqs_equip' data-idx='2'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='3' value='Karty 4' /><button class='eqs_save' data-idx='3'>Zapisz</button><button class='eqs_equip' data-idx='3'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
                 </div> `;
                 const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
                 const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div>   </div> `;
@@ -176,6 +195,7 @@ if (typeof GAME === 'undefined') {} else {
                 $("body").append(`<style>${cssinne}</style>${INNE_Panel}`);
                 $("body").append(`<style>${cssres}</style>${RES_panel}`);
                 $("body").append(`<style>${csssety}</style>${SETY_panel}`);
+                $("body").append(`<style>${csskarty}</style>${KARTY_panel}`);
                 // $("body").append(`<style>${csslpvm}</style>${LPVM_panel}`);
                 $("#pvp_Panel").hide();
                 $("#resp_Panel").hide();
@@ -184,6 +204,7 @@ if (typeof GAME === 'undefined') {} else {
                 $("#lpvm_Panel").hide();
                 $("#inne_Panel").hide();
                 $("#sety_Panel").hide();
+                $("#karty_Panel").hide();
                 function makeDraggable($panel, handleSelector) {
                     var panel = $panel[0];
                     if (!panel) return;
@@ -218,6 +239,7 @@ if (typeof GAME === 'undefined') {} else {
                 makeDraggable($("#inne_Panel"), ".inne_dragg");
                 makeDraggable($("#code_Panel"), ".code_dragg");
                 makeDraggable($("#sety_Panel"), ".sety_dragg");
+                makeDraggable($("#karty_Panel"), ".karty_dragg");
                 $('#main_Panel .gh_pvp').click(() => {
                     if ($(".gh_pvp .gh_status").hasClass("red")) {
                         $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
@@ -302,10 +324,20 @@ if (typeof GAME === 'undefined') {} else {
                     }
                 });
 
+                $('#main_Panel .gh_karty').click(() => {
+                    if ($(".gh_karty .gh_status").hasClass("red")) {
+                        $(".gh_karty .gh_status").removeClass("red").addClass("green").html("On");
+                        $("#karty_Panel").show();
+                    } else {
+                        $(".gh_karty .gh_status").removeClass("green").addClass("red").html("Off");
+                        $("#karty_Panel").hide();
+                    }
+                });
+
                 $('#main_Panel .gh_close').click((e) => {
                     e.stopPropagation();
-                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status").removeClass("green").addClass("red").html("Off");
-                    $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel").hide();
+                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status").removeClass("green").addClass("red").html("Off");
+                    $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel").hide();
                     PVP.stop = true;
                     RESP.stop = true;
                     RES.stop = true;
@@ -708,6 +740,13 @@ if (typeof GAME === 'undefined') {} else {
                 $('#sety_Panel .eqs_equip').click((e) => {
                     EQS.equip(parseInt($(e.currentTarget).data('idx')));
                 });
+
+                $('#karty_Panel .eqs_save').click((e) => {
+                    KARTY.save(parseInt($(e.currentTarget).data('idx')));
+                });
+                $('#karty_Panel .eqs_equip').click((e) => {
+                    KARTY.equip(parseInt($(e.currentTarget).data('idx')));
+                });
             }(function() {
                 let a;
 
@@ -857,6 +896,103 @@ if (typeof GAME === 'undefined') {} else {
                 var idx = parseInt($(e.currentTarget).data('idx'));
                 EQS.rename(idx, $(e.currentTarget).val());
                 $(e.currentTarget).val(EQS.getName(idx));
+            });
+
+            var KARTY = {
+                storageKey: 'swa_card_sets_' + GAME.char_id,
+                sets: JSON.parse(localStorage.getItem('swa_card_sets_' + GAME.char_id) || '[null,null,null,null,null]'),
+            };
+            KARTY.persist = () => {
+                localStorage.setItem(KARTY.storageKey, JSON.stringify(KARTY.sets));
+            };
+            KARTY.parseCardId = (src) => {
+                var m = /\/cards\/(\d+)\.png/.exec(src || '');
+                return m ? parseInt(m[1]) : null;
+            };
+            KARTY.readActiveCards = () => {
+                var active = [];
+                $('.card_slot').each(function() {
+                    var card = $(this).find('.small_card').first();
+                    if (!card.length) return;
+                    var cardId = KARTY.parseCardId(card.find('img').attr('src'));
+                    var level = parseInt(card.find('span').first().text());
+                    if (cardId) active.push({ card_id: cardId, level: level });
+                });
+                return active;
+            };
+            KARTY.readPool = () => {
+                var pool = [];
+                $('.card_option').each(function() {
+                    var cardId = KARTY.parseCardId($(this).find('img').attr('src'));
+                    var level = parseInt($(this).find('span').first().text());
+                    var iid = parseInt($(this).attr('data-card_id'));
+                    if (cardId && iid) pool.push({ card_id: cardId, level: level, iid: iid });
+                });
+                return pool;
+            };
+            KARTY.defaultName = (idx) => 'Karty ' + (idx + 1);
+            KARTY.getName = (idx) => (KARTY.sets[idx] && KARTY.sets[idx].name) || KARTY.defaultName(idx);
+            KARTY.rename = (idx, name) => {
+                name = (name || '').trim() || KARTY.defaultName(idx);
+                if (!KARTY.sets[idx]) KARTY.sets[idx] = { name: name, cards: [] };
+                else KARTY.sets[idx].name = name;
+                KARTY.persist();
+            };
+            KARTY.save = (idx) => {
+                var active = KARTY.readActiveCards();
+                var name = ($('#karty_Panel .eqs_name[data-idx="' + idx + '"]').val() || '').trim() || KARTY.getName(idx);
+                console.log('[KARTY] save', idx, JSON.stringify(active));
+                KARTY.sets[idx] = { name: name, cards: active };
+                KARTY.persist();
+                GAME.komunikat('Zapisano zestaw kart "' + name + '" (' + active.length + ' kart).');
+            };
+            KARTY.equip = (idx) => {
+                var set = KARTY.sets[idx];
+                var wanted = set ? set.cards : [];
+                console.log('[KARTY] equip', idx, JSON.stringify(wanted));
+                if (!wanted || !wanted.length) {
+                    GAME.komunikat('Zestaw kart "' + KARTY.getName(idx) + '" jest pusty.');
+                    return;
+                }
+                var occupiedSlots = [];
+                $('.card_slot').each(function() {
+                    if ($(this).find('.small_card').length) occupiedSlots.push(parseInt($(this).attr('data-slot')));
+                });
+                var equipStep = (j) => {
+                    if (j >= wanted.length) return;
+                    var want = wanted[j];
+                    var pool = KARTY.readPool();
+                    var match = pool.find((p) => p.card_id === want.card_id && p.level === want.level);
+                    if (match) {
+                        console.log('[KARTY] use_card', match.iid, 'for', want);
+                        GAME.emitOrder({ a: 58, type: 1, card: match.iid });
+                    } else {
+                        console.log('[KARTY] brak karty w puli dla', want);
+                    }
+                    setTimeout(() => equipStep(j + 1), 500);
+                };
+                var i = 0;
+                var clearStep = () => {
+                    if (i >= occupiedSlots.length) {
+                        setTimeout(() => equipStep(0), 500);
+                        return;
+                    }
+                    console.log('[KARTY] clear_sslot', occupiedSlots[i]);
+                    GAME.emitOrder({ a: 58, type: 2, slot: occupiedSlots[i] });
+                    i++;
+                    setTimeout(clearStep, 400);
+                };
+                if (occupiedSlots.length) clearStep();
+                else equipStep(0);
+            };
+            $('#karty_Panel .eqs_name').each(function() {
+                var idx = parseInt($(this).data('idx'));
+                $(this).val(KARTY.getName(idx));
+            });
+            $('#karty_Panel .eqs_name').change((e) => {
+                var idx = parseInt($(e.currentTarget).data('idx'));
+                KARTY.rename(idx, $(e.currentTarget).val());
+                $(e.currentTarget).val(KARTY.getName(idx));
             });
 
             var INNE = {
