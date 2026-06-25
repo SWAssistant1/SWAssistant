@@ -113,8 +113,27 @@ if (typeof GAME === 'undefined') {} else {
                     #inne_Panel .inne_check select { width: 100%; background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; padding: 4px; }
                     #inne_Panel .inne_check select:focus { outline: none; border-color: #e3402c !important; }
                 `;
-                $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel").remove();
-                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> </div> `;
+                const csssety = `
+                    #sety_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 1260px); z-index: 9999; width: 220px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+                    #sety_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
+                    #sety_Panel .eqs_row { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; margin: 0 8px 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; }
+                    #sety_Panel .eqs_name { flex: 1; min-width: 0; background: #2a2a30; border: 1px solid #3a3a42; border-radius: 4px; color: #eee; padding: 3px 6px; font-size: 12px; }
+                    #sety_Panel .eqs_name:focus { outline: none; border-color: #e3402c; }
+                    #sety_Panel .eqs_save, #sety_Panel .eqs_equip { cursor: pointer; border: none; border-radius: 4px; padding: 4px 8px; margin-left: 6px; font-size: 12px; color: #fff; }
+                    #sety_Panel .eqs_save { background: #3a6fb5; }
+                    #sety_Panel .eqs_save:hover { background: #4d85d1; }
+                    #sety_Panel .eqs_equip { background: #27ae60; }
+                    #sety_Panel .eqs_equip:hover { background: #2ecc71; }
+                `;
+                $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel, #sety_Panel").remove();
+                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> </div> `;
+                const SETY_panel = ` <div id="sety_Panel" style="display:none;"> <div class="sekcja sety_dragg">SETY EKWIPUNKU</div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Set 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Set 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='2' value='Set 3' /><button class='eqs_save' data-idx='2'>Zapisz</button><button class='eqs_equip' data-idx='2'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='3' value='Set 4' /><button class='eqs_save' data-idx='3'>Zapisz</button><button class='eqs_equip' data-idx='3'>Załóż</button></div>
+                    <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Set 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
+                </div> `;
                 const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
                 const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div>   </div> `;
                 const CODE_panel = ` <div id="code_Panel" style="display:none;"> <div class="sekcja code_dragg">Inne</div> <div class="code_button code_code">KODY<b class="code_status red">Off</b></div> <div class="code_button code_acc">Konto<b class="code_status red">Off</b></div> <div class="code_button code_zast">Zastępstwa<b class="code_status red">Off</b></div> <div class="code_button code_bh1">Błogo 250% tren<b class="code_status red">Off</b></div> <div class="code_button code_bh2">Błogo 5% kod<b class="code_status red">Off</b></div> <label class='select_input'><select id='bot_what_to_train'><option value='1'>Siła</option><option value='2'>Szybkość</option><option value='3'>Wytrzymałość</option><option value='4'>Siła Woli</option><option value='5'>Energia Ki</option><option value='6'>Wtajemniczenie</option></select></label> <label class='select_input'><select id='bot_what_to_traintime'><option value='1'>1 godz.</option><option value='2'>2 godz.</option><option value='3'>3 godz.</option><option value='4'>4 godz.</option><option value='5'>5 godz.</option><option value='6'>6 godz.</option><option value='7'>7 godz.</option><option value='8'>8 godz.</option><option value='9'>9 godz.</option><option value='10'>10 godz.</option><option value='11'>11 godz.</option><option value='12'>12 godz.</option></label> </div> `;
@@ -156,6 +175,7 @@ if (typeof GAME === 'undefined') {} else {
                 $("body").append(`<style>${cssresp}</style>${RESP_panel}`);
                 $("body").append(`<style>${cssinne}</style>${INNE_Panel}`);
                 $("body").append(`<style>${cssres}</style>${RES_panel}`);
+                $("body").append(`<style>${csssety}</style>${SETY_panel}`);
                 // $("body").append(`<style>${csslpvm}</style>${LPVM_panel}`);
                 $("#pvp_Panel").hide();
                 $("#resp_Panel").hide();
@@ -163,6 +183,7 @@ if (typeof GAME === 'undefined') {} else {
                 $("#res_Panel").hide();
                 $("#lpvm_Panel").hide();
                 $("#inne_Panel").hide();
+                $("#sety_Panel").hide();
                 function makeDraggable($panel, handleSelector) {
                     var panel = $panel[0];
                     if (!panel) return;
@@ -196,6 +217,7 @@ if (typeof GAME === 'undefined') {} else {
                 makeDraggable($("#res_Panel"), ".res_dragg");
                 makeDraggable($("#inne_Panel"), ".inne_dragg");
                 makeDraggable($("#code_Panel"), ".code_dragg");
+                makeDraggable($("#sety_Panel"), ".sety_dragg");
                 $('#main_Panel .gh_pvp').click(() => {
                     if ($(".gh_pvp .gh_status").hasClass("red")) {
                         $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
@@ -270,10 +292,20 @@ if (typeof GAME === 'undefined') {} else {
                     }
                 });
 
+                $('#main_Panel .gh_sety').click(() => {
+                    if ($(".gh_sety .gh_status").hasClass("red")) {
+                        $(".gh_sety .gh_status").removeClass("red").addClass("green").html("On");
+                        $("#sety_Panel").show();
+                    } else {
+                        $(".gh_sety .gh_status").removeClass("green").addClass("red").html("Off");
+                        $("#sety_Panel").hide();
+                    }
+                });
+
                 $('#main_Panel .gh_close').click((e) => {
                     e.stopPropagation();
-                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status").removeClass("green").addClass("red").html("Off");
-                    $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel").hide();
+                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status").removeClass("green").addClass("red").html("Off");
+                    $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel").hide();
                     PVP.stop = true;
                     RESP.stop = true;
                     RES.stop = true;
@@ -669,6 +701,13 @@ if (typeof GAME === 'undefined') {} else {
                     PVP.war = $(e.target).val();
                     PVP.save_clan_list();
                 });
+
+                $('#sety_Panel .eqs_save').click((e) => {
+                    EQS.save(parseInt($(e.currentTarget).data('idx')));
+                });
+                $('#sety_Panel .eqs_equip').click((e) => {
+                    EQS.equip(parseInt($(e.currentTarget).data('idx')));
+                });
             }(function() {
                 let a;
 
@@ -751,6 +790,74 @@ if (typeof GAME === 'undefined') {} else {
                 }
                 $('#fight_con, #fight_t1, #fight_t0').show();
             };
+
+            var EQS = {
+                storageKey: 'swa_eq_sets_' + GAME.char_id,
+                sets: JSON.parse(localStorage.getItem('swa_eq_sets_' + GAME.char_id) || '[null,null,null,null,null]'),
+            };
+            EQS.persist = () => {
+                localStorage.setItem(EQS.storageKey, JSON.stringify(EQS.sets));
+            };
+            EQS.readCurrent = () => {
+                var loadout = {};
+                $('.usable_slot').each(function() {
+                    var slot = parseInt($(this).attr('data-slot'));
+                    var iid = parseInt($(this).attr('data-item_id'));
+                    if (slot && iid) loadout[slot] = iid;
+                });
+                return loadout;
+            };
+            EQS.defaultName = (idx) => 'Set ' + (idx + 1);
+            EQS.getName = (idx) => (EQS.sets[idx] && EQS.sets[idx].name) || EQS.defaultName(idx);
+            EQS.rename = (idx, name) => {
+                name = (name || '').trim() || EQS.defaultName(idx);
+                if (!EQS.sets[idx]) EQS.sets[idx] = { name: name, items: {} };
+                else EQS.sets[idx].name = name;
+                EQS.persist();
+            };
+            EQS.save = (idx) => {
+                var loadout = EQS.readCurrent();
+                var name = ($('#sety_Panel .eqs_name[data-idx="' + idx + '"]').val() || '').trim() || EQS.getName(idx);
+                console.log('[EQS] save', idx, JSON.stringify(loadout));
+                EQS.sets[idx] = { name: name, items: loadout };
+                EQS.persist();
+                GAME.komunikat('Zapisano set "' + name + '" (' + Object.keys(loadout).length + ' itemów).');
+            };
+            EQS.equip = (idx) => {
+                var loadout = EQS.sets[idx] ? EQS.sets[idx].items : null;
+                var slots = loadout ? Object.keys(loadout) : [];
+                console.log('[EQS] equip', idx, JSON.stringify(loadout));
+                if (!slots.length) {
+                    GAME.komunikat('Set "' + EQS.getName(idx) + '" jest pusty.');
+                    return;
+                }
+                var i = 0;
+                var step = () => {
+                    if (i >= slots.length) return;
+                    var slot = slots[i];
+                    var iid = loadout[slot];
+                    i++;
+                    var current = EQS.readCurrent()[slot];
+                    console.log('[EQS] step slot=' + slot + ' wanted_iid=' + iid + ' current_iid=' + current);
+                    if (current === iid) {
+                        step();
+                        return;
+                    }
+                    console.log('[EQS] emitOrder', { a: 12, type: 5, iid: iid, page: GAME.ekw_page });
+                    GAME.emitOrder({ a: 12, type: 5, iid: iid, page: GAME.ekw_page });
+                    setTimeout(step, 500);
+                };
+                step();
+            };
+            $('#sety_Panel .eqs_name').each(function() {
+                var idx = parseInt($(this).data('idx'));
+                $(this).val(EQS.getName(idx));
+            });
+            $('#sety_Panel .eqs_name').change((e) => {
+                var idx = parseInt($(e.currentTarget).data('idx'));
+                EQS.rename(idx, $(e.currentTarget).val());
+                $(e.currentTarget).val(EQS.getName(idx));
+            });
 
             var INNE = {
                 ronin: false,
