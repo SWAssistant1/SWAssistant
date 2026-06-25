@@ -110,7 +110,7 @@ if (typeof GAME === 'undefined') {} else {
                     #inne_Panel .inne_check select:focus { outline: none; border-color: #e3402c !important; }
                 `;
                 $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel").remove();
-                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> </div> `;
+                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> </div> `;
                 const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
                 const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>   </div> `;
                 const CODE_panel = ` <div id="code_Panel" style="display:none;"> <div class="sekcja code_dragg">Inne</div> <div class="code_button code_code">KODY<b class="code_status red">Off</b></div> <div class="code_button code_acc">Konto<b class="code_status red">Off</b></div> <div class="code_button code_zast">Zastępstwa<b class="code_status red">Off</b></div> <div class="code_button code_bh1">Błogo 250% tren<b class="code_status red">Off</b></div> <div class="code_button code_bh2">Błogo 5% kod<b class="code_status red">Off</b></div> <label class='select_input'><select id='bot_what_to_train'><option value='1'>Siła</option><option value='2'>Szybkość</option><option value='3'>Wytrzymałość</option><option value='4'>Siła Woli</option><option value='5'>Energia Ki</option><option value='6'>Wtajemniczenie</option></select></label> <label class='select_input'><select id='bot_what_to_traintime'><option value='1'>1 godz.</option><option value='2'>2 godz.</option><option value='3'>3 godz.</option><option value='4'>4 godz.</option><option value='5'>5 godz.</option><option value='6'>6 godz.</option><option value='7'>7 godz.</option><option value='8'>8 godz.</option><option value='9'>9 godz.</option><option value='10'>10 godz.</option><option value='11'>11 godz.</option><option value='12'>12 godz.</option></label> </div> `;
@@ -256,13 +256,24 @@ if (typeof GAME === 'undefined') {} else {
                     }
                 });
 
+                $('#main_Panel .gh_kom').click(() => {
+                    if (KOM.hide) {
+                        $(".gh_kom .gh_status").removeClass("green").addClass("red").html("Off");
+                        KOM.stop();
+                    } else {
+                        $(".gh_kom .gh_status").removeClass("red").addClass("green").html("On");
+                        KOM.start();
+                    }
+                });
+
                 $('#main_Panel .gh_close').click((e) => {
                     e.stopPropagation();
-                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status").removeClass("green").addClass("red").html("Off");
+                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status").removeClass("green").addClass("red").html("Off");
                     $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel").hide();
                     PVP.stop = true;
                     RESP.stop = true;
                     RES.stop = true;
+                    KOM.stop();
                     $(".pvp_pvp .pvp_status, .resp_resp .resp_status, .res_res .res_status, .inne_wymiana .inne_status, .inne_ronin .inne_status, .inne_karciana .inne_status").removeClass("green").addClass("red").html("Off");
                     $("#main_Panel").hide();
                 });
@@ -678,6 +689,33 @@ if (typeof GAME === 'undefined') {} else {
                 }
                 $('#available_servers').html(con);
                 $('#available_servers option[value=' + this.server + ']').prop('selected', true);
+            };
+
+            var KOM = {
+                hide: false,
+                observer: null,
+            };
+            KOM.remove_fight_msgs = () => {
+                $('#fight_con').remove();
+                $('#fight_t1').remove();
+                $('#fight_t0').remove();
+            };
+            KOM.start = () => {
+                KOM.hide = true;
+                KOM.remove_fight_msgs();
+                if (!KOM.observer) {
+                    KOM.observer = new MutationObserver(() => {
+                        if (KOM.hide) KOM.remove_fight_msgs();
+                    });
+                    KOM.observer.observe(document.body, { childList: true, subtree: true });
+                }
+            };
+            KOM.stop = () => {
+                KOM.hide = false;
+                if (KOM.observer) {
+                    KOM.observer.disconnect();
+                    KOM.observer = null;
+                }
             };
 
             var INNE = {
@@ -1689,13 +1727,7 @@ if (typeof GAME === 'undefined') {} else {
             };
             RESP.min_pa = () => {
                 if (GAME.char_data.doubler_rate && GAME.char_data.doubler_rate > 19) {
-                    // var spawner = GAME.spawner[0];
-                    // var pa_mult = cal_sub * RESP.MF() + parseInt(spawner);
-                    return 1000;
-                } else {
-                    // var spawner = GAME.spawner[0];
-                    // var pa_mult = parseInt(spawner);
-                    return 1000;
+                    return 5000;
                 }
             };
             RESP.action = () => {
