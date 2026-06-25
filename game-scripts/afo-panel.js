@@ -720,8 +720,10 @@ if (typeof GAME === 'undefined') {} else {
                 if (KOM.patched) return;
                 KOM.patched = true;
                 var orig_komunikat = GAME.komunikat;
-                GAME.komunikat = function() {
-                    if (KOM.hide) return;
+                GAME.komunikat = function(kom) {
+                    // keep interactive dialogs (require a user choice) even when hiding plain messages
+                    var isInteractive = typeof kom === 'string' && /data-option=|<(button|input|select|textarea)\b/i.test(kom);
+                    if (KOM.hide && !isInteractive) return;
                     return orig_komunikat.apply(this, arguments);
                 };
                 var orig_pushNotification = GAME.pushNotification;
