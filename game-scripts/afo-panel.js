@@ -63,6 +63,10 @@ if (typeof GAME === 'undefined') {} else {
                     #resp_Panel .resp_status { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
                     #resp_Panel .resp_status.red { background: #c0392b !important; color: #fff !important; }
                     #resp_Panel .resp_status.green { background: #27ae60 !important; color: #fff !important; }
+                    #resp_Panel .gamee_input { text-align: center; margin: 0 8px 6px; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.04); }
+                    #resp_Panel .gamee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; text-align: center; }
+                    #resp_Panel .gamee_input input:focus { outline: none; border-color: #e3402c !important; }
+                    #resp_Panel .resp_ramen_used { text-align: center; color: #bbb; font-size: 12px; margin: 0 8px 6px; }
                 `;
                 const csscode = `
                     #code_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 1050px); z-index: 9999; width: 180px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -110,9 +114,9 @@ if (typeof GAME === 'undefined') {} else {
                     #inne_Panel .inne_check select:focus { outline: none; border-color: #e3402c !important; }
                 `;
                 $("#main_Panel, #pvp_Panel, #resp_Panel, #code_Panel, #res_Panel, #inne_Panel, #lpvm_Panel").remove();
-                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> </div> `;
+                const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> </div> `;
                 const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
-                const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>   </div> `;
+                const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div>   </div> `;
                 const CODE_panel = ` <div id="code_Panel" style="display:none;"> <div class="sekcja code_dragg">Inne</div> <div class="code_button code_code">KODY<b class="code_status red">Off</b></div> <div class="code_button code_acc">Konto<b class="code_status red">Off</b></div> <div class="code_button code_zast">Zastępstwa<b class="code_status red">Off</b></div> <div class="code_button code_bh1">Błogo 250% tren<b class="code_status red">Off</b></div> <div class="code_button code_bh2">Błogo 5% kod<b class="code_status red">Off</b></div> <label class='select_input'><select id='bot_what_to_train'><option value='1'>Siła</option><option value='2'>Szybkość</option><option value='3'>Wytrzymałość</option><option value='4'>Siła Woli</option><option value='5'>Energia Ki</option><option value='6'>Wtajemniczenie</option></select></label> <label class='select_input'><select id='bot_what_to_traintime'><option value='1'>1 godz.</option><option value='2'>2 godz.</option><option value='3'>3 godz.</option><option value='4'>4 godz.</option><option value='5'>5 godz.</option><option value='6'>6 godz.</option><option value='7'>7 godz.</option><option value='8'>8 godz.</option><option value='9'>9 godz.</option><option value='10'>10 godz.</option><option value='11'>11 godz.</option><option value='12'>12 godz.</option></label> </div> `;
                 const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
                 const LPVM_panel = ` <div id="lpvm_Panel"> <div class="sekcja lpvm_dragg">LISTY GOŃCZE</div> <div class='pvm_killed'>Wykonane listy: <b>0</b></div> <div class="lpvm_button lpvm_lpvm">START<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_g">G-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_u">U-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_s">S-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_h">H-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_limit">Limit<b class="lpvm_status red">Off</b></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Enter text" name='lpvm_capt' value='60' /></div> </div> `;
@@ -256,13 +260,24 @@ if (typeof GAME === 'undefined') {} else {
                     }
                 });
 
+                $('#main_Panel .gh_kom').click(() => {
+                    if (KOM.hide) {
+                        $(".gh_kom .gh_status").removeClass("green").addClass("red").html("Off");
+                        KOM.stop();
+                    } else {
+                        $(".gh_kom .gh_status").removeClass("red").addClass("green").html("On");
+                        KOM.start();
+                    }
+                });
+
                 $('#main_Panel .gh_close').click((e) => {
                     e.stopPropagation();
-                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status").removeClass("green").addClass("red").html("Off");
+                    $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status").removeClass("green").addClass("red").html("Off");
                     $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel").hide();
                     PVP.stop = true;
                     RESP.stop = true;
                     RES.stop = true;
+                    KOM.stop();
                     $(".pvp_pvp .pvp_status, .resp_resp .resp_status, .res_res .res_status, .inne_wymiana .inne_status, .inne_ronin .inne_status, .inne_karciana .inne_status").removeClass("green").addClass("red").html("Off");
                     $("#main_Panel").hide();
                 });
@@ -392,6 +407,13 @@ if (typeof GAME === 'undefined') {} else {
                 $("#pvp_Panel input[name=pvp_capt]").val(PVP.clan_list);
                 $("#pvp_Panel input[name=speed_capt]").val(PVP.speed);
 
+                $("#resp_Panel input[name=resp_max_ramen]").val(RESP.maxRamen);
+                RESP.updateRamenCounter();
+                $('#resp_Panel input[name=resp_max_ramen]').change((e) => {
+                    RESP.maxRamen = parseInt($(e.target).val()) || 0;
+                    RESP.updateRamenCounter();
+                });
+
                 $('#resp_Panel .resp_on').hide();
                 $('#resp_Panel .resp_off').hide();
                 $('#resp_Panel .resp_resp').click(() => {
@@ -491,6 +513,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_red .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_RED;
+                        RESP.selectSenzu(RESP.SENZU_RED);
                         $('#resp_Panel .resp_blue').hide();
                         $('#resp_Panel .resp_green').hide();
                         $('#resp_Panel .resp_purple').hide();
@@ -510,6 +533,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_blue .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_BLUE;
+                        RESP.selectSenzu(RESP.SENZU_BLUE);
                         $('#resp_Panel .resp_red').hide();
                         $('#resp_Panel .resp_green').hide();
                         $('#resp_Panel .resp_purple').hide();
@@ -529,6 +553,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_green .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_GREEN;
+                        RESP.selectSenzu(RESP.SENZU_GREEN);
                         $('#resp_Panel .resp_red').hide();
                         $('#resp_Panel .resp_blue').hide();
                         $('#resp_Panel .resp_purple').hide();
@@ -548,6 +573,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_purple .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_PURPLE;
+                        RESP.selectSenzu(RESP.SENZU_PURPLE);
                         $('#resp_Panel .resp_red').hide();
                         $('#resp_Panel .resp_blue').hide();
                         $('#resp_Panel .resp_green').hide();
@@ -567,6 +593,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_yellow .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_YELLOW;
+                        RESP.selectSenzu(RESP.SENZU_YELLOW);
                         $('#resp_Panel .resp_red').hide();
                         $('#resp_Panel .resp_blue').hide();
                         $('#resp_Panel .resp_green').hide();
@@ -586,6 +613,7 @@ if (typeof GAME === 'undefined') {} else {
                     if (RESP.CONF_SENZU == false) {
                         $(".resp_magic .resp_status").removeClass("red").addClass("green").html("On");
                         RESP.CONF_SENZU = RESP.SENZU_MAGIC;
+                        RESP.selectSenzu(RESP.SENZU_MAGIC);
                         $('#resp_Panel .resp_red').hide();
                         $('#resp_Panel .resp_blue').hide();
                         $('#resp_Panel .resp_green').hide();
@@ -678,6 +706,33 @@ if (typeof GAME === 'undefined') {} else {
                 }
                 $('#available_servers').html(con);
                 $('#available_servers option[value=' + this.server + ']').prop('selected', true);
+            };
+
+            var KOM = {
+                hide: false,
+                observer: null,
+            };
+            KOM.remove_fight_msgs = () => {
+                $('#fight_con').remove();
+                $('#fight_t1').remove();
+                $('#fight_t0').remove();
+            };
+            KOM.start = () => {
+                KOM.hide = true;
+                KOM.remove_fight_msgs();
+                if (!KOM.observer) {
+                    KOM.observer = new MutationObserver(() => {
+                        if (KOM.hide) KOM.remove_fight_msgs();
+                    });
+                    KOM.observer.observe(document.body, { childList: true, subtree: true });
+                }
+            };
+            KOM.stop = () => {
+                KOM.hide = false;
+                if (KOM.observer) {
+                    KOM.observer.disconnect();
+                    KOM.observer = null;
+                }
             };
 
             var INNE = {
@@ -1476,6 +1531,9 @@ if (typeof GAME === 'undefined') {} else {
                 CONF_GREEN_AMOUNT1: Math.floor(GAME.getCharMaxPr() / 2000 * 0.9999),
                 CONF_YELLOW_AMOUNT: 6,
                 CONF_SENZU: false,
+                maxRamen: 0,
+                usedRamen: 0,
+                lastSenzuType: null,
                 bless: false,
                 checkOST_timer: 0,
                 normal: false,
@@ -1689,13 +1747,7 @@ if (typeof GAME === 'undefined') {} else {
             };
             RESP.min_pa = () => {
                 if (GAME.char_data.doubler_rate && GAME.char_data.doubler_rate > 19) {
-                    // var spawner = GAME.spawner[0];
-                    // var pa_mult = cal_sub * RESP.MF() + parseInt(spawner);
-                    return 1000;
-                } else {
-                    // var spawner = GAME.spawner[0];
-                    // var pa_mult = parseInt(spawner);
-                    return 1000;
+                    return 5000;
                 }
             };
             RESP.action = () => {
@@ -1801,36 +1853,73 @@ if (typeof GAME === 'undefined') {} else {
                         return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 28); // zielona pigula
                 }
             };
+            RESP.SENZU_BUTTONS = {
+                [RESP.SENZU_RED]: '.resp_red',
+                [RESP.SENZU_BLUE]: '.resp_blue',
+                [RESP.SENZU_GREEN]: '.resp_green',
+                [RESP.SENZU_PURPLE]: '.resp_purple',
+                [RESP.SENZU_YELLOW]: '.resp_yellow',
+                [RESP.SENZU_MAGIC]: '.resp_magic',
+            };
+            RESP.selectSenzu = (type) => {
+                if (RESP.lastSenzuType !== type) {
+                    RESP.usedRamen = 0;
+                }
+                RESP.lastSenzuType = type;
+                RESP.updateRamenCounter();
+            };
+            RESP.updateRamenCounter = () => {
+                $('#resp_Panel .resp_ramen_used').text('Zużyto: ' + RESP.usedRamen + (RESP.maxRamen > 0 ? ' / ' + RESP.maxRamen : ''));
+            };
+            RESP.disableSenzu = () => {
+                const sel = RESP.SENZU_BUTTONS[RESP.CONF_SENZU];
+                if (sel) $('#resp_Panel ' + sel).click();
+            };
             RESP.useSenzu = () => {
                 console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
                 // if (RESP.stop) return;
+                if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) {
+                    RESP.disableSenzu();
+                    return;
+                }
                 const blue = RESP.getSenzu(RESP.SENZU_BLUE);
                 const purple = RESP.getSenzu(RESP.SENZU_PURPLE);
                 const magic = RESP.getSenzu(RESP.SENZU_MAGIC);
                 const green = RESP.getSenzu(RESP.SENZU_GREEN);
                 const yellow = RESP.getSenzu(RESP.SENZU_YELLOW);
                 const red = RESP.getSenzu(RESP.SENZU_RED);
+                let consumed = 0;
                 switch (RESP.CONF_SENZU) {
                     case RESP.SENZU_BLUE:
                         RESP.useBlue(1);
+                        consumed = 2;
                         break;
                     case RESP.SENZU_PURPLE:
                         RESP.usePurple(1);
+                        consumed = 3;
                         break;
                     case RESP.SENZU_MAGIC:
                         RESP.useMagic(1);
+                        consumed = 1;
                         break;
                     case RESP.SENZU_GREEN:
                         RESP.useGreen(10);
+                        consumed = 5;
                         break;
                     case RESP.SENZU_YELLOW:
                         RESP.useYellow(1);
+                        consumed = 1;
                         break;
                     case RESP.SENZU_RED:
                         RESP.useRed(1);
+                        consumed = 1;
                         break;
                     default:
                         break;
+                }
+                if (consumed > 0) {
+                    RESP.usedRamen += consumed;
+                    RESP.updateRamenCounter();
                 }
             };
             RESP.useBlue = (amount = RESP.CONF_BLUE_AMOUNT()) => {
