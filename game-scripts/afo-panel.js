@@ -2113,14 +2113,6 @@ if (typeof GAME === 'undefined') {} else {
                         return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 28); // zielona pigula
                 }
             };
-            RESP.SENZU_BUTTONS = {
-                [RESP.SENZU_RED]: '.resp_red',
-                [RESP.SENZU_BLUE]: '.resp_blue',
-                [RESP.SENZU_GREEN]: '.resp_green',
-                [RESP.SENZU_PURPLE]: '.resp_purple',
-                [RESP.SENZU_YELLOW]: '.resp_yellow',
-                [RESP.SENZU_MAGIC]: '.resp_magic',
-            };
             RESP.selectSenzu = (type) => {
                 if (RESP.lastSenzuType !== type) {
                     RESP.usedRamen = 0;
@@ -2131,23 +2123,7 @@ if (typeof GAME === 'undefined') {} else {
             RESP.updateRamenCounter = () => {
                 $('#resp_Panel .resp_ramen_used').text('Zużyto: ' + RESP.usedRamen + (RESP.maxRamen > 0 ? ' / ' + RESP.maxRamen : ''));
             };
-            RESP.disableSenzu = () => {
-                const sel = RESP.SENZU_BUTTONS[RESP.CONF_SENZU];
-                if (sel) $('#resp_Panel ' + sel).click();
-            };
-            RESP.useSenzu = () => {
-                console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
-                // if (RESP.stop) return;
-                if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) {
-                    RESP.disableSenzu();
-                    return;
-                }
-                const blue = RESP.getSenzu(RESP.SENZU_BLUE);
-                const purple = RESP.getSenzu(RESP.SENZU_PURPLE);
-                const magic = RESP.getSenzu(RESP.SENZU_MAGIC);
-                const green = RESP.getSenzu(RESP.SENZU_GREEN);
-                const yellow = RESP.getSenzu(RESP.SENZU_YELLOW);
-                const red = RESP.getSenzu(RESP.SENZU_RED);
+            RESP.consumeSenzuOnce = () => {
                 let consumed = 0;
                 switch (RESP.CONF_SENZU) {
                     case RESP.SENZU_BLUE:
@@ -2177,10 +2153,33 @@ if (typeof GAME === 'undefined') {} else {
                     default:
                         break;
                 }
-                if (consumed > 0) {
-                    RESP.usedRamen += consumed;
-                    RESP.updateRamenCounter();
+                return consumed;
+            };
+            RESP.feeding = false;
+            RESP.feedStep = () => {
+                if (RESP.stop || GAME.char_data.pr >= GAME.getCharMaxPr()) {
+                    RESP.feeding = false;
+                    return;
                 }
+                if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) {
+                    RESP.feeding = false;
+                    return;
+                }
+                const consumed = RESP.consumeSenzuOnce();
+                if (consumed <= 0) {
+                    RESP.feeding = false;
+                    return;
+                }
+                RESP.usedRamen += consumed;
+                RESP.updateRamenCounter();
+                setTimeout(RESP.feedStep, 700);
+            };
+            RESP.useSenzu = () => {
+                console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
+                if (RESP.feeding) return;
+                if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) return;
+                RESP.feeding = true;
+                RESP.feedStep();
             };
             RESP.useBlue = (amount = RESP.CONF_BLUE_AMOUNT()) => {
                 const blue = RESP.getSenzu(RESP.SENZU_BLUE);
