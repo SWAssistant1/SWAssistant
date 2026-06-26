@@ -3,9 +3,6 @@ const path = require('node:path');
 const fs = require('node:fs');
 const url = require('node:url');
 
-// Native Wayland breaks keyboard input in form fields; force XWayland.
-app.commandLine.appendSwitch('ozone-platform', 'x11');
-
 // Must match CONTENT_SCRIPT_WORLD_ID in electron/preload-game.js.
 const CONTENT_SCRIPT_WORLD_ID = 999;
 
@@ -99,7 +96,7 @@ function injectContentScripts(gameWin) {
     },
     { code: jquery },
     { code: contentScript },
-  ]);
+  ]).catch(() => {});
   gameWin.webContents.insertCSS(customStyles);
 }
 
