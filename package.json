@@ -1,0 +1,36 @@
+{
+  "name": "swassistant",
+  "version": "1.0.0",
+  "description": "SWAssistant Chrome extension tooling and Electron package build",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^41.7.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^8.57.0"
+  },
+  "build": {
+    "appId": "com.swassistant.app",
+    "productName": "SWAssistant",
+    "files": [
+      "electron/**/*",
+      "SWA/**/*",
+      "game.js",
+      "game-scripts/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
+  }
+}
