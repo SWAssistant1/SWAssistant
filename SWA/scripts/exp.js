@@ -6,53 +6,25 @@ let wait2_exp = 2
 // global constants
 const VERSION = 'v0.1.3'
 
-const SENZU_BLUE = 'SENZU_BLUE'
-const SENZU_GREEN = 'SENZU_GREEN'
-const SENZU_YELLOW = 'SENZU_YELLOW'
-const SENZU_RED = 'SENZU_RED'
-
 // -----------------------------------
 
 // ===================================
 // user config
 /**
- * Określa ilość niebieskich senzu, które będą używane podczas odnawiania PA
- */
-const CONF_BLUE_AMOUNT = 700
-
-/**
- * Określa ilość zielonych senzu, które będą używane podczas odnawiania PA
- */
-const CONF_GREEN_AMOUNT = 10
-
-/**
- * Określa ilość żółtych senzu, które będą używane podczas odnawiania PA
- */
-const CONF_YELLOW_AMOUNT = 1
-
-/**
- * Określa przy jakiej ilości PA mają zostać użyte senzu
- */
-const CONF_MIN_PA = 1000
-
-/**
- * Określa jakia powinna zostać użyta subka
+ * Wybór subki jest konfigurowany w panelu AFO (sekcja PVM, lista "Subka") i zapisywany
+ * w localStorage pod kluczem 'swa_sub_label' — odczytywany tutaj dynamicznie przez getConfSub(),
+ * więc zmiana w panelu działa bez przeładowania tego skryptu.
  *
- * false - wyłączone odpalanie subki
- * <0-7> - wartości od 0 do 7, gdzie kolejno 0 to ostka, natomiast 7 to x2
+ * '' / brak wpisu w localStorage - subka wyłączona
  */
-const CONF_SUB = 0
-
-/**
- * Określa jakie senzu powinny zostać użyte przy odnawianiu PA
- *
- * false - Jeśli wybór ma być automatyczny (blue -> green -> yellow -> red)
- * SENZU_<typ> - Jeśli ma użyc konkretnego senzu (np. SENZU_RED)
- *
- * !Chwilowo wspiera tylko BLUE, GREEN, YELLOW i RED
- */
-const CONF_SENZU = SENZU_BLUE
+function getConfSub() {
+	const v = localStorage.getItem('swa_sub_label')
+	return v === null ? 'x4' : v
+}
 // ===================================
+// Uwaga: jedzenie ramenów/senzu NIE jest obsługiwane przez ten skrypt — odpowiada za to
+// wyłącznie panel AFO (sekcja PVM, przyciski ramenów + "Min PA"/"Max ramenów"), działający
+// niezależnie od tego, czy ten skrypt jest aktywny.
 
 // -----------------------------------
 // elements
@@ -349,15 +321,29 @@ function isAntybotActive () {
 
 // ===================================
 // FIGHT
+// Ranks index: 0 = Normal, 1 = Champion, 2 = Elite, 3 = Boss
+// Wybór, które poziomy mobów mają być atakowane, jest konfigurowany w panelu AFO
+// (sekcja PVM, przyciski Normal/Champion/Elite/Boss) i zapisywany w localStorage.
+function getEnabledRanks () {
+	try {
+		return JSON.parse(localStorage.getItem('swa_exp_ranks')) || [true, true, true, true]
+	} catch (e) {
+		return [true, true, true, true]
+	}
+}
+
 function fight (mob_num = 0) {
 	if (stop_exp) return
 
+	const ranks = getEnabledRanks()
+	const mob = GAME.field_mobs[mob_num]
+
 	// check if mob exists on field and has no multi fight yet
-	if (GAME.field_mobs[mob_num].ranks[1] && GAME.mf[GAME.field_mobs[mob_num].mob_id] !== 3) fightLegend(mob_num) // kill legend if exists
-	else if (GAME.field_mobs[mob_num].ranks[2]) fightEpic(mob_num) // kill epic if exists
-	else if (GAME.field_mobs[mob_num].ranks[3]) fightMystic(mob_num) // kill mystic if exists
-	else 
-	GAME.emitOrder({a: 13, mob_num: mob_num, fo: GAME.map_options.ma}) // multi attack
+	if (ranks[1] && mob.ranks[1] && GAME.mf[mob.mob_id] !== 3) fightLegend(mob_num) // kill champion if exists
+	else if (ranks[2] && mob.ranks[2]) fightEpic(mob_num) // kill elite if exists
+	else if (ranks[3] && mob.ranks[3]) fightMystic(mob_num) // kill boss if exists
+	else if (ranks[0] && mob.ranks[0] && GAME.field_mf && GAME.field_mf[mob_num] >= 0) GAME.emitOrder({a: 13, mob_num: mob_num, fo: ranks}) // multi fight unlocked
+	else if (ranks[0] && mob.ranks[0]) GAME.emitOrder({a: 7, mob_num: mob_num, rank: 0, quick: 1}) // normal fight until multi fight unlocks
 }
 
 function fightLegend (mob_num = 0) {
@@ -373,11 +359,12 @@ function fightMystic (mob_num = 0) {
 }
 
 function areMobsOnField() {
+	const ranks = getEnabledRanks()
 	const mob_index = GAME.field_mobs.findIndex(field_mob => {
 		return field_mob.ranks.some((rank, index) => {
-			// first part checks if multiattack option for specified mob rank is enabled
+			// first part checks if this rank is selected for attacking in the AFO panel
 			// second part checks if mob with specified rank exists in the cell
-			return GAME.map_options.ma[index] && rank > 0
+			return ranks[index] && rank > 0
 		})
 	})
 
@@ -386,137 +373,21 @@ function areMobsOnField() {
 }
 
 // ===================================
-// SENZU
-function getSenzu(type) {
-  switch (type) {
-    case SENZU_BLUE:
-      return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 30)
-    case SENZU_GREEN:
-      return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 29)
-    case SENZU_YELLOW:
-      return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 28)
-    case SENZU_RED:
-      return GAME.quick_opts.senzus.find(senzu => senzu.item_id === 42)
-  }
-}
-
-function useSenzu () {
-	if (stop_exp) return
-
-	if (isAntybotActive()) {
-		move()
-		return
-	}
-
-	const blue = getSenzu(SENZU_BLUE)
-	const green = getSenzu(SENZU_GREEN)
-	const yellow = getSenzu(SENZU_YELLOW)
-	const red = getSenzu(SENZU_RED)
-
-	switch (CONF_SENZU) {
-		case SENZU_BLUE:
-			useBlue(Math.min(CONF_BLUE_AMOUNT, blue.stack))
-			break
-
-		case SENZU_GREEN:
-		  useGreen(Math.min(CONF_GREEN_AMOUNT, green.stack))
-		  break
-
-		case SENZU_YELLOW:
-		  useYellow(Math.min(CONF_YELLOW_AMOUNT, yellow.stack))
-		  break
-
-		case SENZU_RED:
-		  useRed()
-		  break
-
-		default:
-			if (blue && blue.stack > 0)
-				useBlue(Math.min(CONF_BLUE_AMOUNT, blue.stack))
-			else if (green && green.stack > 0)
-				useGreen(Math.min(CONF_GREEN_AMOUNT, green.stack))
-			else if (yellow && yellow.stack > 0)
-				useYellow(Math.min(CONF_YELLOW_AMOUNT, yellow.stack))
-			else if (red && red.stack > 0)
-				useRed()
-	}
-}
-
-function useBlue(amount = CONF_BLUE_AMOUNT) {
-  const blue = getSenzu(SENZU_BLUE)
-
-  if (!blue) {
-    move()
-    return
-  }
-
-	GAME.emitOrder({
-		a: 12,
-		type: 14,
-		iid: blue.id,
-		page: GAME.ekw_page,
-		am: amount
-	})
-}
-
-function useGreen(amount = CONF_GREEN_AMOUNT) {
-  const green = getSenzu(SENZU_GREEN)
-
-  if (!green) {
-    move()
-    return
-  }
-
-  GAME.emitOrder({
-    a: 12,
-    type: 14,
-    iid: green.id,
-    page: GAME.ekw_page,
-    am: amount
-  })
-}
-
-function useYellow(amount = CONF_YELLOW_AMOUNT) {
-  const yellow = getSenzu(SENZU_YELLOW)
-
-  if (!yellow) {
-    move()
-    return
-  }
-
-  GAME.emitOrder({
-    a: 12,
-    type: 14,
-    iid: yellow.id,
-    page: GAME.ekw_page,
-    am: amount
-  })
-}
-
-function useRed() {
-  const red = getSenzu(SENZU_RED)
-
-  if (!red) {
-    move()
-    return
-  }
-
-  GAME.emitOrder({
-    a: 12,
-    type: 14,
-    iid: red.id,
-    page: GAME.ekw_page,
-    am: 1
-  })
-}
-
-// ===================================
 // SUBSTANCE
 function useSub () {
+	const confSub = getConfSub()
+	if (!confSub) return
+
+	const subs = GAME.quick_opts.sub || []
+	const chosen = subs.find(s => (s[GAME.lang] || '').includes(confSub))
+
+	if (!chosen) return
+
 	GAME.emitOrder({
 		a: 12,
-		type: 19,
-		iid: GAME.quick_opts.sub[CONF_SUB].id
+		type: 8,
+		sel: 0,
+		iid: chosen.id
 	})
 }
 
@@ -550,15 +421,6 @@ function move () {
     }
 	if (moveTimeout) clearTimeout(moveTimeout)
 	moveTimeout = setTimeout(move, 700) // trigger move after 7 seconds without move action
-
-	if (GAME.char_data.pr <= CONF_MIN_PA) {
-		useSenzu()
-		return
-	}
-	if(CONF_SUB !== false && ($doubler_bar.style.display === 'none' || GAME.doubler_end * 1000 < new Date().getTime())) {
-		useSub()
-		return
-	}
 
 	if (isAntybotActive()) {
 		console.log('antybot active')
@@ -615,8 +477,8 @@ function handleResponse (res) {
 		 fight()
 	}, wait2_exp);
 
-	// on fight response
-	else if (res.a === 7) setTimeout(() => {
+	// on fight response (single attack or multi attack)
+	else if (res.a === 7 || res.a === 13) setTimeout(() => {
 		// when in the cell are some mobs
 		const mobs = areMobsOnField()
 		if (mobs) {
@@ -626,11 +488,8 @@ function handleResponse (res) {
 		if(!collectCSK()) move()
 	}, wait2_exp);
 
-	// on senzu use response
-	else if (res.a === 12 && res.type === 14) move()
-
 	// on speed potion use response
-	else if (res.a === 12 && res.type === 19) move()
+	else if (res.a === 12 && res.type === 8) move()
 
 	// on SSJ use response
 	else if (res.a === 18 && res.ssj) move()
@@ -649,3 +508,20 @@ function handleResponse (res) {
 }
 
 GAME.socket.on('gr', handleResponse);
+
+// ===================================
+// SUBSTANCE LOOP
+// Runs independently of move()/fight() so substance activation isn't starved while the bot
+// is busy fighting continuously (fight() can loop on itself for a long time without ever
+// calling move(), where the substance check used to live).
+function subStep () {
+	const expOn = !$(".resp_rare .resp_status").hasClass("red")
+	const confSub = getConfSub()
+	const barHidden = $doubler_bar && $doubler_bar.style.display === 'none'
+	const expired = GAME.doubler_end * 1000 < new Date().getTime()
+	if (expOn && confSub && (barHidden || expired)) {
+		useSub()
+	}
+	setTimeout(subStep, 1000)
+}
+subStep()

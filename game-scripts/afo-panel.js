@@ -67,6 +67,9 @@ if (typeof GAME === 'undefined') {} else {
                     #resp_Panel .gamee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; text-align: center; }
                     #resp_Panel .gamee_input input:focus { outline: none; border-color: #e3402c !important; }
                     #resp_Panel .resp_ramen_used { text-align: center; color: #bbb; font-size: 12px; margin: 0 8px 6px; }
+                    #resp_Panel .resp_sub_select { margin: 0 8px 6px; }
+                    #resp_Panel .resp_sub_select select { width: 100%; background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; padding: 4px; }
+                    #resp_Panel .resp_sub_select select:focus { outline: none; border-color: #e3402c !important; }
                 `;
                 const csscode = `
                     #code_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 1050px); z-index: 9999; width: 180px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -154,7 +157,7 @@ if (typeof GAME === 'undefined') {} else {
                     <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
                 </div> `;
                 const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
-                const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div>   </div> `;
+                const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
                 const CODE_panel = ` <div id="code_Panel" style="display:none;"> <div class="sekcja code_dragg">Inne</div> <div class="code_button code_code">KODY<b class="code_status red">Off</b></div> <div class="code_button code_acc">Konto<b class="code_status red">Off</b></div> <div class="code_button code_zast">Zastępstwa<b class="code_status red">Off</b></div> <div class="code_button code_bh1">Błogo 250% tren<b class="code_status red">Off</b></div> <div class="code_button code_bh2">Błogo 5% kod<b class="code_status red">Off</b></div> <label class='select_input'><select id='bot_what_to_train'><option value='1'>Siła</option><option value='2'>Szybkość</option><option value='3'>Wytrzymałość</option><option value='4'>Siła Woli</option><option value='5'>Energia Ki</option><option value='6'>Wtajemniczenie</option></select></label> <label class='select_input'><select id='bot_what_to_traintime'><option value='1'>1 godz.</option><option value='2'>2 godz.</option><option value='3'>3 godz.</option><option value='4'>4 godz.</option><option value='5'>5 godz.</option><option value='6'>6 godz.</option><option value='7'>7 godz.</option><option value='8'>8 godz.</option><option value='9'>9 godz.</option><option value='10'>10 godz.</option><option value='11'>11 godz.</option><option value='12'>12 godz.</option></label> </div> `;
                 const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
                 const LPVM_panel = ` <div id="lpvm_Panel"> <div class="sekcja lpvm_dragg">LISTY GOŃCZE</div> <div class='pvm_killed'>Wykonane listy: <b>0</b></div> <div class="lpvm_button lpvm_lpvm">START<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_g">G-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_u">U-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_s">S-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_h">H-Born<b class="lpvm_status red">Off</b></div> <div class="lpvm_button lpvm_limit">Limit<b class="lpvm_status red">Off</b></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Enter text" name='lpvm_capt' value='60' /></div> </div> `;
@@ -476,6 +479,29 @@ if (typeof GAME === 'undefined') {} else {
                 $('#resp_Panel input[name=resp_max_ramen]').change((e) => {
                     RESP.maxRamen = parseInt($(e.target).val()) || 0;
                     RESP.updateRamenCounter();
+                });
+
+                $("#resp_Panel input[name=resp_min_pa]").val(RESP.minPa);
+                $('#resp_Panel input[name=resp_min_pa]').change((e) => {
+                    RESP.minPa = parseInt($(e.target).val()) || 0;
+                });
+
+                RESP.populateSubSelect();
+                $('#resp_Panel select[name=resp_sub_select]').change((e) => {
+                    localStorage.setItem('swa_sub_label', $(e.target).val());
+                });
+
+                var expRanks = JSON.parse(localStorage.getItem('swa_exp_ranks') || '[true,true,true,true]');
+                ['normal', 'champion', 'elite', 'boss'].forEach((name, idx) => {
+                    var $btn = $('#resp_Panel .resp_rank_' + name);
+                    var $status = $btn.find('.resp_status');
+                    if (!expRanks[idx]) $status.removeClass('green').addClass('red').html('Off');
+                    $btn.click(() => {
+                        expRanks[idx] = !expRanks[idx];
+                        if (expRanks[idx]) $status.removeClass('red').addClass('green').html('On');
+                        else $status.removeClass('green').addClass('red').html('Off');
+                        localStorage.setItem('swa_exp_ranks', JSON.stringify(expRanks));
+                    });
                 });
 
                 $('#resp_Panel .resp_on').hide();
@@ -1794,6 +1820,7 @@ if (typeof GAME === 'undefined') {} else {
                 maxRamen: 0,
                 usedRamen: 0,
                 lastSenzuType: null,
+                minPa: 5000,
                 bless: false,
                 checkOST_timer: 0,
                 normal: false,
@@ -2007,7 +2034,25 @@ if (typeof GAME === 'undefined') {} else {
             };
             RESP.min_pa = () => {
                 if (GAME.char_data.doubler_rate && GAME.char_data.doubler_rate > 19) {
-                    return 5000;
+                    return Math.max(RESP.minPa, 5000);
+                }
+                return RESP.minPa;
+            };
+            RESP.populateSubSelect = () => {
+                var subs = (GAME.quick_opts && GAME.quick_opts.sub) || [];
+                var $sel = $('#resp_Panel select[name=resp_sub_select]');
+                var saved = localStorage.getItem('swa_sub_label');
+                $sel.empty();
+                $sel.append('<option value="">Wyłączona</option>');
+                subs.forEach((s) => {
+                    var label = s[GAME.lang];
+                    $sel.append('<option value="' + label + '">' + label + ' (' + s.stack + ')</option>');
+                });
+                if (saved !== null) {
+                    $sel.val(saved);
+                } else {
+                    var def = subs.find((s) => (s[GAME.lang] || '').includes('x4'));
+                    $sel.val(def ? def[GAME.lang] : '');
                 }
             };
             RESP.action = () => {
@@ -2128,11 +2173,11 @@ if (typeof GAME === 'undefined') {} else {
                 switch (RESP.CONF_SENZU) {
                     case RESP.SENZU_BLUE:
                         RESP.useBlue(1);
-                        consumed = 2;
+                        consumed = 1;
                         break;
                     case RESP.SENZU_PURPLE:
                         RESP.usePurple(1);
-                        consumed = 3;
+                        consumed = 1;
                         break;
                     case RESP.SENZU_MAGIC:
                         RESP.useMagic(1);
@@ -2140,7 +2185,7 @@ if (typeof GAME === 'undefined') {} else {
                         break;
                     case RESP.SENZU_GREEN:
                         RESP.useGreen(10);
-                        consumed = 5;
+                        consumed = 1;
                         break;
                     case RESP.SENZU_YELLOW:
                         RESP.useYellow(1);
@@ -2172,7 +2217,7 @@ if (typeof GAME === 'undefined') {} else {
                 }
                 RESP.usedRamen += consumed;
                 RESP.updateRamenCounter();
-                setTimeout(RESP.feedStep, 700);
+                setTimeout(RESP.feedStep, 250);
             };
             RESP.useSenzu = () => {
                 console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
