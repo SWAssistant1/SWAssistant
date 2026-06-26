@@ -6,8 +6,8 @@
   "main": "electron/main.js",
   "scripts": {
     "lint": "eslint .",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win"
+    "build": "electron-builder --publish=never",
+    "build:win": "electron-builder --win --publish=never"
   },
   "devDependencies": {
     "electron": "^41.7.1",
