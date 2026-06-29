@@ -30,7 +30,14 @@ var PVP = {
     buff_clan: false,
     chars:[],
     start_char:0,
-    pvp_timeout:0,
+    start_char_id:null,
+    wait_for_clear_ticks:0,
+    attacked_this_round:false,
+    empty_rounds:{},
+    waiting_for_attack:false,
+    wait_for_attack_since:0,
+    start_wait_timeouts:0,
+    start_char_disabled:false,
 };
 PVP.checkkkk = () => {
     let imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -200,11 +207,7 @@ PVP.action = () => {
             PVP.caseNumber++;
             PVP.orgi();
             break;
-        case 12: 
-            PVP.caseNumber++;
-            PVP.checkTimeout();
-            break;
-        case 13:
+        case 12:
             PVP.caseNumber = 0;
             PVP.zmien_postc();
         default:
@@ -245,7 +248,15 @@ PVP.check_players2 = () => {
     window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     PVP.licznik = 1;
 };
+PVP.isHiddenVillage = () => {
+    return $('#map_name').text().trim().toLowerCase().indexOf('ukryta wiosk') !== -1;
+};
 PVP.kill_players = () => {
+    if (PVP.isHiddenVillage()) {
+        PVP.licznik = 0;
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
     var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
     if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
@@ -254,6 +265,7 @@ PVP.kill_players = () => {
         PVP.kill_players1();
         window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     } else if (PVP.licznik < $("#player_list_con .player").length) {
+        PVP.attacked_this_round = true;
         if ($("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-option").includes("gxxx")) {
             GAME.socket.emit('ga', {
                 a: 24,
@@ -280,35 +292,11 @@ PVP.kill_players = () => {
         kom_clear();
     } 
 };
-PVP.checkTimeout = () => {
-
-    if (PVP.start_char !=0 || PVP.start_char-1 !=0) {
-        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+PVP.kill_players1 = () => {
+    if (PVP.isHiddenVillage()) {
+        kom_clear();
         return;
     }
-        
-        var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ".initial_hide_forced");
-        if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
-            $("#player_list_con").find("[data-option=load_more_players]").click();
-            console.log("1");
-            window.setTimeout(PVP.checkTimeout, PVP.czekajpvp / PVP.WSPP());
-        }else if (enemy.length == 0) {
-            window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP())
-            console.log('2');
-        }else if (PVP.licznik < $("#player_list_con .player").length) {
-            if (PVP.pvp_timeout < parseInt($("#player_list_con .player").eq(PVP.licznik).find(".timer").attr("data-end")))
-                PVP.pvp_timeout = parseInt($("#player_list_con .player").eq(PVP.licznik).find(".timer").attr("data-end"));
-            PVP.licznik++;
-            console.log("3 ", PVP.licznik, PVP.pvp_timeout);
-            window.setTimeout(PVP.checkTimeout, PVP.wait_pvp / PVP.WSPP())
-        } else {
-            window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
-            PVP.licznik = 0;
-            kom_clear();
-        }
-    
-}
-PVP.kill_players1 = () => {
     if (!JQS.chm.is(":focus")) {
         var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
         var bbb = $("#player_list_con").find(".player button" + "[data-option=gpvp_attack]" + "[data-quick=1]" + ":not(.initial_hide_forced)");
@@ -317,6 +305,7 @@ PVP.kill_players1 = () => {
             $("#player_list_con").find("[data-option=load_more_players]").click();
             window.setTimeout(PVP.kill_players1, 50);
         } else if (bbb.length > 0) {
+            PVP.attacked_this_round = true;
             GAME.socket.emit('ga', {
                 a: 24,
                 type: 1,
@@ -325,6 +314,7 @@ PVP.kill_players1 = () => {
             });
             window.setTimeout(PVP.kill_players1, 110);
         } else if (enemy.length > 0) {
+            PVP.attacked_this_round = true;
             enemy.eq(0).click();
             window.setTimeout(PVP.kill_players1, 110);
             console.log("zabijanie ", enemy.length);
@@ -348,17 +338,70 @@ PVP.zmien_postc = () => {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
-    console.log("PVP ", PVP.start_char, PVP.chars.length)
-    if (PVP.start_char == PVP.chars.length) {
-        
-        console.log("PVP ", PVP.start_char, ((PVP.pvp_timeout-GAME.getTime()) * 1000))
-        var charId = parseInt(PVP.chars[0]);
-        GAME.emitOrder({ a: 2, char_id: charId });
-        if (PVP.pvp_timeout > GAME.getTime()) {
-            window.setTimeout(PVP.start, 1000);
+
+    var attackable = PVP.isHiddenVillage() ? [] : $("#player_list_con").find(".player button[data-quick=1]:not(.initial_hide_forced)");
+    if (attackable.length > 0 && PVP.wait_for_clear_ticks < 10) {
+        PVP.wait_for_clear_ticks++;
+        console.log("PVP zmieniaj - jeszcze są przeciwnicy na polu (" + attackable.length + "), nie zmieniam postaci, próba " + PVP.wait_for_clear_ticks);
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
+    if (attackable.length > 0) {
+        console.log("PVP zmieniaj - przekroczono limit prób czyszczenia pola, zmieniam postać mimo to");
+    }
+    PVP.wait_for_clear_ticks = 0;
+
+    var currentCharId = GAME.char_id;
+    if (PVP.waiting_for_attack) {
+        if (PVP.attacked_this_round) {
+            console.log("PVP zmieniaj - postać startowa zaatakowała, wracam do rotacji");
+            PVP.waiting_for_attack = false;
+            PVP.empty_rounds = {};
+            PVP.attacked_this_round = false;
+            PVP.start_wait_timeouts = 0;
+        } else if (GAME.getTime() - PVP.wait_for_attack_since >= 300) {
+            PVP.waiting_for_attack = false;
+            PVP.empty_rounds = {};
+            PVP.attacked_this_round = false;
+            PVP.start_wait_timeouts++;
+            if (PVP.start_wait_timeouts >= 2) {
+                console.log("PVP zmieniaj - postać startowa nie atakuje przez kilka prób, wyłączam wracanie na nią");
+                PVP.start_char_disabled = true;
+            } else {
+                console.log("PVP zmieniaj - 5 minut bez ataku na postaci startowej, zmieniam dalej");
+            }
+        } else {
+            console.log("PVP zmieniaj - czekam na atak postacią startową (" + (300 - (GAME.getTime() - PVP.wait_for_attack_since)) + "s)");
+            window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
             return;
         }
+    } else {
+        if (PVP.attacked_this_round) {
+            PVP.empty_rounds[currentCharId] = 0;
+        } else {
+            PVP.empty_rounds[currentCharId] = (PVP.empty_rounds[currentCharId] || 0) + 1;
+            console.log("PVP zmieniaj - postać " + currentCharId + " runda bez ataku (" + PVP.empty_rounds[currentCharId] + "/2)");
+        }
+        PVP.attacked_this_round = false;
+
+        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id) {
+            console.log("PVP zmieniaj - postać " + currentCharId + " 2 rundy bez ataku, wracam na postać startową i czekam na atak");
+            PVP.empty_rounds[currentCharId] = 0;
+            PVP.waiting_for_attack = true;
+            PVP.wait_for_attack_since = GAME.getTime();
+            GAME.emitOrder({ a: 2, char_id: PVP.start_char_id });
+            window.setTimeout(PVP.start, 2000);
+            return;
+        }
+    }
+
+    console.log("PVP ", PVP.start_char, PVP.chars.length)
+    if (PVP.start_char == PVP.chars.length) {
         PVP.start_char = 0;
+        var charId0 = parseInt(PVP.chars[PVP.start_char++]);
+        GAME.emitOrder({ a: 2, char_id: charId0 });
+        window.setTimeout(PVP.start, 2000);
+        return;
     }
     var charId = parseInt(PVP.chars[PVP.start_char++]);
     GAME.emitOrder({ a: 2, char_id: charId });

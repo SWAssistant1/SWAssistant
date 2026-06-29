@@ -73,14 +73,7 @@ function renderMissionRankButtons(ranks) {
         $container.append($btn);
     });
 }
-var SCRIPTS_REGISTRY = [
-    { id: 'characterTraining', label: 'Trening postaci', file: 'SWA/scripts/character-training.js' },
-    { id: 'insta30', label: 'Insta 30', file: 'SWA/scripts/insta30.js' },
-    { id: 'automation7', label: 'Automatyzacja 7', file: 'SWA/scripts/automation-7.js' },
-    { id: 'automation8', label: 'Automatyzacja 8', file: 'SWA/scripts/automation-8.js' },
-    { id: 'automation9', label: 'Automatyzacja 9', file: 'SWA/scripts/automation-9.js' },
-    { id: 'automation10', label: 'Automatyzacja 10', file: 'SWA/scripts/automation-10.js' }
-];
+var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
 function createPanel() {
     const css = `
         #main_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -92,15 +85,6 @@ function createPanel() {
         #main_Panel .gh_status.green { background: #27ae60 !important; color: #fff !important; }
         #main_Panel .gh_close { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 20px; height: 20px; line-height: 20px; text-align: center; cursor: pointer; color: #fff; font-weight: 700; border-radius: 50%; background: rgba(0,0,0,0.25); transition: background .15s ease; }
         #main_Panel .gh_close:hover { background: rgba(0,0,0,0.5); }
-    `;
-    const cssscripts = `
-        #scripts_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 420px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
-        #scripts_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
-        #scripts_Panel .scripts_button { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; margin: 0 8px 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; transition: background .15s ease, color .15s ease; }
-        #scripts_Panel .scripts_button:hover { background: rgba(227,64,44,0.28); color: #fff; }
-        #scripts_Panel .scripts_status { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
-        #scripts_Panel .scripts_status.red { background: #c0392b !important; color: #fff !important; }
-        #scripts_Panel .scripts_status.green { background: #27ae60 !important; color: #fff !important; }
     `;
     const csspvp = `
         #pvp_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 210px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -202,8 +186,8 @@ function createPanel() {
         #karty_Panel .eqs_equip { background: #27ae60; }
         #karty_Panel .eqs_equip:hover { background: #2ecc71; }
     `;
-    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #scripts_Panel, #misje_Panel").remove();
-    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_scripts'>Skrypty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> </div> `;
+    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel").remove();
+    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> </div> `;
     const SETY_panel = ` <div id="sety_Panel" style="display:none;"> <div class="sekcja sety_dragg">SETY EKWIPUNKU</div>
         <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Set 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
         <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Set 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
@@ -222,14 +206,10 @@ function createPanel() {
     const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
-    const SCRIPTS_panel = ` <div id="scripts_Panel" style="display:none;"> <div class="sekcja scripts_dragg">SKRYPTY</div> ` +
-        SCRIPTS_REGISTRY.map(function (s) {
-            return `<div class="scripts_button scripts_${s.id}" data-file="${s.file}" data-flag="__SWA_SCRIPT_${s.id}_LOADED__">${s.label}<b class="scripts_status red">Off</b></div>`;
-        }).join('') +
-        ` </div> `;
     const INNE_Panel = `<div id="inne_Panel" style="display:none;"> <div class="sekcja inne_dragg">Inne</div> <div class="inne_button inne_wymiana">Wymiana<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_ronin">Ronin<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_karciana">Karciana<strong class="inne_status red">Off</strong></div>
+        <div class="inne_button inne_insta30">Insta 30<strong class="inne_status red">Off</strong></div>
         <div class="inne_check ronin_opt1"><select 
         style="width: 150px; margin-left: -2px; background: grey; text-align: center; font-size: 16;" name="ronin_opt">
         <option value="82">Krysztal chakry</option>
@@ -265,7 +245,6 @@ function createPanel() {
     $("body").append(`<style>${cssres}</style>${RES_panel}`);
     $("body").append(`<style>${csssety}</style>${SETY_panel}`);
     $("body").append(`<style>${csskarty}</style>${KARTY_panel}`);
-    $("body").append(`<style>${cssscripts}</style>${SCRIPTS_panel}`);
     $("body").append(`<style>${cssmisje}</style>${MISJE_panel}`);
     $("#pvp_Panel").hide();
     $("#resp_Panel").hide();
@@ -273,7 +252,6 @@ function createPanel() {
     $("#inne_Panel").hide();
     $("#sety_Panel").hide();
     $("#karty_Panel").hide();
-    $("#scripts_Panel").hide();
     $("#misje_Panel").hide();
     function makeDraggable($panel, handleSelector) {
         var panel = $panel[0];
@@ -309,7 +287,6 @@ function createPanel() {
     makeDraggable($("#inne_Panel"), ".inne_dragg");
     makeDraggable($("#sety_Panel"), ".sety_dragg");
     makeDraggable($("#karty_Panel"), ".karty_dragg");
-    makeDraggable($("#scripts_Panel"), ".scripts_dragg");
     makeDraggable($("#misje_Panel"), ".misje_dragg");
     $('#main_Panel .gh_pvp').click(() => {
         if ($(".gh_pvp .gh_status").hasClass("red")) {
@@ -394,16 +371,6 @@ function createPanel() {
         }
     });
 
-    $('#main_Panel .gh_scripts').click(() => {
-        if ($(".gh_scripts .gh_status").hasClass("red")) {
-            $(".gh_scripts .gh_status").removeClass("red").addClass("green").html("On");
-            $("#scripts_Panel").show();
-        } else {
-            $(".gh_scripts .gh_status").removeClass("green").addClass("red").html("Off");
-            $("#scripts_Panel").hide();
-        }
-    });
-
     $('#main_Panel .gh_misje').click(() => {
         if ($(".gh_misje .gh_status").hasClass("red")) {
             $(".gh_misje .gh_status").removeClass("red").addClass("green").html("On");
@@ -417,8 +384,8 @@ function createPanel() {
 
     $('#main_Panel .gh_close').click((e) => {
         e.stopPropagation();
-        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status, .gh_scripts .gh_status, .gh_misje .gh_status").removeClass("green").addClass("red").html("Off");
-        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #scripts_Panel, #misje_Panel").hide();
+        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status, .gh_misje .gh_status").removeClass("green").addClass("red").html("Off");
+        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel").hide();
         PVP.stop = true;
         RESP.stop = true;
         RES.stop = true;
@@ -493,7 +460,20 @@ function createPanel() {
         if (PVP.stop) {
             $(".pvp_pvp .pvp_status").removeClass("red").addClass("green").html("On");
             PVP.stop = false;
+            PVP.start_char_id = GAME.char_id;
+            PVP.empty_rounds = {};
+            PVP.attacked_this_round = false;
+            PVP.waiting_for_attack = false;
+            PVP.start_wait_timeouts = 0;
+            PVP.start_char_disabled = false;
             PVP.start();
+            $('#mapop_view2').prop('checked', true).trigger('change');
+            GAME.loadMapJson(function() {
+                GAME.socket.emit('ga', {
+                    a: 3,
+                    vo: GAME.map_options.vo
+                }, 1);
+            });
             RESP.stop = true;
             RES.stop = true;
             $(".res_res .res_status").removeClass("green").addClass("red").html("Off");
@@ -749,15 +729,10 @@ function createPanel() {
         KARTY.equip(parseInt($(e.currentTarget).data('idx')));
     });
 
-    $('#scripts_Panel .scripts_button').each(function () {
-        var $btn = $(this);
-        var file = $btn.data('file');
-        var flag = $btn.data('flag');
-        $btn.click(() => {
-            if (window[flag]) return;
-            loadGithubScript(file, flag, () => {
-                $btn.find('.scripts_status').removeClass('red').addClass('green').html('On');
-            });
+    $('#inne_Panel .inne_insta30').click(() => {
+        if (window[INSTA30_SCRIPT.flag]) return;
+        loadGithubScript(INSTA30_SCRIPT.file, INSTA30_SCRIPT.flag, () => {
+            $('.inne_insta30 .inne_status').removeClass('red').addClass('green').html('On');
         });
     });
 
