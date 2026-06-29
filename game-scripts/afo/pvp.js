@@ -532,15 +532,15 @@ PVP.save_clan_list = () => {
     localStorage.setItem('clan_list', PVP.war);
 };
 PVP.orgi = () => {
-    console.log("org ", $("#pvp_Panel input[name=org_id]").val());
+    console.log("org ", $("#pvp_Panel select[name=org_id]").val());
     if (!PVP.org) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
 
-    var org_id = 18;
-    if ($("#pvp_Panel input[name=org_id]").val() != '')
-        org_id = $("#pvp_Panel input[name=org_id]").val();
+    var org_id = 1;
+    if ($("#pvp_Panel select[name=org_id]").val() != '')
+        org_id = $("#pvp_Panel select[name=org_id]").val();
     setTimeout(() => {
         window.warx = document.getElementsByClassName("war_win")[PVP.org_cnt].getElementsByTagName("button")[0].getAttribute("data-war");
         GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
