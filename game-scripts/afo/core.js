@@ -75,7 +75,6 @@ function renderMissionRankButtons(ranks) {
 }
 var SCRIPTS_REGISTRY = [
     { id: 'characterTraining', label: 'Trening postaci', file: 'SWA/scripts/character-training.js' },
-    { id: 'wars', label: 'Wojny (skrypt)', file: 'SWA/scripts/wars.js' },
     { id: 'insta30', label: 'Insta 30', file: 'SWA/scripts/insta30.js' },
     { id: 'automation7', label: 'Automatyzacja 7', file: 'SWA/scripts/automation-7.js' },
     { id: 'automation8', label: 'Automatyzacja 8', file: 'SWA/scripts/automation-8.js' },

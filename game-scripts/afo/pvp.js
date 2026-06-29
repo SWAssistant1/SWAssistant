@@ -7,6 +7,9 @@ var PVP = {
     war_list: 0,
     war_cnt: 0,
     org_cnt: 0,
+    org_skip: {},
+    org_pending: {},
+    war_cooldown_until: 0,
     emp : 0,
     wk: false,
     caseNumber: 0,
@@ -531,6 +534,22 @@ PVP.clan_list = () => {
 PVP.save_clan_list = () => {
     localStorage.setItem('clan_list', PVP.war);
 };
+PVP.waitForOrgHireResult = (warId, attemptsLeft) => {
+    var failed = false;
+    $('#kom_con .kom .content').each(function () {
+        if ($(this).text().indexOf('Nie masz uprawnień') !== -1) failed = true;
+    });
+    if (failed) {
+        PVP.org_skip[warId] = true;
+        delete PVP.org_pending[warId];
+        return;
+    }
+    if (attemptsLeft > 0) {
+        setTimeout(() => PVP.waitForOrgHireResult(warId, attemptsLeft - 1), 300);
+    } else {
+        delete PVP.org_pending[warId];
+    }
+};
 PVP.orgi = () => {
     console.log("org ", $("#pvp_Panel select[name=org_id]").val());
     if (!PVP.org) {
@@ -541,15 +560,49 @@ PVP.orgi = () => {
     var org_id = 1;
     if ($("#pvp_Panel select[name=org_id]").val() != '')
         org_id = $("#pvp_Panel select[name=org_id]").val();
-    setTimeout(() => {
-        window.warx = document.getElementsByClassName("war_win")[PVP.org_cnt].getElementsByTagName("button")[0].getAttribute("data-war");
-        GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
-        PVP.org_cnt +=1;
-    }, 100);
-    if (PVP.org_cnt > 8)
-        PVP.org_cnt = 0;
+
+    var wars = document.getElementsByClassName("war_win");
+    var target = null;
+    for (var i = 0; i < wars.length; i++) {
+        var wid = wars[i].getElementsByTagName("button")[0].getAttribute("data-war");
+        if (!PVP.org_skip[wid] && !PVP.org_pending[wid]) {
+            target = wid;
+            break;
+        }
+    }
+
+    if (target) {
+        PVP.org_pending[target] = true;
+        setTimeout(() => {
+            window.warx = target;
+            $('#kom_con .kom').remove();
+            GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
+            setTimeout(() => PVP.waitForOrgHireResult(target, 6), 300);
+        }, 100);
+    }
     window.setTimeout(PVP.start, 300);
 }
+PVP.isAtWarWith = (targetId) => {
+    var targetName = LNG['village' + targetId];
+    var ownName = LNG['village' + PVP.emp];
+    var found = false;
+    $('#emp_wars .war_win').each(function () {
+        var names = $(this).find('b');
+        var a = $(names[0]).text().trim();
+        var b = $(names[1]).text().trim();
+        if ((a === ownName && b === targetName) || (a === targetName && b === ownName)) {
+            found = true;
+        }
+    });
+    return found;
+};
+PVP.checkWarCooldownMsg = () => {
+    var $timer = $('#kom_con .kom .content .timer');
+    if ($timer.length) {
+        var end = parseInt($timer.attr('data-end'));
+        if (end) PVP.war_cooldown_until = end;
+    }
+};
 PVP.dec_wars = () => {
     console.log("dec wars");
     if (!PVP.wi) {
@@ -557,20 +610,23 @@ PVP.dec_wars = () => {
         return;
     }
     console.log("dec wars ", PVP.war_cnt, PVP.org_cnt);
+
     if (PVP.war_cnt > 10)
         PVP.war_cnt = 0;
 
     if (PVP.war_cnt == PVP.emp)
         PVP.war_cnt++;
 
-    PVP.wi = false;
-
-    setTimeout(() => {
+    if (PVP.isAtWarWith(PVP.war_cnt)) {
+        console.log("already at war with", PVP.war_cnt, "- skipping without cooldown");
+        PVP.war_cnt += 1;
+    } else if (GAME.getTime() >= PVP.war_cooldown_until) {
         console.log("emit order war");
+        $('#kom_con .kom').remove();
         GAME.emitOrder({a:50,type:7,target:PVP.war_cnt});
-        PVP.war_cnt +=1;
-        PVP.wi = true;
-    },602);
+        PVP.war_cnt += 1;
+        setTimeout(PVP.checkWarCooldownMsg, 500);
+    }
 
     if (PVP.war_list > $("#ewar_list .timer").length || PVP.war_list < $("#ewar_list .timer").length) {
         PVP.war_list = $("#ewar_list .timer").length;
