@@ -36,18 +36,26 @@ if (typeof GAME === 'undefined') {} else {
             });
         }
 
-        function loadNext(i) {
-            if (i >= files.length) {
-                bootstrap();
-                return;
+        function loadAll() {
+            var remaining = files.length;
+
+            function oneDone() {
+                remaining--;
+                if (remaining === 0) {
+                    bootstrap();
+                }
             }
-            fetchFile(files[i], 1, function (data) {
-                injectCode(data);
-                console.info('[AFO] Module injected:', files[i]);
-                loadNext(i + 1);
-            }, function () {
-                console.error('[AFO] Module load failed after retries:', files[i]);
-                GAME.komunikat('Błąd ładowania AFO (' + files[i] + '), odśwież stronę i spróbuj ponownie!');
+
+            files.forEach(function (file) {
+                fetchFile(file, 1, function (data) {
+                    injectCode(data);
+                    console.info('[AFO] Module injected:', file);
+                    oneDone();
+                }, function () {
+                    console.error('[AFO] Module load failed after retries:', file);
+                    GAME.komunikat('Błąd ładowania AFO (' + file + '), odśwież stronę i spróbuj ponownie!');
+                    oneDone();
+                });
             });
         }
 
@@ -80,6 +88,6 @@ if (typeof GAME === 'undefined') {} else {
             }, 900);
         }
 
-        setTimeout(() => loadNext(0), 50);
+        setTimeout(() => loadAll(), 50);
     })();
 }

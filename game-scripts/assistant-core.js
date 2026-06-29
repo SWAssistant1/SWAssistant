@@ -32,9 +32,9 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
             'game-scripts/assistant/fight.js',
             'game-scripts/assistant/alt-pilot.js',
             'game-scripts/assistant/char-nav.js',
-            'game-scripts/assistant/misc.js',
-            'game-scripts/assistant/bootstrap.js'
+            'game-scripts/assistant/misc.js'
         ];
+        var BOOTSTRAP_FILE = 'game-scripts/assistant/bootstrap.js';
         var MAX_ATTEMPTS = 4;
 
         function injectCode(code) {
@@ -58,17 +58,37 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
             });
         }
 
-        function loadNext(idx) {
-            if (idx >= files.length) return;
-            fetchFile(files[idx], 1, function (data) {
+        function loadBootstrap() {
+            fetchFile(BOOTSTRAP_FILE, 1, function (data) {
                 injectCode(data);
-                console.info('[ASSISTANT] Module injected:', files[idx]);
-                loadNext(idx + 1);
+                console.info('[ASSISTANT] Module injected:', BOOTSTRAP_FILE);
             }, function () {
-                console.error('[ASSISTANT] Module load failed after retries:', files[idx]);
+                console.error('[ASSISTANT] Module load failed after retries:', BOOTSTRAP_FILE);
             });
         }
 
-        loadNext(0);
+        function loadAll() {
+            var remaining = files.length;
+
+            function oneDone() {
+                remaining--;
+                if (remaining === 0) {
+                    loadBootstrap();
+                }
+            }
+
+            files.forEach(function (file) {
+                fetchFile(file, 1, function (data) {
+                    injectCode(data);
+                    console.info('[ASSISTANT] Module injected:', file);
+                    oneDone();
+                }, function () {
+                    console.error('[ASSISTANT] Module load failed after retries:', file);
+                    oneDone();
+                });
+            });
+        }
+
+        loadAll();
     });
 }
