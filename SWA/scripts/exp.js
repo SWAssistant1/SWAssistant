@@ -1,3 +1,7 @@
+(function () {
+if (window.__SWA_EXP_ENGINE_RUNNING__) return;
+window.__SWA_EXP_ENGINE_RUNNING__ = true;
+
 let wait2_exp = 2
 
 
@@ -525,3 +529,9 @@ function subStep () {
 	setTimeout(subStep, 1000)
 }
 subStep()
+
+// Arms the move()/fight() loop as soon as the engine is injected — move() itself idles
+// (re-checking every 300ms) while the AFO "exp" toggle (.resp_rare) is off, so calling it
+// once here is enough; no separate start button is needed anymore.
+move()
+})();

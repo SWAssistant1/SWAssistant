@@ -1,3 +1,7 @@
+(function () {
+if (window.__SWA_INSTA30_ENGINE_RUNNING__) return;
+window.__SWA_INSTA30_ENGINE_RUNNING__ = true;
+
 window.setTimeout(function() {
 	document.getElementsByClassName("select_page")[28].click(); // włącza okienko z instancjami
 }, 500);
@@ -583,3 +587,4 @@ function move_up() {
 function multiwalka() {
 	GAME.emitOrder({a:13,mob_num:0,fo:GAME.map_options.ma});
 }
+})();

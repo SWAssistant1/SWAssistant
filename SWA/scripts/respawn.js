@@ -1,4 +1,8 @@
 
+(function () {
+if (window.__SWA_RESPAWN_ENGINE_RUNNING__) return;
+window.__SWA_RESPAWN_ENGINE_RUNNING__ = true;
+
 var wait_resp = 2; //szybkość skryptu 1-1000 im mniejsza wartość tym szybciej
 var maxDown = 0; // ustawić 0 jeśli nie używane, maksymalna wartość na mapie do której ma się poruszać postać w dół
 var maxUp = 0; // ustawić 0 jeśli nie używane, maksymalna wartość na mapie do której ma się poruszać postać w górę
@@ -250,5 +254,6 @@ console.log("scriptOff");
 stop_resp = true;
 }
 start();
+})();
 
 
