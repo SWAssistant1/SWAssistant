@@ -505,7 +505,10 @@ PVP.go_right = () => {
 };
 PVP.check = () => {
     if ($("#war_list .timer").length === 0 && PVP.wk) {
-        GAME.emitOrder({a:39,type:24,shorts:'Yuki'});
+        var clanShort = PVP.war || PVP.clan_list();
+        if (clanShort) {
+            GAME.emitOrder({a:39,type:24,shorts:clanShort});
+        }
         GAME.loadMapJson(function() {
             GAME.socket.emit('ga', {
                 a: 3,
