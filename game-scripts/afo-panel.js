@@ -2,6 +2,7 @@ if (typeof GAME === 'undefined') {} else {
     (function () {
         var branch = window.__SWA_BRANCH__ || 'main';
         var files = [
+            'game-scripts/afo-fixes.js',
             'game-scripts/afo-core.js',
             'game-scripts/afo-kom.js',
             'game-scripts/afo-eq-sets.js',
