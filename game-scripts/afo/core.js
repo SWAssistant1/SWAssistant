@@ -22,9 +22,11 @@ function loadGithubScript(path, loadedFlagName, onSuccess) {
 function loadExpEngine() {
     loadGithubScript('SWA/scripts/exp.js', '__SWA_EXP_LOADED__');
 }
+function loadRespawnEngine() {
+    loadGithubScript('SWA/scripts/respawn.js', '__SWA_RESPAWN_LOADED__');
+}
 var SCRIPTS_REGISTRY = [
     { id: 'characterTraining', label: 'Trening postaci', file: 'SWA/scripts/character-training.js' },
-    { id: 'respawn', label: 'Respawn', file: 'SWA/scripts/respawn.js' },
     { id: 'wars', label: 'Wojny (skrypt)', file: 'SWA/scripts/wars.js' },
     { id: 'insta30', label: 'Insta 30', file: 'SWA/scripts/insta30.js' },
     { id: 'missions', label: 'Misje', file: 'SWA/scripts/missions.js' },
@@ -78,10 +80,14 @@ function createPanel() {
         #resp_Panel .gamee_input { text-align: center; margin: 0 8px 6px; padding: 4px; border-radius: 6px; background: rgba(255,255,255,0.04); }
         #resp_Panel .gamee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; text-align: center; }
         #resp_Panel .gamee_input input:focus { outline: none; border-color: #e3402c !important; }
+        #resp_Panel .gamee_input label { display: block; font-size: 11px; color: #bbb; margin-bottom: 4px; }
         #resp_Panel .resp_ramen_used { text-align: center; color: #bbb; font-size: 12px; margin: 0 8px 6px; }
         #resp_Panel .resp_sub_select { margin: 0 8px 6px; }
         #resp_Panel .resp_sub_select select { width: 100%; background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; padding: 4px; }
         #resp_Panel .resp_sub_select select:focus { outline: none; border-color: #e3402c !important; }
+        #resp_Panel .resp_senzu_select { margin: 0 8px 6px; }
+        #resp_Panel .resp_senzu_select select { width: 100%; background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; padding: 4px; }
+        #resp_Panel .resp_senzu_select select:focus { outline: none; border-color: #e3402c !important; }
     `;
     const cssres = `
         #res_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 630px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -157,7 +163,7 @@ function createPanel() {
         <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
     </div> `;
     const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
-    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
+    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const SCRIPTS_panel = ` <div id="scripts_Panel" style="display:none;"> <div class="sekcja scripts_dragg">SKRYPTY</div> ` +
         SCRIPTS_REGISTRY.map(function (s) {
@@ -526,6 +532,7 @@ function createPanel() {
     $('#resp_Panel .resp_resp1').click(() => {
         if ($(".resp_resp1 .resp_status").hasClass("red")) {
             $(".resp_resp1 .resp_status").removeClass("red").addClass("green").html("On");
+            loadRespawnEngine();
         } else {
             $(".resp_resp1 .resp_status").removeClass("green").addClass("red").html("Off");
         }
@@ -598,124 +605,22 @@ function createPanel() {
             RESP.checkSSJ = true;
         }
     });
-    $('#resp_Panel .resp_red').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_red .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_RED;
-            RESP.selectSenzu(RESP.SENZU_RED);
-            $('#resp_Panel .resp_blue').hide();
-            $('#resp_Panel .resp_green').hide();
-            $('#resp_Panel .resp_purple').hide();
-            $('#resp_Panel .resp_yellow').hide();
-            $('#resp_Panel .resp_magic').hide();
-        } else {
-            $(".resp_red .resp_status").removeClass("green").addClass("red").html("Off");
+    var SENZU_SELECT_MAP = {
+        BLUE: RESP.SENZU_BLUE,
+        GREEN: RESP.SENZU_GREEN,
+        PURPLE: RESP.SENZU_PURPLE,
+        YELLOW: RESP.SENZU_YELLOW,
+        RED: RESP.SENZU_RED,
+        MAGIC: RESP.SENZU_MAGIC
+    };
+    $('#resp_Panel select[name=resp_senzu_select]').change((e) => {
+        var val = $(e.target).val();
+        if (!val) {
             RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_blue').show();
-            $('#resp_Panel .resp_green').show();
-            $('#resp_Panel .resp_purple').show();
-            $('#resp_Panel .resp_yellow').show();
-            $('#resp_Panel .resp_magic').show();
-        }
-    });
-    $('#resp_Panel .resp_blue').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_blue .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_BLUE;
-            RESP.selectSenzu(RESP.SENZU_BLUE);
-            $('#resp_Panel .resp_red').hide();
-            $('#resp_Panel .resp_green').hide();
-            $('#resp_Panel .resp_purple').hide();
-            $('#resp_Panel .resp_yellow').hide();
-            $('#resp_Panel .resp_magic').hide();
         } else {
-            $(".resp_blue .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_red').show();
-            $('#resp_Panel .resp_green').show();
-            $('#resp_Panel .resp_purple').show();
-            $('#resp_Panel .resp_yellow').show();
-            $('#resp_Panel .resp_magic').show();
-        }
-    });
-    $('#resp_Panel .resp_green').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_green .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_GREEN;
-            RESP.selectSenzu(RESP.SENZU_GREEN);
-            $('#resp_Panel .resp_red').hide();
-            $('#resp_Panel .resp_blue').hide();
-            $('#resp_Panel .resp_purple').hide();
-            $('#resp_Panel .resp_yellow').hide();
-            $('#resp_Panel .resp_magic').hide();
-        } else {
-            $(".resp_green .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_red').show();
-            $('#resp_Panel .resp_blue').show();
-            $('#resp_Panel .resp_purple').show();
-            $('#resp_Panel .resp_yellow').show();
-            $('#resp_Panel .resp_magic').show();
-        }
-    });
-    $('#resp_Panel .resp_purple').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_purple .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_PURPLE;
-            RESP.selectSenzu(RESP.SENZU_PURPLE);
-            $('#resp_Panel .resp_red').hide();
-            $('#resp_Panel .resp_blue').hide();
-            $('#resp_Panel .resp_green').hide();
-            $('#resp_Panel .resp_yellow').hide();
-            $('#resp_Panel .resp_magic').hide();
-        } else {
-            $(".resp_purple .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_red').show();
-            $('#resp_Panel .resp_blue').show();
-            $('#resp_Panel .resp_green').show();
-            $('#resp_Panel .resp_yellow').show();
-            $('#resp_Panel .resp_magic').show();
-        }
-    });
-    $('#resp_Panel .resp_yellow').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_yellow .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_YELLOW;
-            RESP.selectSenzu(RESP.SENZU_YELLOW);
-            $('#resp_Panel .resp_red').hide();
-            $('#resp_Panel .resp_blue').hide();
-            $('#resp_Panel .resp_green').hide();
-            $('#resp_Panel .resp_purple').hide();
-            $('#resp_Panel .resp_magic').hide();
-        } else {
-            $(".resp_yellow .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_red').show();
-            $('#resp_Panel .resp_blue').show();
-            $('#resp_Panel .resp_green').show();
-            $('#resp_Panel .resp_purple').show();
-            $('#resp_Panel .resp_magic').show();
-        }
-    });
-    $('#resp_Panel .resp_magic').click(() => {
-        if (RESP.CONF_SENZU == false) {
-            $(".resp_magic .resp_status").removeClass("red").addClass("green").html("On");
-            RESP.CONF_SENZU = RESP.SENZU_MAGIC;
-            RESP.selectSenzu(RESP.SENZU_MAGIC);
-            $('#resp_Panel .resp_red').hide();
-            $('#resp_Panel .resp_blue').hide();
-            $('#resp_Panel .resp_green').hide();
-            $('#resp_Panel .resp_purple').hide();
-            $('#resp_Panel .resp_yellow').hide();
-        } else {
-            $(".resp_magic .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.CONF_SENZU = false;
-            $('#resp_Panel .resp_red').show();
-            $('#resp_Panel .resp_blue').show();
-            $('#resp_Panel .resp_green').show();
-            $('#resp_Panel .resp_purple').show();
-            $('#resp_Panel .resp_yellow').show();
+            var type = SENZU_SELECT_MAP[val];
+            RESP.CONF_SENZU = type;
+            RESP.selectSenzu(type);
         }
     });
 

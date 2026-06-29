@@ -5,7 +5,7 @@ if (branchInput) {
     branchInput.value = result.swa_branch || '';
   });
 
-  branchInput.addEventListener('change', () => {
+  branchInput.addEventListener('input', () => {
     chrome.storage.local.set({ swa_branch: branchInput.value.trim() });
   });
 }
