@@ -1,4 +1,38 @@
 if (typeof GAME === 'undefined') {} else {
+function loadGithubScript(path, loadedFlagName, onSuccess) {
+    if (window[loadedFlagName]) {
+        if (onSuccess) onSuccess();
+        return;
+    }
+    var branch = window.__SWA_BRANCH__ || 'main';
+    var url = 'https://raw.githubusercontent.com/SWAssistant1/SWAssistant/' + branch + '/' + path + '?t=' + Date.now();
+    $.get(url, function (code) {
+        window[loadedFlagName] = true;
+        var script = document.createElement('script');
+        script.textContent = code;
+        document.head.appendChild(script);
+        script.remove();
+        console.info('[AFO] Script injected:', path);
+        if (onSuccess) onSuccess();
+    }).fail(function () {
+        console.error('[AFO] Script load failed:', path);
+        GAME.komunikat('Błąd ładowania skryptu (' + path + '), spróbuj ponownie!');
+    });
+}
+function loadExpEngine() {
+    loadGithubScript('SWA/scripts/exp.js', '__SWA_EXP_LOADED__');
+}
+var SCRIPTS_REGISTRY = [
+    { id: 'characterTraining', label: 'Trening postaci', file: 'SWA/scripts/character-training.js' },
+    { id: 'respawn', label: 'Respawn', file: 'SWA/scripts/respawn.js' },
+    { id: 'wars', label: 'Wojny (skrypt)', file: 'SWA/scripts/wars.js' },
+    { id: 'insta30', label: 'Insta 30', file: 'SWA/scripts/insta30.js' },
+    { id: 'missions', label: 'Misje', file: 'SWA/scripts/missions.js' },
+    { id: 'automation7', label: 'Automatyzacja 7', file: 'SWA/scripts/automation-7.js' },
+    { id: 'automation8', label: 'Automatyzacja 8', file: 'SWA/scripts/automation-8.js' },
+    { id: 'automation9', label: 'Automatyzacja 9', file: 'SWA/scripts/automation-9.js' },
+    { id: 'automation10', label: 'Automatyzacja 10', file: 'SWA/scripts/automation-10.js' }
+];
 function createPanel() {
     const css = `
         #main_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -10,6 +44,15 @@ function createPanel() {
         #main_Panel .gh_status.green { background: #27ae60 !important; color: #fff !important; }
         #main_Panel .gh_close { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); width: 20px; height: 20px; line-height: 20px; text-align: center; cursor: pointer; color: #fff; font-weight: 700; border-radius: 50%; background: rgba(0,0,0,0.25); transition: background .15s ease; }
         #main_Panel .gh_close:hover { background: rgba(0,0,0,0.5); }
+    `;
+    const cssscripts = `
+        #scripts_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 420px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+        #scripts_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
+        #scripts_Panel .scripts_button { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; margin: 0 8px 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; transition: background .15s ease, color .15s ease; }
+        #scripts_Panel .scripts_button:hover { background: rgba(227,64,44,0.28); color: #fff; }
+        #scripts_Panel .scripts_status { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
+        #scripts_Panel .scripts_status.red { background: #c0392b !important; color: #fff !important; }
+        #scripts_Panel .scripts_status.green { background: #27ae60 !important; color: #fff !important; }
     `;
     const csspvp = `
         #pvp_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 210px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -97,8 +140,8 @@ function createPanel() {
         #karty_Panel .eqs_equip { background: #27ae60; }
         #karty_Panel .eqs_equip:hover { background: #2ecc71; }
     `;
-    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel").remove();
-    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> </div> `;
+    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #scripts_Panel").remove();
+    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_scripts'>Skrypty<b class='gh_status red'>Off</b></div> </div> `;
     const SETY_panel = ` <div id="sety_Panel" style="display:none;"> <div class="sekcja sety_dragg">SETY EKWIPUNKU</div>
         <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Set 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
         <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Set 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
@@ -116,6 +159,11 @@ function createPanel() {
     const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="org id" name='org_id' value='18' /></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Lista wojen" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
     const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class="resp_button resp_blue">Ogromny ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_green">maly ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_purple">Powiekszony ramen<b class="resp_status red">Off</b></div> <div class="resp_button resp_yellow">zolta pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_red">zielona pigula<b class="resp_status red">Off</b></div> <div class="resp_button resp_magic">Czerwona pigula<b class="resp_status red">Off</b></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
+    const SCRIPTS_panel = ` <div id="scripts_Panel" style="display:none;"> <div class="sekcja scripts_dragg">SKRYPTY</div> ` +
+        SCRIPTS_REGISTRY.map(function (s) {
+            return `<div class="scripts_button scripts_${s.id}" data-file="${s.file}" data-flag="__SWA_SCRIPT_${s.id}_LOADED__">${s.label}<b class="scripts_status red">Off</b></div>`;
+        }).join('') +
+        ` </div> `;
     const INNE_Panel = `<div id="inne_Panel" style="display:none;"> <div class="sekcja inne_dragg">Inne</div> <div class="inne_button inne_wymiana">Wymiana<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_ronin">Ronin<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_karciana">Karciana<strong class="inne_status red">Off</strong></div>
@@ -154,12 +202,14 @@ function createPanel() {
     $("body").append(`<style>${cssres}</style>${RES_panel}`);
     $("body").append(`<style>${csssety}</style>${SETY_panel}`);
     $("body").append(`<style>${csskarty}</style>${KARTY_panel}`);
+    $("body").append(`<style>${cssscripts}</style>${SCRIPTS_panel}`);
     $("#pvp_Panel").hide();
     $("#resp_Panel").hide();
     $("#res_Panel").hide();
     $("#inne_Panel").hide();
     $("#sety_Panel").hide();
     $("#karty_Panel").hide();
+    $("#scripts_Panel").hide();
     function makeDraggable($panel, handleSelector) {
         var panel = $panel[0];
         if (!panel) return;
@@ -194,6 +244,7 @@ function createPanel() {
     makeDraggable($("#inne_Panel"), ".inne_dragg");
     makeDraggable($("#sety_Panel"), ".sety_dragg");
     makeDraggable($("#karty_Panel"), ".karty_dragg");
+    makeDraggable($("#scripts_Panel"), ".scripts_dragg");
     $('#main_Panel .gh_pvp').click(() => {
         if ($(".gh_pvp .gh_status").hasClass("red")) {
             $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
@@ -277,10 +328,20 @@ function createPanel() {
         }
     });
 
+    $('#main_Panel .gh_scripts').click(() => {
+        if ($(".gh_scripts .gh_status").hasClass("red")) {
+            $(".gh_scripts .gh_status").removeClass("red").addClass("green").html("On");
+            $("#scripts_Panel").show();
+        } else {
+            $(".gh_scripts .gh_status").removeClass("green").addClass("red").html("Off");
+            $("#scripts_Panel").hide();
+        }
+    });
+
     $('#main_Panel .gh_close').click((e) => {
         e.stopPropagation();
-        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status").removeClass("green").addClass("red").html("Off");
-        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel").hide();
+        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status, .gh_scripts .gh_status").removeClass("green").addClass("red").html("Off");
+        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #scripts_Panel").hide();
         PVP.stop = true;
         RESP.stop = true;
         RES.stop = true;
@@ -485,6 +546,7 @@ function createPanel() {
         } else {
             $(".resp_rare .resp_status").removeClass("red").addClass("green").html("On");
             RESP.rare = true;
+            loadExpEngine();
         }
     });
     $('#resp_Panel .resp_leg').click(() => {
@@ -709,6 +771,18 @@ function createPanel() {
     });
     $('#karty_Panel .eqs_equip').click((e) => {
         KARTY.equip(parseInt($(e.currentTarget).data('idx')));
+    });
+
+    $('#scripts_Panel .scripts_button').each(function () {
+        var $btn = $(this);
+        var file = $btn.data('file');
+        var flag = $btn.data('flag');
+        $btn.click(() => {
+            if (window[flag]) return;
+            loadGithubScript(file, flag, () => {
+                $btn.find('.scripts_status').removeClass('red').addClass('green').html('On');
+            });
+        });
     });
 }
 GAME.emit = function(order, data, force) {

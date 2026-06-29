@@ -1,3 +1,7 @@
+(function () {
+if (window.__SWA_WARS_ENGINE_RUNNING__) return;
+window.__SWA_WARS_ENGINE_RUNNING__ = true;
+
 var i=0;
 window.setInterval(function() {
 if(i<10){
@@ -24,3 +28,4 @@ kk += 1;
 }
 }, 3000);
 }, 603000);
+})();

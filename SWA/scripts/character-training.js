@@ -1,3 +1,7 @@
+(function () {
+if (window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__) return;
+window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__ = true;
+
 BOT = {
     chars:[],
     timeout:1000,
@@ -56,3 +60,4 @@ BOT.GetChars = function(){
     
     BOT.Start();
 }();
+})();

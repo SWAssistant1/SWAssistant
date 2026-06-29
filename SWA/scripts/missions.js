@@ -1,4 +1,8 @@
 
+(function () {
+if (window.__SWA_MISSIONS_ENGINE_RUNNING__) return;
+window.__SWA_MISSIONS_ENGINE_RUNNING__ = true;
+
 (function(definition) {
   /* global module, define */
   if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -604,3 +608,4 @@ function waitForMissionEnd() {
 
 
 start();
+})();
