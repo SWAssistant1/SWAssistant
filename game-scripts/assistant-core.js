@@ -22,8 +22,13 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
         }
 
         var branch = window.__SWA_BRANCH__ || 'main';
+        // class.js must finish first (it sets window.kwsv3, which every
+        // other file reads at top level); bootstrap.js must run last (it
+        // instantiates kwsv3). The rest have no ordering dependency on each
+        // other, so they load in parallel between those two.
+        var CLASS_FILE = 'game-scripts/assistant/class.js';
+        var BOOTSTRAP_FILE = 'game-scripts/assistant/bootstrap.js';
         var files = [
-            'game-scripts/assistant/class.js',
             'game-scripts/assistant/core-methods.js',
             'game-scripts/assistant/tournaments.js',
             'game-scripts/assistant/minimap.js',
@@ -34,7 +39,6 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
             'game-scripts/assistant/char-nav.js',
             'game-scripts/assistant/misc.js'
         ];
-        var BOOTSTRAP_FILE = 'game-scripts/assistant/bootstrap.js';
         var MAX_ATTEMPTS = 4;
 
         function injectCode(code) {
@@ -89,6 +93,12 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
             });
         }
 
-        loadAll();
+        fetchFile(CLASS_FILE, 1, function (data) {
+            injectCode(data);
+            console.info('[ASSISTANT] Module injected:', CLASS_FILE);
+            loadAll();
+        }, function () {
+            console.error('[ASSISTANT] Module load failed after retries:', CLASS_FILE);
+        });
     });
 }
