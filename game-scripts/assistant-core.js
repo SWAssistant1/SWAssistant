@@ -1412,12 +1412,13 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                 var currentServerTime = new Date(GAME.getTime()*1000);
                 var currentServerHour = currentServerTime.getHours();
                 var currentServerMinute = currentServerTime.getMinutes();
-                console.log("KWA_TOURNAMENTS: Check tournaments sign");
                 if(currentServerHour > 20 || currentServerHour < 18) {
-                    console.log("KWA_TOURNAMENTS: Wrong hours, reset values");
-                    this.tourSigned = false;
-                    this.tournamentCategory = undefined;
-                    this.newTournamentID = undefined;
+                    if (this.tourSigned || this.tournamentCategory !== undefined || this.newTournamentID !== undefined) {
+                        console.log("KWA_TOURNAMENTS: Wrong hours, reset values");
+                        this.tourSigned = false;
+                        this.tournamentCategory = undefined;
+                        this.newTournamentID = undefined;
+                    }
                     this.isCheckingTournaments = false;
                 } else if (!this.tourSigned) {
                     console.log("KWA_TOURNAMENTS: not signed");
@@ -1441,6 +1442,8 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
                     } else {
                         this.isCheckingTournaments = false;
                     }
+                } else {
+                    this.isCheckingTournaments = false;
                 }
             }
             setTimerForTournamentsReset() {
