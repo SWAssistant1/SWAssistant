@@ -410,6 +410,7 @@ function check_y(){
 }
 
 var missionsCount = [];
+var missionsRanks = [];
 var count = 0;
 var z = 0;
 var grid = [];
@@ -426,13 +427,49 @@ var whatNow = 0;
 var missionTime = 0;
 var waiting = false;
 
+// Ranki misji, które ma wykonywać bot, są wybierane w panelu AFO (Misje) i zapisywane
+// w localStorage pod 'swa_mission_ranks' — domyślnie każdy odkryty rank jest włączony,
+// dopóki użytkownik go nie wyłączy.
+function loadEnabledMissionRanks() {
+	try {
+		return JSON.parse(localStorage.getItem('swa_mission_ranks')) || {};
+	} catch (e) {
+		return {};
+	}
+}
+
+function isMissionsOn() {
+	return !$(".misje_main .misje_status").hasClass("red");
+}
+
+function isRankEnabled(rank) {
+	if (!rank) return false;
+	var enabled = loadEnabledMissionRanks();
+	if (!(rank in enabled)) return true;
+	return !!enabled[rank];
+}
+
+// Postaci nie mają wszystkich ranków misji odblokowanych, więc panel AFO musi wiedzieć,
+// które faktycznie występują u tej postaci — publikujemy je po każdym skanie tabeli.
+// missionsRanks/missionsCount muszą zostać 5-elementowe (indeks = rank-1, patrz z+1
+// w initialiseMission), więc filtrujemy zera tylko w wersji wysyłanej do panelu.
+function publishAvailableRanks() {
+	var availableRanks = missionsRanks.filter(function (rank, idx) {
+		return rank && missionsCount[idx] > 0;
+	});
+	localStorage.setItem('swa_mission_available_ranks', JSON.stringify(availableRanks));
+	window.dispatchEvent(new CustomEvent('swa-missions-ranks', { detail: availableRanks }));
+}
+
 function start(){
+	if (!isMissionsOn()) {
+		window.setTimeout(start, wait);
+		return;
+	}
 	if(!GAME.is_loading && !waiting){
 		action();
-		window.setTimeout(start,wait);
-	}else {
-		window.setTimeout(start,wait);
 	}
+	window.setTimeout(start,wait);
 }
 
 function action(){
@@ -445,17 +482,14 @@ function action(){
 			whatNow++;
 			getMissionCount();
 			break;
-		break;
-			case 2:
+		case 2:
 			getMissionStartId();
 			break;
-		break;
-			case 3:
+		case 3:
 			whatNow++;
 			initialiseMission();
 			break;
-		break;
-			case 4:
+		case 4:
 			whatNow++;
 			tpToLocation();
 			break;
@@ -465,8 +499,8 @@ function action(){
 			break;
 		case 6:
 			moveToMissionLocation();
-		break;
-			case 7:
+			break;
+		case 7:
 			whatNow++;
 			acceptMission();
 			break;
@@ -480,28 +514,45 @@ function action(){
 
 function clickMissionPage() {
 	$('[data-page="game_camp"]').click();
+	// a:207 type:0 (odpalane przez page_switch) wraca po chwili z serwera —
+	// bez tej pauzy getMissionCount() czyta jeszcze nieodświeżone char_data.a_1..a_5
+	waiting = true;
+	window.setTimeout(function () { waiting = false; }, 800);
 }
 
 function getMissionCount() {
-	var parent = jQuery('#camp_tab > tbody').children();
-	
-	for(let i = 1; i < parent.length; i++) {
-		let element = jQuery(parent[i]).children()[1];
-		missionsCount[i - 1] = parseInt(jQuery(element).html());
-		count += parseInt(jQuery(element).html());
+	missionsCount = [];
+	missionsRanks = [];
+	count = 0;
+
+	// Gra nie ma tabeli #camp_tab — liczby misji per rank są w GAME.char_data.a_1..a_5
+	// (patrz GAME.parseData case 10 / bindings rank_miss{r}_ava w game.js).
+	for(var r = 1; r <= 5; r++) {
+		let cnt = parseInt(GAME.char_data['a_' + r]) || 0;
+		missionsRanks[r - 1] = LNG['ninja_class' + r];
+		missionsCount[r - 1] = cnt;
+		count += cnt;
 	}
+
+	publishAvailableRanks();
 };
 
 function getMissionStartId() {
-	if(missionsCount[z] == 0) {
-		z++;;
-	} else {
+	// pomiń ranki bez misji do zrobienia albo wyłączone w panelu AFO
+	while (z < missionsCount.length && (missionsCount[z] === 0 || !isRankEnabled(missionsRanks[z]))) {
+		z++;
+	}
+
+	if (z < missionsCount.length) {
 		whatNow++;
+		return;
 	}
-	
-	if(z == missionsCount.length) {
-		waiting = true;
-	}
+
+	// brak misji w żadnym włączonym ranku — wyłączamy automat, żeby nie teleportować
+	// się w kółko do misji której już nie ma (licznik na 0)
+	z = 0;
+	whatNow = 0;
+	$(".misje_main .misje_status").removeClass("green").addClass("red").html("Off");
 }
 
 function initialiseMission() {
@@ -599,7 +650,9 @@ function acceptMission() {
 function waitForMissionEnd() {
 	waiting = true;
 	window.setTimeout(function(){
-		whatNow = 2;
+		// wracamy do whatNow=0 (a nie 2), żeby liczba misji per rank została odświeżona
+		// zamiast działać na nieaktualnych danych z poprzedniego skanu
+		whatNow = 0;
 		waiting = false;
 	},missionTime + 5000);
 }
