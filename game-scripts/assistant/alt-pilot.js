@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.createAlternativePilot = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.createAlternativePilot = function () {
     document.getElementById('map_pilot').style.width = '512px';
     var customStyles = document.createElement('style');
     customStyles.type = 'text/css';
@@ -36,24 +36,24 @@ kwsv3.prototype.createAlternativePilot = function () {
           }
     `;
     $("head").append(customStyles);
-    var kwsHidePilotElement = document.getElementById('kws_hidePilot');
+    var swaHidePilotElement = document.getElementById('swa_hidePilot');
     var mapPilotElement = document.getElementById('map_pilot');
-    if (kwsHidePilotElement) {
-        kwsHidePilotElement.value = '1';
+    if (swaHidePilotElement) {
+        swaHidePilotElement.value = '1';
         var changeEvent = new Event('change');
-        kwsHidePilotElement.dispatchEvent(changeEvent);
-        if (kwsHidePilotElement.value === '1' && mapPilotElement) {
+        swaHidePilotElement.dispatchEvent(changeEvent);
+        if (swaHidePilotElement.value === '1' && mapPilotElement) {
             mapPilotElement.style.display = 'none';
         }
         var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
-        kwsHidePilotElement.dispatchEvent(clickEvent);
+        swaHidePilotElement.dispatchEvent(clickEvent);
     } else {
-        console.error('Element o ID "kws_hidePilot" nie został znaleziony.');
+        console.error('Element o ID "swa_hidePilot" nie został znaleziony.');
     }
     var minimap = document.querySelector('#minimap_canvas');
     var gridCanvas = document.querySelector('#minimap_grid_canvas');
     var minimapLay = document.querySelector('.minimap_lay');
-    var kwsLocInfo = document.querySelector('#kws_locInfo');
+    var swaLocInfo = document.querySelector('#swa_locInfo');
 
     if (minimap) {
         minimap.style.left = '-15px';
@@ -70,11 +70,9 @@ kwsv3.prototype.createAlternativePilot = function () {
         minimapLay.style.top = '802px';
     }
 
-    if (kwsLocInfo) {
-       // kwsLocInfo.style.left = '-235px';
-       // kwsLocInfo.style.top = '860px';
-		  kwsLocInfo.style.left = '-35px';
-		  kwsLocInfo.style.top = '1030px';                   
+    if (swaLocInfo) {
+		  swaLocInfo.style.left = '-35px';
+		  swaLocInfo.style.top = '1030px';
     }
 
     $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
@@ -146,7 +144,7 @@ kwsv3.prototype.createAlternativePilot = function () {
     this.bindAlternativePilotButtons();
 };
 
-kwsv3.prototype.bindAlternativePilotButtons = function () {
+Assistant.prototype.bindAlternativePilotButtons = function () {
 			$('#klawiszspacja').click(() => {
 			    const originalCreateAlternativePilot = createAlternativePilot;
 			    function createAlternativePilot() {
@@ -156,17 +154,17 @@ kwsv3.prototype.bindAlternativePilotButtons = function () {
 
 			    $('#klawiszw, #klawiszy, #klawisz1, #klawisz2, #klawisz3, #klawisz4, #klawisz5, #klawisz6, #klawisz7, #klawisz8, #klawisz9, #klawiszq, #klawisze, #klawiszs, #klawisza, #klawiszd, #klawiszx, #klawiszz, #klawiszc, #klawiszr, #klawiszy, #klawiszv, #klawiszqx3, #klawiszwx3, #klawiszex3, #klawiszax3, #klawiszsx3, #klawiszdx3, #klawiszzx3, #klawiszcx3, #klawiszvx3, #klawiszb5, #klawiszspacja, #klawiszn').remove();
 
-			    var kwsHidePilotElement = document.getElementById('kws_hidePilot');
+			    var swaHidePilotElement = document.getElementById('swa_hidePilot');
 			    var mapPilotElement = document.getElementById('map_pilot');
-			    if (kwsHidePilotElement) {
-				kwsHidePilotElement.value = '0';
+			    if (swaHidePilotElement) {
+				swaHidePilotElement.value = '0';
 				var changeEvent = new Event('change');
-				kwsHidePilotElement.dispatchEvent(changeEvent);
-				if (kwsHidePilotElement.value === '0' && mapPilotElement) {
+				swaHidePilotElement.dispatchEvent(changeEvent);
+				if (swaHidePilotElement.value === '0' && mapPilotElement) {
 				    mapPilotElement.style.display = 'block';
 				}
 				var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
-				kwsHidePilotElement.dispatchEvent(clickEvent);
+				swaHidePilotElement.dispatchEvent(clickEvent);
 			    }
 			    createAlternativePilot = originalCreateAlternativePilot;
 			});

@@ -1,31 +1,4 @@
 if (typeof GAME === 'undefined') {} else {
-function pvp_option_bind(){
-    $('.poption').off('click').on('click',function(){
-        var th=$(this);
-        if(th.is(':disabled')) return false;
-        th.tooltip('hide');
-        var option=th.data('option');
-        switch(option){
-            case 'show_player':
-                GAME.emitOrder({a:34,type:0,char_id:th.data('char_id')});
-            break;
-            case 'show_clan':
-                var klan_id=parseInt(th.data('klan_id'));
-                GAME.emitOrder({a:40,klan_id:klan_id});
-            break;
-            case 'pvp_attack':
-                GAME.emitOrder({a:24,char_id:th.data('char_id'),quick:th.data('quick')});
-            break;
-            case 'gpvp_attack':
-                GAME.emitOrder({a:24,type:1,char_id:th.data('char_id'),quick:th.data('quick')});
-            break;
-            case 'load_more_players':
-                GAME.emitOrder({a:3,type:1,start:th.data('start_from'),vo:GAME.map_options.vo});
-                $('.more_players').remove();
-            break;
-        }
-    });
-}
 
 var PVP = {
     stop: true,
@@ -44,7 +17,6 @@ var PVP = {
     licznik: 0,
     dogory: false,
     loc: 0,
-    adimp: false,
     g: 1,
     tele: false,
     tabb: [],
@@ -359,66 +331,8 @@ PVP.kill_players1 = () => {
         }
     }
 };
-PVP.check_imp = () => {
-    var tab = [];
-    for (var i = 0; i < 3; i++) {
-        tab[i] = parseInt($("#empire_heroes .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
-    }
-    return tab;
-};
-PVP.check_imp2 = () => {
-    var tab = [];
-    for (var i = 0; i < 3; i++) {
-        tab[i] = parseInt($("#empire_efrags .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
-    }
-    return tab;
-};
 PVP.wojny1 = () => {
-    // if (PVP.wi) {
-    //     var aimp = $("#e_admiral_player").find("[data-option=show_player]").attr("data-char_id");
-    //     var imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
-    //     if (!PVP.adimp) {
-    //         // GAME.socket.emit('ga', {
-    //         //     a: 50,
-    //         //     type: 0,
-    //         //     empire: GAME.char_data.empire
-    //         // });
-    //         PVP.adimp = true;
-    //         window.setTimeout(PVP.wojny1, 500);
-    //     } else if (!GAME.emp_enemies.includes(1) && ![GAME.char_data.empire].includes(1) && (PVP.check_imp().includes(GAME.char_id) || PVP.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
-    //         // GAME.socket.emit('ga', {
-    //         //     a: 50,
-    //         //     type: 7,
-    //         //     target: 1
-    //         // });
-    //         window.setTimeout(PVP.wojny1, 500);
-    //     } else if (!GAME.emp_enemies.includes(2) && ![GAME.char_data.empire].includes(2) && (PVP.check_imp().includes(GAME.char_id) || PVP.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
-    //         // GAME.socket.emit('ga', {
-    //         //     a: 50,
-    //         //     type: 7,
-    //         //     target: 2
-    //         // });
-    //         window.setTimeout(PVP.wojny1, 500);
-    //     } else if (!GAME.emp_enemies.includes(3) && ![GAME.char_data.empire].includes(3) && (PVP.check_imp().includes(GAME.char_id) || PVP.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
-    //         // GAME.socket.emit('ga', {
-    //         //     a: 50,
-    //         //     type: 7,
-    //         //     target: 3
-    //         // });
-    //         window.setTimeout(PVP.wojny1, 500);
-    //     } else if (!GAME.emp_enemies.includes(4) && ![GAME.char_data.empire].includes(4) && (PVP.check_imp().includes(GAME.char_id) || PVP.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
-    //         // GAME.socket.emit('ga', {
-    //         //     a: 50,
-    //         //     type: 7,
-    //         //     target: 4
-    //         // });
-    //         window.setTimeout(PVP.wojny1, 500);
-    //     } else {
-    //         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
-    //     }
-    // } else {
-        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
-    // }
+    window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
 };
 PVP.zejdz = () => {
     GAME.socket.emit('ga', {

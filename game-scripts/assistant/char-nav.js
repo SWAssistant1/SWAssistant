@@ -1,25 +1,25 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.goToNextChar = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.goToNextChar = function () {
     this.resetAFO();
     var charId = this.charactersManager.getNextCharId();
     GAME.emitOrder({ a: 2, char_id: charId });
 };
 
-kwsv3.prototype.goToPreviousChar = function () {
+Assistant.prototype.goToPreviousChar = function () {
     this.resetAFO();
     var charId = this.charactersManager.getPreviousCharId();
     GAME.emitOrder({ a: 2, char_id: charId });
 };
 
-kwsv3.prototype.adjustCurrentCharacterId = function () {
+Assistant.prototype.adjustCurrentCharacterId = function () {
     var thisCharId = GAME.char_id;
     if (thisCharId != this.charactersManager.currentCharacterId) {
         this.charactersManager.setCurrentCharacterId(thisCharId);
     }
 };
 
-kwsv3.prototype.resetAFO = function () {
-    console.log("KWA_RESET_AFO: reset AFO values");
+Assistant.prototype.resetAFO = function () {
+    console.log("SWA_RESET_AFO: reset AFO values");
     if ($("#resp_Panel .resp_status").eq(0).hasClass("green")) {
         $("#resp_Panel .resp_button.resp_resp").click();
     }
@@ -32,11 +32,11 @@ kwsv3.prototype.resetAFO = function () {
     if ($("#res_Panel .res_status").eq(0).hasClass("green")) {
         $("#res_Panel .res_button.res_res").click();
     }
-    if ($(".manage_autoExpeditions").eq(0).hasClass("kws_active_icon")) {
+    if ($(".manage_autoExpeditions").eq(0).hasClass("swa_active_icon")) {
         $(".manage_autoExpeditions").click();
     }
     setTimeout(() => {
-        console.log("KWA_RESET_AFO: reset tournaments values");
+        console.log("SWA_RESET_AFO: reset tournaments values");
         this.tourSigned = false;
         this.tournamentCategory = undefined;
         this.newTournamentID = undefined;

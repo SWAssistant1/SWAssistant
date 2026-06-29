@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.isLogged = function (cb) {
+var Assistant = window.Assistant;
+Assistant.prototype.isLogged = function (cb) {
     let waitForID = setInterval(() => {
         if (GAME.pid) {
             clearInterval(waitForID);
@@ -8,8 +8,8 @@ kwsv3.prototype.isLogged = function (cb) {
     }, 200);
 };
 
-kwsv3.prototype.getSettings = function () {
-    let settings = JSON.parse(localStorage.getItem("kws_settings"));
+Assistant.prototype.getSettings = function () {
+    let settings = JSON.parse(localStorage.getItem("swa_settings"));
     let settings_sample = {
         hide_tracker: false,
         aeCodes: false
@@ -20,27 +20,27 @@ kwsv3.prototype.getSettings = function () {
                 settings[key] = settings_sample[key];
             }
         }
-        localStorage.setItem("kws_settings", JSON.stringify(settings));
+        localStorage.setItem("swa_settings", JSON.stringify(settings));
         return settings;
     } else {
-        localStorage.setItem("kws_settings", JSON.stringify(settings_sample));
+        localStorage.setItem("swa_settings", JSON.stringify(settings_sample));
         return settings_sample;
     }
 };
 
-kwsv3.prototype.updateSettings = function () {
-    localStorage.setItem('kws_settings', JSON.stringify(this.settings));
+Assistant.prototype.updateSettings = function () {
+    localStorage.setItem('swa_settings', JSON.stringify(this.settings));
 };
 
-kwsv3.prototype.createCSS = function () {
-    $("head").append(`<style id="kwsCSS"></style>`);
+Assistant.prototype.createCSS = function () {
+    $("head").append(`<style id="swaCSS"></style>`);
 };
 
-kwsv3.prototype.addToCSS = function (data) {
-    $(`#kwsCSS`).append(data);
+Assistant.prototype.addToCSS = function (data) {
+    $(`#swaCSS`).append(data);
 };
 
-kwsv3.prototype.bindClickHandlers = function () {
+Assistant.prototype.bindClickHandlers = function () {
     $("body").on("click", ".free_assist_for_all", () => {
         this.freeAssist();
     });
@@ -146,13 +146,13 @@ kwsv3.prototype.bindClickHandlers = function () {
         }
     });
 
-    $("body").on("click", `.kws_top_bar_section.additional_stats`, () => {
+    $("body").on("click", `.swa_top_bar_section.additional_stats`, () => {
         this.handleAdditionalTopBarVisibility();
     });
-    $("body").on("click", `.kws_additional_top_bar_section.additional_stats_reset`, () => {
+    $("body").on("click", `.swa_additional_top_bar_section.additional_stats_reset`, () => {
         this.resetCalculatedPower();
     });
-    $("body").on("click", `.kws_top_bar_section.train_upgr_info`, () => {
+    $("body").on("click", `.swa_top_bar_section.train_upgr_info`, () => {
         GAME.page_switch('game_train');
     });
     $('#drag_tracker').off('click').on('click', () => {
@@ -182,20 +182,20 @@ kwsv3.prototype.bindClickHandlers = function () {
     $("body").on("click", `.qlink.manage_auto_abyss`, () => {
         if (!this.auto_abyss) {
             this.auto_abyss = true;
-            $(".qlink.manage_auto_abyss").addClass("kws_active_icon");
+            $(".qlink.manage_auto_abyss").addClass("swa_active_icon");
             this.auto_abyss_interval = setInterval(() => {
                 this.manageAutoAbyss();
             }, 5000);
         } else {
             this.auto_abyss = false;
-            $(".qlink.manage_auto_abyss").removeClass("kws_active_icon");
+            $(".qlink.manage_auto_abyss").removeClass("swa_active_icon");
             clearInterval(this.auto_abyss_interval);
         }
     });
     $("body").on("click", `.qlink.manage_auto_arena`, () => {
         if (!this.auto_arena) {
             this.auto_arena = true;
-            $(".qlink.manage_auto_arena").addClass("kws_active_icon");
+            $(".qlink.manage_auto_arena").addClass("swa_active_icon");
             this.manageAutoArena();
         } else {
             this.stopAutoArena();
@@ -267,39 +267,39 @@ kwsv3.prototype.bindClickHandlers = function () {
             "opacity": value / 100
         });
     });
-    $("body").on("change", "#kws_sh_locInfo", (el) => {
+    $("body").on("change", "#swa_sh_locInfo", (el) => {
         let value = parseInt($(el.target).val());
         if (value == 1) {
-            $("#kws_locInfo").css({
+            $("#swa_locInfo").css({
                 "display": "block"
             });
         } else {
-            $("#kws_locInfo").css({
+            $("#swa_locInfo").css({
                 "display": "none"
             });
         }
         this.minimap.loc_info = value;
         this.manageMinimapSettings("save");
     });
-    $("body").on("change", "#kws_hidePilot", (el) => {
+    $("body").on("change", "#swa_hidePilot", (el) => {
         let value = parseInt($(el.target).val());
         this.managePilot("set", value);
     });
-    $("body").on("click", `.kws_mapsize_change`, () => {
-        let width = parseInt($(`input[name="kws_map_width"]`).val());
-        let height = parseInt($(`input[name="kws_map_height"]`).val());
+    $("body").on("click", `.swa_mapsize_change`, () => {
+        let width = parseInt($(`input[name="swa_map_width"]`).val());
+        let height = parseInt($(`input[name="swa_map_height"]`).val());
         if (width && height) {
             this.manageMapSize("change", [width, height]);
         }
     });
-    $("body").on("click", `.kws_mapsize_reset`, () => {
+    $("body").on("click", `.swa_mapsize_reset`, () => {
         this.manageMapSize("reset")
     });
-    $("body").on("click", `.kws_change_website_bg`, () => {
+    $("body").on("click", `.swa_change_website_bg`, () => {
         let url = $("#new_website_bg").val();
         this.manageWebsiteBackground("set", url);
     });
-    $("body").on("click", `.kws_reset_website_bg`, () => {
+    $("body").on("click", `.swa_reset_website_bg`, () => {
         this.manageWebsiteBackground("reset");
     });
     $("body").on("click", `[data-option="map_multi_pvp"]`, () => {
@@ -416,16 +416,16 @@ kwsv3.prototype.bindClickHandlers = function () {
             e: emp
         });
     });
-    $("#kws_spawn").draggable({
+    $("#swa_spawn").draggable({
         handle: ".sekcja"
     });
     $('.spawn_switch').on('click', function () {
-        $("#kws_spawn2").toggle();
+        $("#swa_spawn2").toggle();
     });
-    $("#kws_spawn input[type=checkbox], input[type=text]").change((chb) => {
+    $("#swa_spawn input[type=checkbox], input[type=text]").change((chb) => {
         switch ($(chb.target).attr("name")) {
             case "ignoreMobs":
-                GAME.spawner[1] = $('#kws_spawn input[name="ignoreMobs"]').map((index, element) => {
+                GAME.spawner[1] = $('#swa_spawn input[name="ignoreMobs"]').map((index, element) => {
                     return element.checked ? 1 : 0;
                 }).get();
                 break;
@@ -434,7 +434,6 @@ kwsv3.prototype.bindClickHandlers = function () {
                 break;
         }
     });
-    // $("#secondary_char_stats").append(` <div class="instance" data-toggle="tooltip" data-original-title="<div class=tt>Instancje <br /><span class=&quot;red&quot;><b>Kliknij by wykonać instancje</b></span></div>" class=""><i class="ico a11"></i> <span> <ul><ul/></span></div> <div class="activities" data-toggle="tooltip" data-original-title="<div class=tt>Aktywności <br /><span class=&quot;red&quot;><b>Kliknij by odebrać aktywności</b></span></div>" class=""><i class="ico a12"></i> <span> <ul><ul/></span></div>`);
     $("body").on('change', '.autoExpeCodes input[type=checkbox]', (el) => {
         let name = $(el.target).attr("name");
         if (name === 'aeCodes') {

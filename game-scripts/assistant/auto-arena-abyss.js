@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.manageAutoAbyss = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.manageAutoAbyss = function () {
     GAME.socket.emit('ga', {
         a: 59,
         type: 0
@@ -27,7 +27,7 @@ kwsv3.prototype.manageAutoAbyss = function () {
     }
 };
 
-kwsv3.prototype.manageAutoArena = function () {
+Assistant.prototype.manageAutoArena = function () {
     if (this.auto_arena) {
         GAME.socket.emit('ga', {
             a: 46,
@@ -41,7 +41,7 @@ kwsv3.prototype.manageAutoArena = function () {
     }
 };
 
-kwsv3.prototype.attackAutoArena = function () {
+Assistant.prototype.attackAutoArena = function () {
     let opponents = $("#arena_players").find(`.player button[data-option="arena_attack"][data-quick="1"]:not(.initial_hide_forced)`);
     let opponent = parseInt(opponents.attr("data-index"));
     if (this.auto_arena) {
@@ -65,8 +65,8 @@ kwsv3.prototype.attackAutoArena = function () {
     }
 };
 
-kwsv3.prototype.stopAutoArena = function () {
+Assistant.prototype.stopAutoArena = function () {
     this.auto_arena = false;
-    $(".qlink.manage_auto_arena").removeClass("kws_active_icon");
+    $(".qlink.manage_auto_arena").removeClass("swa_active_icon");
 };
 

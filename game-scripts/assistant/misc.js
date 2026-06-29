@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.activateAllClanBuffs = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.activateAllClanBuffs = function () {
     let abut = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`);
     let isDisabled = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`).parents("tr").hasClass("disabled");
     let cpbt = $("#clan_planet_buffs").html();
@@ -33,36 +33,36 @@ kwsv3.prototype.activateAllClanBuffs = function () {
     }
 };
 
-kwsv3.prototype.parseMapInfo = function (quests, where) {
+Assistant.prototype.parseMapInfo = function (quests, where) {
     let mapInfo = Object.values(quests).filter(this.filterQuests);
     let mapSK = Object.keys(GAME.map_balls) ? Object.keys(GAME.map_balls).length : 0;
-    $(`#kws_locInfo .content`).html(`Zadania: ${mapInfo.length}<br>SK: ${mapSK}`);
+    $(`#swa_locInfo .content`).html(`Zadania: ${mapInfo.length}<br>SK: ${mapSK}`);
 };
 
-kwsv3.prototype.filterQuests = function (quest) {
+Assistant.prototype.filterQuests = function (quest) {
     let steps = quest.length;
     if (steps > 0 && quest[steps - 1] && quest[steps - 1].end != 1) {
         return quest;
     }
 };
 
-kwsv3.prototype.setWebsiteBackground = function () {
-    if (localStorage.getItem('kws_wbg')) {
+Assistant.prototype.setWebsiteBackground = function () {
+    if (localStorage.getItem('swa_wbg')) {
         $("body").css({
             "background": "#02070D",
-            "background-image": `url(${localStorage.getItem('kws_wbg')})`,
+            "background-image": `url(${localStorage.getItem('swa_wbg')})`,
             "background-size": "cover",
             "background-attachment": "fixed"
         });
-        $("#new_website_bg").val(localStorage.getItem('kws_wbg'));
+        $("#new_website_bg").val(localStorage.getItem('swa_wbg'));
         $("footer").addClass("hide_before");
     }
 };
 
-kwsv3.prototype.manageWebsiteBackground = function (act, url) {
+Assistant.prototype.manageWebsiteBackground = function (act, url) {
     if (act == "set") {
         if (url.length > 5) {
-            localStorage.setItem('kws_wbg', url);
+            localStorage.setItem('swa_wbg', url);
             $("body").css({
                 "background": "#02070D",
                 "background-image": `url(${url})`,
@@ -72,7 +72,7 @@ kwsv3.prototype.manageWebsiteBackground = function (act, url) {
             $("footer").addClass("hide_before");
         }
     } else if (act == "reset") {
-        localStorage.removeItem("kws_wbg");
+        localStorage.removeItem("swa_wbg");
         $("#new_website_bg").val("");
         $("body").css({
             "background": "#02070D",
@@ -84,7 +84,7 @@ kwsv3.prototype.manageWebsiteBackground = function (act, url) {
     }
 };
 
-kwsv3.prototype.getTitlesList = function (cb) {
+Assistant.prototype.getTitlesList = function (cb) {
     GAME.socket.emit('ga', {
         a: 42,
         type: 9
@@ -99,7 +99,7 @@ kwsv3.prototype.getTitlesList = function (cb) {
     }, 100);
 };
 
-kwsv3.prototype.vip = function () {
+Assistant.prototype.vip = function () {
     var month = $("#monthly_vip_rewards").find(".vip_cat.option" + ":not(.disabled)" + ":not(.received)");
     var general = $("#general_vip_rewards").find(".vip_cat.option" + ":not(.disabled)" + ":not(.received)");
     if (month.length) {
@@ -131,7 +131,7 @@ kwsv3.prototype.vip = function () {
     }
 };
 
-kwsv3.prototype.bless = function () {
+Assistant.prototype.bless = function () {
     GAME.socket.emit('ga', {
         a: 14,
         type: 3
@@ -151,7 +151,7 @@ kwsv3.prototype.bless = function () {
     }, 500);
 };
 
-kwsv3.prototype.questProceed = function () {
+Assistant.prototype.questProceed = function () {
     if (JQS.qcc.is(":visible")) {
         if ($("button[data-option=finish_quest]").length === 1) {
             let qb_id = $("button[data-option=finish_quest]").attr("data-qb_id");
@@ -222,7 +222,7 @@ kwsv3.prototype.questProceed = function () {
     }
 };
 
-kwsv3.prototype.check_act = function () {
+Assistant.prototype.check_act = function () {
     let recived = $("#act_prizes").find("div.act_prize.disabled").length;
     let points = $('#char_activity').text();
     if (points >= 25 && recived < 1) {
@@ -240,25 +240,25 @@ kwsv3.prototype.check_act = function () {
     }
 };
 
-kwsv3.prototype.spawnList = function () {
+Assistant.prototype.spawnList = function () {
     let mob = "";
     for (var i = 0; i < 6; i++) {
-        mob += `<div class="spawn_row"><div class="newCheckbox"><input id="kws_spawner_ignore_${i}" type="checkbox" class="kws_spawner_check" name="ignoreMobs" value="${i}" ${(GAME.spawner && GAME.spawner[1][i] ? 'checked' : '')} /><label for="kws_spawner_ignore_${i}"></label></div>${LNG.lab457}&nbsp;<b>${LNG['mob_rank' + i]}</b></div>`;
+        mob += `<div class="spawn_row"><div class="newCheckbox"><input id="swa_spawner_ignore_${i}" type="checkbox" class="swa_spawner_check" name="ignoreMobs" value="${i}" ${(GAME.spawner && GAME.spawner[1][i] ? 'checked' : '')} /><label for="swa_spawner_ignore_${i}"></label></div>${LNG.lab457}&nbsp;<b>${LNG['mob_rank' + i]}</b></div>`;
     }
-    mob += `<div class="spawn_row" style="flex-direction: column;align-items: center;"><div>Użyte PA na spawn</div><div class="game_input small"><input id="kws_pa_max" name="usePaToSpawn" type="text" value="1000"></div></div>`;
+    mob += `<div class="spawn_row" style="flex-direction: column;align-items: center;"><div>Użyte PA na spawn</div><div class="game_input small"><input id="swa_pa_max" name="usePaToSpawn" type="text" value="1000"></div></div>`;
     return mob;
 };
 
-kwsv3.prototype.updatePaToSpawn = function (pats) {
+Assistant.prototype.updatePaToSpawn = function (pats) {
     let pa = parseInt(pats);
     if (!pa || pa <= 0 || pa > 1000 || pa != pats) {
         pa = 1000;
-        $("#kws_spawn input[name=usePaToSpawn]").val(pa);
+        $("#swa_spawn input[name=usePaToSpawn]").val(pa);
     }
     GAME.spawner[0] = pa;
 };
 
-kwsv3.prototype.calcLVL = function (exp) {
+Assistant.prototype.calcLVL = function (exp) {
     let lvls_gained = 0;
     let clvl = GAME.char_data.level;
     let cexp = GAME.char_data.exp + exp;
@@ -280,7 +280,7 @@ kwsv3.prototype.calcLVL = function (exp) {
     return `<b class="orange">[~${lvls_gained} lvl'i]</b>`;
 };
 
-kwsv3.prototype.handleSockets = function (res) {
+Assistant.prototype.handleSockets = function (res) {
     const mouseOverEvent = new MouseEvent('mouseover', {
         bubbles: true,
         cancelable: true,
@@ -291,7 +291,6 @@ kwsv3.prototype.handleSockets = function (res) {
         cancelable: true,
         view: window
     });
-    // console.log("KWA_HANDLE_SOCKETS: res.a == %s", res.a);
     switch (res.a) {
         case 7: //?? PvP fight result?
             if (!this.stopped) {
@@ -366,25 +365,20 @@ kwsv3.prototype.handleSockets = function (res) {
                 break;
             }
         default:
-            // console.log("KWA_HANDLE_SOCKETS: unhandeled response");
             break;
     }
 };
 
-kwsv3.prototype.RerollItem = function () {
+Assistant.prototype.RerollItem = function () {
     console.log("rerol item", this.item_jakosc);
-    // if (this.item_jakosc === false)
-    //     return;
     reroll_item();
     window.setTimeout(function() {
         $('[data-option="rer2_item"]').click();
     }, 300);
 };
 
-kwsv3.prototype.UpgradeItem = function () {
+Assistant.prototype.UpgradeItem = function () {
     console.log("up item", this.item_poziom);
-    // if (this.item_poziom === false)
-    //     return;
     upgrade_item();
     window.setTimeout(function() {
         $('[data-option="upg2_item"]').click();

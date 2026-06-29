@@ -1,28 +1,28 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.createMinimapSettings = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.createMinimapSettings = function () {
     this.manageMinimapSettings("load");
     this.manageMapSize("load");
     this.managePilot();
-    $("#field_sett #field_options").append(`<br style='clear:both;'><div id="kws_minimap_settings"> <b class='orange'>Ukryj pilota kontroli postaci: </b><div class="select_input"><select id="kws_hidePilot"><option value="1" ${this.hidePilot == 1 ? "selected" : ""}>tak</option><option value="0" ${this.hidePilot == 0 ? "selected" : ""}>Nie</option></select></div> <b class='orange'>Minimapa wyświetlana ze strony: </b><div class="select_input"><select id="minimap_side"><option value="0" ${this.minimap.side == 0 ? "selected" : ""}>Prawej</option><option value="1" ${this.minimap.side == 1 ? "selected" : ""}>Lewej</option><option value="2" ${this.minimap.side == 2 ? "selected" : ""}>L - Poza</option></select></div> <b class='orange'>Przeźroczystość minimapy: </b><input id="minimap_range" type="range" value="${this.minimap.opacity}" min="10" max="100" step="1"> <b class='orange'>Dodatkowe informacje o lokacji: </b><div class="select_input"><select id="kws_sh_locInfo"><option value="1" ${this.minimap.loc_info == 1 ? "selected" : ""}>Pokaż</option><option value="0" ${this.minimap.loc_info == 0 ? "selected" : ""}>Ukryj</option></select></div> <b class='orange'>Rozmiar mapy: </b>X: <input name="kws_map_width" class="smin_input" style="width:30px;" type="text" value="${this.mapsize.x}" placeholder="13"> Y: <input name="kws_map_height" class="smin_input" style="width:30px;" type="text" value="${this.mapsize.y}" placeholder="13"><button class="smin_butt kws_mapsize_change" style="margin-left:5px;">Zmień</button><button class="smin_butt kws_mapsize_reset" style="margin-left:5px;">Reset</button> </div>`);
+    $("#field_sett #field_options").append(`<br style='clear:both;'><div id="swa_minimap_settings"> <b class='orange'>Ukryj pilota kontroli postaci: </b><div class="select_input"><select id="swa_hidePilot"><option value="1" ${this.hidePilot == 1 ? "selected" : ""}>tak</option><option value="0" ${this.hidePilot == 0 ? "selected" : ""}>Nie</option></select></div> <b class='orange'>Minimapa wyświetlana ze strony: </b><div class="select_input"><select id="minimap_side"><option value="0" ${this.minimap.side == 0 ? "selected" : ""}>Prawej</option><option value="1" ${this.minimap.side == 1 ? "selected" : ""}>Lewej</option><option value="2" ${this.minimap.side == 2 ? "selected" : ""}>L - Poza</option></select></div> <b class='orange'>Przeźroczystość minimapy: </b><input id="minimap_range" type="range" value="${this.minimap.opacity}" min="10" max="100" step="1"> <b class='orange'>Dodatkowe informacje o lokacji: </b><div class="select_input"><select id="swa_sh_locInfo"><option value="1" ${this.minimap.loc_info == 1 ? "selected" : ""}>Pokaż</option><option value="0" ${this.minimap.loc_info == 0 ? "selected" : ""}>Ukryj</option></select></div> <b class='orange'>Rozmiar mapy: </b>X: <input name="swa_map_width" class="smin_input" style="width:30px;" type="text" value="${this.mapsize.x}" placeholder="13"> Y: <input name="swa_map_height" class="smin_input" style="width:30px;" type="text" value="${this.mapsize.y}" placeholder="13"><button class="smin_butt swa_mapsize_change" style="margin-left:5px;">Zmień</button><button class="smin_butt swa_mapsize_reset" style="margin-left:5px;">Reset</button> </div>`);
 };
 
-kwsv3.prototype.manageMinimapSettings = function (act) {
+Assistant.prototype.manageMinimapSettings = function (act) {
     if (act == "load") {
-        this.minimap = JSON.parse(localStorage.getItem('kws_minimap'));
+        this.minimap = JSON.parse(localStorage.getItem('swa_minimap'));
         if (this.minimap == undefined) {
             this.minimap = {
                 side: 0,
                 opacity: 100,
                 loc_info: 0
             };
-            localStorage.setItem('kws_minimap', JSON.stringify(this.minimap));
+            localStorage.setItem('swa_minimap', JSON.stringify(this.minimap));
         }
     } else if (act == "save") {
-        localStorage.setItem('kws_minimap', JSON.stringify(this.minimap));
+        localStorage.setItem('swa_minimap', JSON.stringify(this.minimap));
     }
 };
 
-kwsv3.prototype.changeMapSize = function (rx = 13, ry = 13) {
+Assistant.prototype.changeMapSize = function (rx = 13, ry = 13) {
     rx = Math.floor(rx);
     ry = Math.floor(ry);
     GAME.map.cX = rx * 40;
@@ -49,15 +49,15 @@ kwsv3.prototype.changeMapSize = function (rx = 13, ry = 13) {
     });
 };
 
-kwsv3.prototype.manageMapSize = function (act, size = [13, 13]) {
+Assistant.prototype.manageMapSize = function (act, size = [13, 13]) {
     if (act == "load") {
-        this.mapsize = JSON.parse(localStorage.getItem('kws_mapsize'));
+        this.mapsize = JSON.parse(localStorage.getItem('swa_mapsize'));
         if (this.mapsize == undefined) {
             this.mapsize = {
                 x: 13,
                 y: 13
             };
-            localStorage.setItem('kws_mapsize', JSON.stringify(this.mapsize));
+            localStorage.setItem('swa_mapsize', JSON.stringify(this.mapsize));
         } else if (this.mapsize.x != 13 || this.mapsize.y != 13) {
             this.changeMapSize(this.mapsize.x, this.mapsize.y);
         }
@@ -65,26 +65,26 @@ kwsv3.prototype.manageMapSize = function (act, size = [13, 13]) {
         this.changeMapSize(size[0], size[1]);
         this.mapsize.x = size[0];
         this.mapsize.y = size[1];
-        localStorage.setItem('kws_mapsize', JSON.stringify(this.mapsize));
+        localStorage.setItem('swa_mapsize', JSON.stringify(this.mapsize));
     } else {
         this.changeMapSize();
         this.mapsize.x = 13;
         this.mapsize.y = 13;
-        $(`input[name="kws_map_width"]`).val(13);
-        $(`input[name="kws_map_height"]`).val(13);
-        localStorage.setItem('kws_mapsize', JSON.stringify(this.mapsize));
+        $(`input[name="swa_map_width"]`).val(13);
+        $(`input[name="swa_map_height"]`).val(13);
+        localStorage.setItem('swa_mapsize', JSON.stringify(this.mapsize));
     }
 };
 
-kwsv3.prototype.managePilot = function (act = false, val = 0) {
+Assistant.prototype.managePilot = function (act = false, val = 0) {
     if (act == "set") {
-        localStorage.setItem('kws_pilot', val);
+        localStorage.setItem('swa_pilot', val);
         this.hidePilot = val;
         this.managePilot();
     } else {
-        this.hidePilot = localStorage.getItem('kws_pilot');
+        this.hidePilot = localStorage.getItem('swa_pilot');
         if (this.hidePilot == undefined) {
-            localStorage.setItem('kws_pilot', 0);
+            localStorage.setItem('swa_pilot', 0);
             this.hidePilot = 0;
         }
         if (this.hidePilot == 1) {

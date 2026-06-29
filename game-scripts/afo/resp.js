@@ -8,7 +8,6 @@ var RESP = {
     zmiana: false,
     multifight: false,
     reload: false,
-    downb: false,
     SENZU_BLUE: 'SENZU_BLUE',
     SENZU_GREEN: 'SENZU_GREEN',
     SENZU_YELLOW: 'SENZU_YELLOW',
@@ -59,13 +58,6 @@ var RESP = {
 };
 RESP.check = () => {
     console.log('checking resp');
-    let imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
-    let emp = GAME.char_data.empire;
-    let buff = $(".emp_buff .pull-right").find("button").attr("data-option") == "activate_emp_buff";
-    let buff_id = $(".emp_buff .pull-right").find("button").attr("data-buff");
-    let who_win = $("#gne_satus").text().includes("ZŁO");
-    let abut = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`);
-    let isDisabled = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`).parents("tr").hasClass("disabled");
     if (GAME.char_data.pr <= RESP.min_pa()) {
         console.log("resp use sensu");
         RESP.useSenzu();
@@ -89,14 +81,8 @@ RESP.check = () => {
         let ekwUsedElement = document.getElementById('ekw_used');
         let ekwUsedValue = ekwUsedElement.textContent;
 
-        // let ekwSpaceElement = document.getElementById('ekw_space');
-        // let ekwSpaceValue = ekwSpaceElement.textContent;
         if ((($(".resp_rare .resp_status").hasClass("green")) && ekwUsedValue < 1000) ||
         (($(".resp_resp1 .resp_status").hasClass("green")) && ekwUsedValue < 1000)) {
-        //     window.setTimeout(function() {
-        //         GAME.page_switch("game_ekw");
-        //     }, 225);
-        //     Response.normal = false;
             return false;
         }
         const komElements = document.querySelectorAll('#kom_con .kom');
@@ -142,44 +128,6 @@ RESP.check = () => {
 
 
     }
-    // item jakosc
-    // const targetElement = document.querySelector('.player_ekw_item[data-item_id="'+ GAME.dragged_item.id+'"]');
-    // const pattern = /<span id="quality">Jakość:/;
-    // if (targetElement) {
-    //   // Get the value of the data-slot attribute
-    //   const dataSlotValue = targetElement.getAttribute('data-original-title');
-          
-    //   const match = dataSlotValue.match(/\((\d+)%\)/);
-  
-    //   if (match) {
-    //     // The value is in the first capturing group
-    //     const value = match[1];
-    //     console.log('Extracted value:', value); // Output: 31
-    //   } else {
-    //     console.log('Pattern not found.');
-    //   }
-    // } else {
-    //   console.log('Quality span not found.');
-    // }
-    // wymiana ramenow insta ronina
-    // GAME.emitOrder({
-    //     a: 211,
-    //     type: 2,
-    //     exchange: 9,
-    //     item: 91
-    // });
-
-
-    //  else if ($(".resp_normal .resp_status").hasClass("green")) {
-    //     GAME.emitOrder({a:12,page:GAME.ekw_page});
-    //     let ekwUsedElement = document.getElementById('ekw_used');
-    //     let ekwUsedValue = ekwUsedElement.textContent;
-
-    //     let ekwSpaceElement = document.getElementById('ekw_space');
-    //     let ekwSpaceValue = ekwSpaceElement.textContent;
-    //     if (ekwUsedValue > ekwSpaceElement * 0.7)
-    //         RESP.normal = true;
-    // }
     return false;
 };
 
@@ -269,7 +217,6 @@ RESP.action = () => {
     if (!RESP.stop) {
         if (!RESP.check()) {
             setTimeout(() => {
-                // RESP.fight();
                 RESP.go();
             }, RESP.wait);
         } else {
@@ -280,74 +227,10 @@ RESP.action = () => {
         }
     }
 };
-RESP.fight = () => {
-    console.log('resp fight');
-    // GAME.socket.emit(`ga`,{a:13,mob_num:0,fo:GAME.map_options.ma});
-    if (RESP.reload) {
-        setTimeout(() => {
-            GAME.maploaded = false;
-            GAME.prepareMap();
-        }, 300);
-        RESP.reload = false;
-    }
-    if ((RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 0) && GAME.field_mobs[GAME.field_mob_id - 1].ranks[0] || (RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 1 && GAME.field_mobs[GAME.field_mob_id - 1].ranks[1]) || (RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 2 && GAME.field_mobs[GAME.field_mob_id - 1].ranks[2]) || (RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 3 && GAME.field_mobs[GAME.field_mob_id - 1].ranks[3]) || (RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 4 && GAME.field_mobs[GAME.field_mob_id - 1].ranks[4]) || (RESP.MF() > 0 && GAME.field_mf[GAME.field_mob_id - 1] < 5 && GAME.field_mobs[GAME.field_mob_id - 1].ranks[5]) || !RESP.multifight) {
-        GAME.socket.emit('ga', {
-            a: 7,
-            order: 2,
-            quick: 1,
-            fo: GAME.map_options.ma
-        });
-    } else if (RESP.MF2() > 0) {
-        GAME.socket.emit('ga', {
-            a: 13,
-            mob_num: GAME.field_mob_id,
-            fo: GAME.map_options.ma
-        })
-    } 
-    RESP.action();
-};
 RESP.reload_map = () => {
     RESP.reload = true;
 };
-RESP.MF = () => {
-    var r = 0;
-    if (GAME.field_mobs) {
-        for (i = 0; i < GAME.map_options.ma.length; i++) {
-            if (GAME.map_options.ma[i] === 1) {
-                r += parseInt(GAME.field_mobs[0].ranks[i]);
-                if (GAME.field_mobs[1]) {
-                    r += parseInt(GAME.field_mobs[1].ranks[i]);
-                }
-                if (GAME.field_mobs[2]) {
-                    r += parseInt(GAME.field_mobs[2].ranks[i]);
-                }
-                if (GAME.field_mobs[3]) {
-                    r += parseInt(GAME.field_mobs[3].ranks[i]);
-                }
-            }
-        }
-    }
-    console.log(r);
-    return r;
-};
-RESP.MF2 = () => {
-    var r = 0;
-    for (i = 0; i < GAME.map_options.ma.length; i++) {
-        if (GAME.field_mob_id < GAME.field_mobs.length && "ranks" in GAME.field_mobs[GAME.field_mob_id] && GAME.map_options.ma[i] === 1) {
-            r += parseInt(GAME.field_mobs[GAME.field_mob_id].ranks[i]);
-        }
-    }
-    return r;
-};
 RESP.go = () => {
-    // if (RESP.downb) {
-    //     GAME.map_move(3);
-    //     RESP.downb = false;
-    // } else {
-    //     GAME.map_move(6);
-    //     RESP.downb = true;
-    // }
-    
     RESP.action();
 };
 

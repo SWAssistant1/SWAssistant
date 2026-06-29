@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-const kws = new kwsv3(kwsLocalCharacters);
+var Assistant = window.Assistant;
+const assistant = new Assistant(swaLocalCharacters);
 GAME.komunikat2 = function (kom) {
     if (this.koms.indexOf(kom) == -1) {
         if (this.komc > 50) this.komc = 40;
@@ -32,7 +32,7 @@ GAME.cached_data = function () {
     setTimeout(() => {
         if (GAME.emp_wars.length < 3 && GAME.quick_opts.empire) {
             setTimeout(() => {
-                kws.wojny2();
+                assistant.wojny2();
             }, 300);
         }
     }, 1500);
@@ -66,12 +66,12 @@ GAME.cached_data = function () {
     });
     $('#train_uptime').html(GAME.showTimer(GAME.char_data.train_ucd - GAME.getTime()));
     setTimeout(() => {
-        if (kws.check_act()) {
+        if (assistant.check_act()) {
             $("#secondary_char_stats .activities").click();
         }
     }, 1200);
     GAME.parseQuickOpts(1);
-    kws.workers_info = [false, false];
+    assistant.workers_info = [false, false];
     arena_count = 0;
     pvp_count = 0;
     setTimeout(() => {
@@ -94,7 +94,6 @@ GAME.parseQuickOpts = function (newq_bar = false) {
             GAME.checkTutorial();
         });
     }
-    // if (this.quick_opts.private_planet) opts += `<div class="option qlink priv" data-option="private_teleport" data-toggle="tooltip" data-original-title="<div class=tt>${LNG.lab138}</div>"></div>`;
     if (this.quick_opts.teleport) opts += `<div class="option qlink tele" data-option="use_teleport" data-toggle="tooltip" data-original-title="<div class=tt>${LNG.lab140}</div>"></div>`;
     if (this.quick_opts.travel) opts += `<div class="option qlink trav" data-option="use_travel" data-toggle="tooltip" data-original-title="<div class=tt>${LNG.lab141}</div>"></div>`;
     if (this.quick_opts.ssj) {
@@ -112,8 +111,8 @@ GAME.parseQuickOpts = function (newq_bar = false) {
     
         opts += `<div class="qlink get_titles_list" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/0eQCqBl.png');" data-toggle="tooltip" data-original-title="<div class=tt>Zmień tytuł</div>"></div>`;
         opts += `<div class="qlink load_afo" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/P8sJgQz.png');" data-toggle="tooltip" data-original-title="<div class=tt>Załaduj AFO</div>"></div>`;
-        opts += `<div class="qlink sideIcons manage_auto_abyss${kws.auto_abyss ? ' kws_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/j5eQv2B.png');display:block;top:-136px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie Otchłani</div>"></div>`;
-        opts += `<div class="qlink sideIcons manage_auto_arena${kws.auto_arena ? ' kws_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/rAroNzD.png');display:block;top:-104px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie na Arenie</div>"></div>`;
+        opts += `<div class="qlink sideIcons manage_auto_abyss${assistant.auto_abyss ? ' swa_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/j5eQv2B.png');display:block;top:-136px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie Otchłani</div>"></div>`;
+        opts += `<div class="qlink sideIcons manage_auto_arena${assistant.auto_arena ? ' swa_active_icon' : ''}" style="filter:hue-rotate(168deg);background-image: url('https://i.imgur.com/rAroNzD.png');display:block;top:-104px;position:absolute;" data-toggle="tooltip" data-original-title="<div class=tt>[Włącz / Wyłącz] Atakowanie na Arenie</div>"></div>`;
     }
     $('#quick_bar').html(opts);
 
@@ -150,7 +149,7 @@ GAME.endQuest = function (quest_end) {
         }
     }
     if (GAME.map_quests) {
-        kws.parseMapInfo(GAME.map_quests, "GAME.endQuest");
+        assistant.parseMapInfo(GAME.map_quests, "GAME.endQuest");
     }
 };
 GAME.moveQuest = function (quest_move) {
@@ -173,12 +172,12 @@ GAME.moveQuest = function (quest_move) {
             }
         }
         if (GAME.map_quests) {
-            kws.parseMapInfo(GAME.map_quests, "GAME.moveQuest");
+            assistant.parseMapInfo(GAME.map_quests, "GAME.moveQuest");
         }
     } else this.endQuest(quest_move.qb_id);
 };
 GAME.parseLocBons = function (loc_data) {
-    kws.parseMapInfo(GAME.map_quests, "GAME.parseLocBons");
+    assistant.parseMapInfo(GAME.map_quests, "GAME.parseLocBons");
     var bons = '';
     if (loc_data.bonus_tren) bons += '<img src="/gfx/icons/loc_bon/tren.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_tren + '</b>' + LNG.item_stat15 + '</div>" />';
     if (loc_data.bonus_exp) bons += '<img src="/gfx/icons/loc_bon/exp.png" data-toggle="tooltip" data-original-title="<div class=tt><b>' + loc_data.bonus_exp + '</b>' + LNG.item_stat16 + '</div>" />';

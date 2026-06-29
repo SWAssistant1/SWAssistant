@@ -22,9 +22,9 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
         }
 
         var branch = window.__SWA_BRANCH__ || 'main';
-        // class.js must finish first (it sets window.kwsv3, which every
+        // class.js must finish first (it sets window.Assistant, which every
         // other file reads at top level); bootstrap.js must run last (it
-        // instantiates kwsv3). The rest have no ordering dependency on each
+        // instantiates Assistant). The rest have no ordering dependency on each
         // other, so they load in parallel between those two.
         var CLASS_FILE = 'game-scripts/assistant/class.js';
         var BOOTSTRAP_FILE = 'game-scripts/assistant/bootstrap.js';

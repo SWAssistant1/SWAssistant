@@ -1,5 +1,5 @@
-var kwsv3 = window.kwsv3;
-kwsv3.prototype.wojny2 = function () {
+var Assistant = window.Assistant;
+Assistant.prototype.wojny2 = function () {
     var aimp = $("#e_admiral_player").find("[data-option=show_player]").attr("data-char_id");
     var imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
     if (!adimp) {
@@ -14,7 +14,7 @@ kwsv3.prototype.wojny2 = function () {
         setTimeout(() => {
             this.wojny2();
         }, 300);
-    } else if (!GAME.emp_enemies.includes(1) && ![GAME.char_data.empire].includes(1) && (kws.check_imp().includes(GAME.char_id) || kws.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
+    } else if (!GAME.emp_enemies.includes(1) && ![GAME.char_data.empire].includes(1) && (assistant.check_imp().includes(GAME.char_id) || assistant.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 7,
@@ -23,7 +23,7 @@ kwsv3.prototype.wojny2 = function () {
         setTimeout(() => {
             this.wojny2();
         }, 300);
-    } else if (!GAME.emp_enemies.includes(2) && ![GAME.char_data.empire].includes(2) && (kws.check_imp().includes(GAME.char_id) || kws.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
+    } else if (!GAME.emp_enemies.includes(2) && ![GAME.char_data.empire].includes(2) && (assistant.check_imp().includes(GAME.char_id) || assistant.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 7,
@@ -32,7 +32,7 @@ kwsv3.prototype.wojny2 = function () {
         setTimeout(() => {
             this.wojny2();
         }, 300);
-    } else if (!GAME.emp_enemies.includes(3) && ![GAME.char_data.empire].includes(3) && (kws.check_imp().includes(GAME.char_id) || kws.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
+    } else if (!GAME.emp_enemies.includes(3) && ![GAME.char_data.empire].includes(3) && (assistant.check_imp().includes(GAME.char_id) || assistant.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 7,
@@ -41,7 +41,7 @@ kwsv3.prototype.wojny2 = function () {
         setTimeout(() => {
             this.wojny2();
         }, 300);
-    } else if (!GAME.emp_enemies.includes(4) && ![GAME.char_data.empire].includes(4) && (kws.check_imp().includes(GAME.char_id) || kws.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
+    } else if (!GAME.emp_enemies.includes(4) && ![GAME.char_data.empire].includes(4) && (assistant.check_imp().includes(GAME.char_id) || assistant.check_imp2().includes(GAME.char_id) || imp == GAME.char_id || aimp == GAME.char_id)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 7,
@@ -53,7 +53,7 @@ kwsv3.prototype.wojny2 = function () {
     } else { }
 };
 
-kwsv3.prototype.check_imp = function () {
+Assistant.prototype.check_imp = function () {
     var tab = [];
     for (var i = 0; i < 3; i++) {
         tab[i] = parseInt($("#empire_heroes .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
@@ -61,7 +61,7 @@ kwsv3.prototype.check_imp = function () {
     return tab;
 };
 
-kwsv3.prototype.check_imp2 = function () {
+Assistant.prototype.check_imp2 = function () {
     var tab = [];
     for (var i = 0; i < 3; i++) {
         tab[i] = parseInt($("#empire_efrags .activity").eq(i).find("[data-option=show_player]").attr("data-char_id"));
@@ -69,7 +69,7 @@ kwsv3.prototype.check_imp2 = function () {
     return tab;
 };
 
-kwsv3.prototype.pvpKill = function () {
+Assistant.prototype.pvpKill = function () {
     if (!JQS.chm.is(":focus")) {
         let opponents = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
         if ($("button[data-option='load_more_players']").is(":visible")) {
@@ -86,7 +86,7 @@ kwsv3.prototype.pvpKill = function () {
     }
 };
 
-kwsv3.prototype.useCompressor = function () {
+Assistant.prototype.useCompressor = function () {
     GAME.emitOrder({
         a: 22,
         type: 10,
@@ -94,7 +94,7 @@ kwsv3.prototype.useCompressor = function () {
       });
 };
 
-kwsv3.prototype.killChamp = function () {
+Assistant.prototype.killChamp = function () {
     var mob_id;
     var mob_size;
     for (var i = 0; i < GAME.field_mobs.length; i++) {
@@ -111,7 +111,7 @@ kwsv3.prototype.killChamp = function () {
     }
 };
 
-kwsv3.prototype.killElite = function () {
+Assistant.prototype.killElite = function () {
     var mob_id;
     var mob_size;
     for (var i = 0; i < GAME.field_mobs.length; i++) {
@@ -131,7 +131,7 @@ kwsv3.prototype.killElite = function () {
     
 };
 
-kwsv3.prototype.killBoss = function () {
+Assistant.prototype.killBoss = function () {
     var mob_id;
     var mob_size;
     for (var i = 0; i < GAME.field_mobs.length; i++) {

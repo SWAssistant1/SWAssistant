@@ -54,14 +54,14 @@ function getCharacters() {
         if(allCharacters.length == 0) {
             setTimeout(getCharacters, 200);
         } else {
-            var kwsCharactersManager = new KwsCharactersManager();
+            var swaCharactersManager = new KwsCharactersManager();
             allCharacters.forEach((element, index, array) => {
-                kwsCharactersManager.characters.push(element.getAttribute("data-char_id"));
+                swaCharactersManager.characters.push(element.getAttribute("data-char_id"));
             });
-            kwsLocalCharacters = kwsCharactersManager;
+            swaLocalCharacters = swaCharactersManager;
         }
     }
 }
 
-var kwsLocalCharacters = undefined;
+var swaLocalCharacters = undefined;
 getCharacters();
