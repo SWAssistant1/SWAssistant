@@ -23,17 +23,17 @@ if (typeof GAME === 'undefined' && extrapremium) { } else {
 
         var branch = window.__SWA_BRANCH__ || 'main';
         var files = [
-            'game-scripts/assistant-class.js',
-            'game-scripts/assistant-core-methods.js',
-            'game-scripts/assistant-tournaments.js',
-            'game-scripts/assistant-minimap.js',
-            'game-scripts/assistant-top-bar.js',
-            'game-scripts/assistant-auto-arena-abyss.js',
-            'game-scripts/assistant-fight.js',
-            'game-scripts/assistant-alt-pilot.js',
-            'game-scripts/assistant-char-nav.js',
-            'game-scripts/assistant-misc.js',
-            'game-scripts/assistant-bootstrap.js'
+            'game-scripts/assistant/class.js',
+            'game-scripts/assistant/core-methods.js',
+            'game-scripts/assistant/tournaments.js',
+            'game-scripts/assistant/minimap.js',
+            'game-scripts/assistant/top-bar.js',
+            'game-scripts/assistant/auto-arena-abyss.js',
+            'game-scripts/assistant/fight.js',
+            'game-scripts/assistant/alt-pilot.js',
+            'game-scripts/assistant/char-nav.js',
+            'game-scripts/assistant/misc.js',
+            'game-scripts/assistant/bootstrap.js'
         ];
         var MAX_ATTEMPTS = 4;
 

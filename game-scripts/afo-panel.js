@@ -2,15 +2,15 @@ if (typeof GAME === 'undefined') {} else {
     (function () {
         var branch = window.__SWA_BRANCH__ || 'main';
         var files = [
-            'game-scripts/afo-fixes.js',
-            'game-scripts/afo-core.js',
-            'game-scripts/afo-kom.js',
-            'game-scripts/afo-eq-sets.js',
-            'game-scripts/afo-card-sets.js',
-            'game-scripts/afo-inne.js',
-            'game-scripts/afo-pvp.js',
-            'game-scripts/afo-resp.js',
-            'game-scripts/afo-res.js'
+            'game-scripts/afo/fixes.js',
+            'game-scripts/afo/core.js',
+            'game-scripts/afo/kom.js',
+            'game-scripts/afo/eq-sets.js',
+            'game-scripts/afo/card-sets.js',
+            'game-scripts/afo/inne.js',
+            'game-scripts/afo/pvp.js',
+            'game-scripts/afo/resp.js',
+            'game-scripts/afo/res.js'
         ];
 
         var MAX_ATTEMPTS = 4;
