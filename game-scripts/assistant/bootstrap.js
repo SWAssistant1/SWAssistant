@@ -218,11 +218,19 @@ const kulka = new ballManager();
 
 // game.js already called the original GAME.parseQuickOpts once during its
 // own init, before this override (with the load_afo button) was attached.
-// Re-render the quick bar now so the button shows up without needing a
-// character switch to trigger another render.
-if (GAME.char_id) {
-    GAME.parseQuickOpts();
-}
+// Re-render the quick bar so the button shows up without needing a
+// character switch to trigger another render. GAME.char_id/quick_opts
+// timing relative to this script loading isn't guaranteed, so retry a
+// few times instead of relying on a single immediate call.
+(function ensureAfoButton(attempt) {
+    if ($('#quick_bar .qlink.load_afo').length) return;
+    if (GAME.char_id && GAME.quick_opts) {
+        GAME.parseQuickOpts();
+    }
+    if (attempt < 10) {
+        setTimeout(() => ensureAfoButton(attempt + 1), 500);
+    }
+})(0);
 
 let adimp = false;
 let arena_count = 0;
