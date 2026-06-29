@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.goToNextChar = function () {
     this.resetAFO();
     var charId = this.charactersManager.getNextCharId();

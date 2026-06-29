@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.manageAutoAbyss = function () {
     GAME.socket.emit('ga', {
         a: 59,

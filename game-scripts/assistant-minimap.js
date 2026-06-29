@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.createMinimapSettings = function () {
     this.manageMinimapSettings("load");
     this.manageMapSize("load");

@@ -1,4 +1,4 @@
-class kwsv3 {
+window.kwsv3 = class kwsv3 {
     constructor(charactersManager) {
         this.charactersManager = charactersManager;
         this.isLogged((data) => {
@@ -130,4 +130,4 @@ class kwsv3 {
             this.handleSockets(res);
         });
     }
-}
+};

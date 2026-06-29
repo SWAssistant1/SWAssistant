@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 const kws = new kwsv3(kwsLocalCharacters);
 GAME.komunikat2 = function (kom) {
     if (this.koms.indexOf(kom) == -1) {

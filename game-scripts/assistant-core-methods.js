@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.isLogged = function (cb) {
     let waitForID = setInterval(() => {
         if (GAME.pid) {

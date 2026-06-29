@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.updateTopBar = function () {
     let currentLevel = GAME.char_data.level;
     let currentTime = Date.now();

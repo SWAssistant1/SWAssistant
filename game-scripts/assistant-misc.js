@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.activateAllClanBuffs = function () {
     let abut = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`);
     let isDisabled = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`).parents("tr").hasClass("disabled");

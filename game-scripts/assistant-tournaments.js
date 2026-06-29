@@ -1,3 +1,4 @@
+var kwsv3 = window.kwsv3;
 kwsv3.prototype.findTournamentCategory = function () {
     for (var type = 2; type <= 2; type++) {
         for (var cat = 1; cat <= 69; cat++) {
