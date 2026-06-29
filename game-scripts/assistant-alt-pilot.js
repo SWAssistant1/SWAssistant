@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.createAlternativePilot = function () {
     document.getElementById('map_pilot').style.width = '512px';
     var customStyles = document.createElement('style');
@@ -358,4 +357,3 @@ console.log("custom clicked,")
     });
 };
 
-}

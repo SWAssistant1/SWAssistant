@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.updateTopBar = function () {
     let currentLevel = GAME.char_data.level;
     let currentTime = Date.now();
@@ -92,4 +91,3 @@ kwsv3.prototype.pvp_count = function () {
     $(".kws_top_bar_section.pvp").html(`PVP: ${pvp_count}`);
 };
 
-}

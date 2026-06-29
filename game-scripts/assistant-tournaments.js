@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.findTournamentCategory = function () {
     for (var type = 2; type <= 2; type++) {
         for (var cat = 1; cat <= 69; cat++) {
@@ -55,4 +54,3 @@ kwsv3.prototype.setTimerForTournamentsReset = function () {
     this.isCheckingTournaments = false;
 };
 
-}

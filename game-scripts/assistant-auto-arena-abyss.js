@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.manageAutoAbyss = function () {
     GAME.socket.emit('ga', {
         a: 59,
@@ -70,4 +69,3 @@ kwsv3.prototype.stopAutoArena = function () {
     $(".qlink.manage_auto_arena").removeClass("kws_active_icon");
 };
 
-}

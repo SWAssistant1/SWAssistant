@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.isLogged = function (cb) {
     let waitForID = setInterval(() => {
         if (GAME.pid) {
@@ -483,4 +482,3 @@ kwsv3.prototype.bindClickHandlers = function () {
     });
 };
 
-}

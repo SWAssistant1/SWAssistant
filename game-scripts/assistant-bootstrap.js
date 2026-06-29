@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 const kws = new kwsv3(kwsLocalCharacters);
 GAME.komunikat2 = function (kom) {
     if (this.koms.indexOf(kom) == -1) {
@@ -223,4 +222,3 @@ let roll2 = false;
 let roll1 = false;
 let roll3 = false;
 let version = '1.0.0';
-}

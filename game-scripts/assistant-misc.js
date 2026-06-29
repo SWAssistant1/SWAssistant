@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.activateAllClanBuffs = function () {
     let abut = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`);
     let isDisabled = $("#clan_buffs").find(`button[data-option="activate_war_buff"]`).parents("tr").hasClass("disabled");
@@ -391,4 +390,3 @@ kwsv3.prototype.UpgradeItem = function () {
     }, 400);
 };
 
-}

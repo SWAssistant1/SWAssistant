@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.goToNextChar = function () {
     this.resetAFO();
     var charId = this.charactersManager.getNextCharId();
@@ -44,4 +43,3 @@ kwsv3.prototype.resetAFO = function () {
     }, 1000);
 };
 
-}

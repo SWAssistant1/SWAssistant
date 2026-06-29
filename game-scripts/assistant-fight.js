@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.wojny2 = function () {
     var aimp = $("#e_admiral_player").find("[data-option=show_player]").attr("data-char_id");
     var imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -148,4 +147,3 @@ kwsv3.prototype.killBoss = function () {
     }
 };
 
-}

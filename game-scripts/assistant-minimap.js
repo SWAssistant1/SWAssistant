@@ -1,4 +1,3 @@
-if (typeof GAME === 'undefined') {} else {
 kwsv3.prototype.createMinimapSettings = function () {
     this.manageMinimapSettings("load");
     this.manageMapSize("load");
@@ -95,4 +94,3 @@ kwsv3.prototype.managePilot = function (act = false, val = 0) {
     }
 };
 
-}
