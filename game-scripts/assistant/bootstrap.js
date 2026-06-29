@@ -216,6 +216,14 @@ GAME.initiate = function () {
 };
 const kulka = new ballManager();
 
+// game.js already called the original GAME.parseQuickOpts once during its
+// own init, before this override (with the load_afo button) was attached.
+// Re-render the quick bar now so the button shows up without needing a
+// character switch to trigger another render.
+if (GAME.char_id) {
+    GAME.parseQuickOpts();
+}
+
 let adimp = false;
 let arena_count = 0;
 let pvp_count = 0;
