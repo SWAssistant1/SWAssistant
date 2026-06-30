@@ -179,6 +179,50 @@ GAME.parseData = function (type, res) {
     if (type == 5 && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
     return ret;
 };
+// quest_want(res, qid) z full=0 (rendering dziennika/trackera) nadpisuje globalny stan
+// quest_action_count/start/tmp dla zadań typu 39 ("zabij X mobków"), tym samym państw
+// na żywo zliczany progres w otwartym oknie podświetlonego zadania jest cofany za każdym
+// razem gdy GAME.parseTracker odświeży się po danych pola (typ 5) - czyli ciągle podczas
+// farmienia. Renderowanie trackera nie powinno ruszać tego stanu, więc zachowujemy go
+// przy wywołaniach bez full=1 (czyli poza otwarciem właściwego okna zadania).
+var swa_orig_quest_want = GAME.quest_want;
+GAME.quest_want = function (res, qid, full = 0) {
+    if (!full && res && res.type == 39) {
+        var savedAction = this.quest_action;
+        var savedTmp = this.quest_action_tmp;
+        var savedStart = this.quest_action_start;
+        var savedCount = this.quest_action_count;
+        var savedMax = this.quest_action_max;
+        var savedQid = this.quest_action_qid;
+        var ret = swa_orig_quest_want.apply(this, arguments);
+        this.quest_action = savedAction;
+        this.quest_action_tmp = savedTmp;
+        this.quest_action_start = savedStart;
+        this.quest_action_count = savedCount;
+        this.quest_action_max = savedMax;
+        this.quest_action_qid = savedQid;
+        return ret;
+    }
+    return swa_orig_quest_want.apply(this, arguments);
+};
+
+GAME.socket.on('gr', function (res) {
+    if (!res || res.e || res.me || res.game_progress) return;
+    if (res.a != 22 || !res.track || !GAME.swa_last_track || !GAME.swa_last_track.length) return;
+    for (var i = 0; i < GAME.swa_last_track.length; i++) {
+        var entry = GAME.swa_last_track[i];
+        if (entry && entry.qb_id == res.track && entry.want) {
+            var max = entry.want.maxv;
+            var cnt = (res.track == GAME.quest_action_qid && typeof res.new_amount !== 'undefined')
+                ? res.new_amount
+                : (entry.want.count || 0) + (res.amount || 0);
+            if (max && cnt > max) cnt = max;
+            entry.want.count = cnt;
+            GAME.parseTracker(GAME.swa_last_track);
+            break;
+        }
+    }
+});
 GAME.parseTracker = function (track) {
     var con='';
     var localQuestIds={};
