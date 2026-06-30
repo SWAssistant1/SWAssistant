@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 var EQS = {
     storageKey: 'swa_eq_sets_' + GAME.char_id,
     sets: JSON.parse(localStorage.getItem('swa_eq_sets_' + GAME.char_id) || '[null,null,null,null,null]'),

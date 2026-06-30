@@ -71,8 +71,8 @@ Assistant.prototype.createAlternativePilot = function () {
     }
 
     if (swaLocInfo) {
-		  swaLocInfo.style.left = '-35px';
-		  swaLocInfo.style.top = '1030px';
+        swaLocInfo.style.left = '-35px';
+        swaLocInfo.style.top = '1030px';
     }
 
     $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
@@ -121,53 +121,48 @@ Assistant.prototype.createAlternativePilot = function () {
     $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
     $('#map_canvas_container').append("<div style='position:absolute; top:730px; left:310px; z-index:999;'><button id='klawiszb5' style='width:60px; height: 60px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 16px;'>B</button></div>");
     $('#map_canvas_container').append("<div style='position:absolute; top:730px; left:436px; z-index:999;'><button id='klawiszn' style='width: 60px; height: 60px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 16px;'>N</button></div>");
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:851px; left:89px; z-index:999;'><button id='klawisz1' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>1</button></div>");	
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:851px; left:149px; z-index:999;'><button id='klawisz2' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>2</button></div>");
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:851px; left:209px; z-index:999;'><button id='klawisz3' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>3</button></div>");	
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:911px; left:89px; z-index:999;'><button id='klawisz4' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>4</button></div>");
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:911px; left:149px; z-index:999;'><button id='klawisz5' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>5</button></div>");	
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:911px; left:209px; z-index:999;'><button id='klawisz6' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>6</button></div>");	
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:971px; left:89px; z-index:999;'><button id='klawisz7' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>7</button></div>");	
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:971px; left:149px; z-index:999;'><button id='klawisz8' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>8</button></div>");
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:971px; left:209px; z-index:999;'><button id='klawisz9' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>9</button></div>");
-	$('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
-	$('#map_canvas_container').append("<div style='position:absolute; top:1031px; left:89px; z-index:999;'><button id='klawiszspacja' style='width: 150px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>----------------</button></div>");									
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:851px; left:89px; z-index:999;'><button id='klawisz1' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>1</button></div>");	
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:851px; left:149px; z-index:999;'><button id='klawisz2' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>2</button></div>");
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:851px; left:209px; z-index:999;'><button id='klawisz3' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>3</button></div>");	
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:911px; left:89px; z-index:999;'><button id='klawisz4' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>4</button></div>");
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:911px; left:149px; z-index:999;'><button id='klawisz5' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>5</button></div>");	
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:911px; left:209px; z-index:999;'><button id='klawisz6' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>6</button></div>");	
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:971px; left:89px; z-index:999;'><button id='klawisz7' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>7</button></div>");	
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:971px; left:149px; z-index:999;'><button id='klawisz8' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>8</button></div>");
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:971px; left:209px; z-index:999;'><button id='klawisz9' style='width: 50px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>9</button></div>");
+    $('.clearfix').append('<div id="map_canvas_container" style="position:absolute; top:731px; left:59px; "></div>');
+    $('#map_canvas_container').append("<div style='position:absolute; top:1031px; left:89px; z-index:999;'><button id='klawiszspacja' style='width: 150px; height: 50px; border-radius: 5px; border: 2px solid white; padding: 5px; background-color: black; color: white; cursor: pointer; font-size: 20px;'>----------------</button></div>");									
     this.bindAlternativePilotButtons();
 };
 
 Assistant.prototype.bindAlternativePilotButtons = function () {
-			$('#klawiszspacja').click(() => {
-			    const originalCreateAlternativePilot = createAlternativePilot;
-			    function createAlternativePilot() {
-			    }
+            $('#klawiszspacja').click(() => {
+                delete window.createAlternativePilot;
 
-			    delete window.createAlternativePilot;
+                $('#klawiszw, #klawiszy, #klawisz1, #klawisz2, #klawisz3, #klawisz4, #klawisz5, #klawisz6, #klawisz7, #klawisz8, #klawisz9, #klawiszq, #klawisze, #klawiszs, #klawisza, #klawiszd, #klawiszx, #klawiszz, #klawiszc, #klawiszr, #klawiszy, #klawiszv, #klawiszqx3, #klawiszwx3, #klawiszex3, #klawiszax3, #klawiszsx3, #klawiszdx3, #klawiszzx3, #klawiszcx3, #klawiszvx3, #klawiszb5, #klawiszspacja, #klawiszn').remove();
 
-			    $('#klawiszw, #klawiszy, #klawisz1, #klawisz2, #klawisz3, #klawisz4, #klawisz5, #klawisz6, #klawisz7, #klawisz8, #klawisz9, #klawiszq, #klawisze, #klawiszs, #klawisza, #klawiszd, #klawiszx, #klawiszz, #klawiszc, #klawiszr, #klawiszy, #klawiszv, #klawiszqx3, #klawiszwx3, #klawiszex3, #klawiszax3, #klawiszsx3, #klawiszdx3, #klawiszzx3, #klawiszcx3, #klawiszvx3, #klawiszb5, #klawiszspacja, #klawiszn').remove();
-
-			    var swaHidePilotElement = document.getElementById('swa_hidePilot');
-			    var mapPilotElement = document.getElementById('map_pilot');
-			    if (swaHidePilotElement) {
-				swaHidePilotElement.value = '0';
-				var changeEvent = new Event('change');
-				swaHidePilotElement.dispatchEvent(changeEvent);
-				if (swaHidePilotElement.value === '0' && mapPilotElement) {
-				    mapPilotElement.style.display = 'block';
-				}
-				var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
-				swaHidePilotElement.dispatchEvent(clickEvent);
-			    }
-			    createAlternativePilot = originalCreateAlternativePilot;
-			});
+                var swaHidePilotElement = document.getElementById('swa_hidePilot');
+                var mapPilotElement = document.getElementById('map_pilot');
+                if (swaHidePilotElement) {
+                swaHidePilotElement.value = '0';
+                var changeEvent = new Event('change');
+                swaHidePilotElement.dispatchEvent(changeEvent);
+                if (swaHidePilotElement.value === '0' && mapPilotElement) {
+                    mapPilotElement.style.display = 'block';
+                }
+                var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+                swaHidePilotElement.dispatchEvent(clickEvent);
+                }
+            });
 
     $('#klawiszw').click(() => {
         GAME.map_move(2) // klawisz 'w'
@@ -178,77 +173,77 @@ Assistant.prototype.bindAlternativePilotButtons = function () {
 console.log("custom clicked,")
         });     
 
- 		  $('#klawisz1').click(() => {
-		  var keyEvent = jQuery.Event('keydown');
-		  keyEvent.which = 49;  // Kod klawisza '1'
-		  $(document).trigger(keyEvent);
-		});	
-		$('#klawisz2').click(() => {
-		    GAME.socket.emit('ga', {
-			a: 15,
-			type: 13
-		    });
-		});
+           $('#klawisz1').click(() => {
+          var keyEvent = jQuery.Event('keydown');
+          keyEvent.which = 49;  // Kod klawisza '1'
+          $(document).trigger(keyEvent);
+        });	
+        $('#klawisz2').click(() => {
+            GAME.socket.emit('ga', {
+            a: 15,
+            type: 13
+            });
+        });
 
-		$('#klawisz3').click(() => {
-		    GAME.socket.emit('ga', {
-			a: 39,
-			type: 32
-		    });
-		});
+        $('#klawisz3').click(() => {
+            GAME.socket.emit('ga', {
+            a: 39,
+            type: 32
+            });
+        });
 
-		$('#klawisz4').click(() => {
-		    this.bless();
-		});
+        $('#klawisz4').click(() => {
+            this.bless();
+        });
 
-		$('#klawisz5').click(() => {
-		    setTimeout(() => {
-			GAME.socket.emit('ga', {
-			    a: 54,
-			    type: 0
-			});
-		    }, 300);
-		    setTimeout(() => {
-			this.vip();
-		    }, 600);
-		    GAME.socket.emit('ga', {
-			a: 15,
-			type: 7
-		    });
-		});
+        $('#klawisz5').click(() => {
+            setTimeout(() => {
+            GAME.socket.emit('ga', {
+                a: 54,
+                type: 0
+            });
+            }, 300);
+            setTimeout(() => {
+            this.vip();
+            }, 600);
+            GAME.socket.emit('ga', {
+            a: 15,
+            type: 7
+            });
+        });
 
-		$('#klawisz6').click(() => {
-		    GAME.socket.emit('ga', {
-			a: 39,
-			type: 46,
-			rent: 3
-		    });
-		});
+        $('#klawisz6').click(() => {
+            GAME.socket.emit('ga', {
+            a: 39,
+            type: 46,
+            rent: 3
+            });
+        });
 
-		$('#klawisz7').click(() => {
-		    GAME.socket.emit('ga', {
-			a: 10,
-			type: 2,
-			ct: 0
-		    });
-		});
+        $('#klawisz7').click(() => {
+            GAME.socket.emit('ga', {
+            a: 10,
+            type: 2,
+            ct: 0
+            });
+        });
 
-		$('#klawisz8').click(() => {
-		    let set = $("#ekw_sets").find(".option.ek_sets_all" + ":not(.current)").attr("data-set");
-		    if (set != undefined) {
-			GAME.socket.emit('ga', {
-			    a: 64,
-			    type: 2,
-			    set: set
-			});
-		    }
-		});
+        $('#klawisz8').click(() => {
+            let set = $("#ekw_sets").find(".option.ek_sets_all" + ":not(.current)").attr("data-set");
+            if (set != undefined) {
+            GAME.socket.emit('ga', {
+                a: 64,
+                type: 2,
+                set: set
+            });
+            }
+        });
 
-		$('#klawisz9').click(() => {
-		    var keyEvent = jQuery.Event('keydown');
-		    keyEvent.which = 57;  // Kod klawisza '9'
-		    $(document).trigger(keyEvent);
-		});
+        $('#klawisz9').click(() => {
+            var keyEvent = jQuery.Event('keydown');
+            keyEvent.which = 57;  // Kod klawisza '9'
+            $(document).trigger(keyEvent);
+        });
 
     $('#klawiszq').click(() => {
         GAME.map_move(6) //klawisz 'q'

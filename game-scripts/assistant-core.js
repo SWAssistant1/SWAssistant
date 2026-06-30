@@ -1,15 +1,7 @@
-var checked = false;
-var item_id;
-var item_jakosc=false;
-var item_poziom=false;
-var item_jakosc_cap=0;
-var item_poziom_cap=0;
-if (typeof GAME === 'undefined' && extrapremium) { } else {
+if (typeof GAME !== 'undefined' || !extrapremium) {
     let Pog = setInterval(() => {
-        if (!GAME.pid) { } else {
-            clearInterval(Pog);
-            checked = true;
-        }
+        if (!GAME.pid) return;
+        clearInterval(Pog);
     }, 50);
 
     let Pgg = setInterval(() => {

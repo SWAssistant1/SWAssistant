@@ -4,7 +4,7 @@ if (window.__SWA_MISSIONS_ENGINE_RUNNING__) return;
 window.__SWA_MISSIONS_ENGINE_RUNNING__ = true;
 
 (function(definition) {
-  /* global module, define */
+  /* global define */
   if (typeof module === 'object' && typeof module.exports === 'object') {
     module.exports = definition();
   } else if (typeof define === 'function' && define.amd) {
@@ -353,6 +353,7 @@ BinaryHeap.prototype = {
     var element = this.content[n];
     var elemScore = this.scoreFunction(element);
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       // Compute the indices of the child elements.
       var child2N = (n + 1) << 1;
@@ -411,18 +412,15 @@ function check_y(){
 
 var missionsCount = [];
 var missionsRanks = [];
-var count = 0;
 var z = 0;
 var grid = [];
 var x = 0;
 var y = 0;
 var graph;
-var start;
 var end;
 var result;
 var moveCounter = 0;
 var wait = 500;
-var waitMove = 100;
 var whatNow = 0;
 var missionTime = 0;
 var waiting = false;
@@ -523,7 +521,6 @@ function clickMissionPage() {
 function getMissionCount() {
 	missionsCount = [];
 	missionsRanks = [];
-	count = 0;
 
 	// Gra nie ma tabeli #camp_tab — liczby misji per rank są w GAME.char_data.a_1..a_5
 	// (patrz GAME.parseData case 10 / bindings rank_miss{r}_ava w game.js).
@@ -531,11 +528,10 @@ function getMissionCount() {
 		let cnt = parseInt(GAME.char_data['a_' + r]) || 0;
 		missionsRanks[r - 1] = LNG['ninja_class' + r];
 		missionsCount[r - 1] = cnt;
-		count += cnt;
 	}
 
 	publishAvailableRanks();
-};
+}
 
 function getMissionStartId() {
 	// pomiń ranki bez misji do zrobienia albo wyłączone w panelu AFO
@@ -592,7 +588,7 @@ function getPathToMissionLocation() {
 
 	graph = new Graph(grid, { diagonal: true });
 
-	startFrom = graph.grid[check_X()][check_y()];
+	var startFrom = graph.grid[check_X()][check_y()];
 	end = graph.grid[GAME.current_mission.x][GAME.current_mission.y];
 	result = astar.search(graph, startFrom, end);
 	

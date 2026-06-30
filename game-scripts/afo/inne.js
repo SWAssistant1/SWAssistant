@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 var INNE = {
     ronin: false,
     karciana: false,
@@ -12,8 +12,8 @@ INNE.start = () => {
     if (INNE.wymiana && !GAME.is_loading) {
         INNE.action();
     } else if (GAME.is_loading) {
-        window.setTimeout(INNE.start, wait_wymiana);
-    } else {}
+        window.setTimeout(INNE.start, INNE.wait_wymiana);
+    }
 };
 
 INNE.action = () => {
@@ -27,7 +27,7 @@ INNE.action = () => {
         INNE.exchange_id = 13;
     }
 
-    window.inter_wymiana = window.setInterval(function() {
+    var inter_wymiana = window.setInterval(function() {
         if (INNE.cap_wymiana > 0) {
             console.log("wymiana", INNE.cap_wymiana, INNE.res_id, INNE.exchange_id);
             GAME.emitOrder({a:211,type:2,exchange:INNE.exchange_id,item:INNE.res_id});

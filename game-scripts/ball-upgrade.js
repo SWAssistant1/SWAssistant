@@ -104,11 +104,11 @@ class ballUpgrade {
 
     markBonuses() {
         this.bonuses = [];
-        $('.ball_stats.stat_page tr[id]:not([style*="display: none"])').each((value, index, array) => {
+        $('.ball_stats.stat_page tr[id]:not([style*="display: none"])').each((value) => {
             this.bonuses.push($(`#bon${value + 1}_upgrade`)[0].checked);
         }, this);
 
-        let allUnchecked = this.bonuses.every((value, index, array) => {
+        let allUnchecked = this.bonuses.every((value) => {
             value == false;
         }, this);
 
@@ -119,7 +119,7 @@ class ballUpgrade {
 
     evaluateBonuses() {
         var sum = 0;
-        this.bonuses.forEach((shouldInclude, index, array) => {
+        this.bonuses.forEach((shouldInclude, index) => {
             if(shouldInclude) {
                 sum += parseFloat($(`#ss_change_${index+1}`).text());
             }

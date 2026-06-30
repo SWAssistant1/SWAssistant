@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
     (function () {
         var branch = window.__SWA_BRANCH__ || 'main';
         var files = [

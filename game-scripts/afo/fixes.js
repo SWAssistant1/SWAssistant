@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
     // GAME.charValuesBind assumes its target DOM elements (e.g. #char_stat_1)
     // always exist, but they're only present on certain pages. Switching
     // characters/locations a lot (PVP automation) makes the server keep

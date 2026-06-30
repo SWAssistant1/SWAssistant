@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 
 var PVP = {
     stop: true,
@@ -104,14 +104,14 @@ PVP.checkkkk = () => {
             buff: buff_id
         });
         return true;
-    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((emp == 1 || emp == 3) && who_win)) {
+    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((PVP.emp == 1 || PVP.emp == 3) && who_win)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 6,
             buff: buff_id
         });
         return true;
-    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((emp == 2 || emp == 4) && !who_win)) {
+    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((PVP.emp == 2 || PVP.emp == 4) && !who_win)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 6,
@@ -154,7 +154,7 @@ PVP.start = () => {
         PVP.action();
     } else if (GAME.is_loading) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
-    } else {}
+    }
 };
 PVP.action = () => {
     console.log("pvp action", PVP.caseNumber)
@@ -210,6 +210,7 @@ PVP.action = () => {
         case 12:
             PVP.caseNumber = 0;
             PVP.zmien_postc();
+            break;
         default:
     }
 };
@@ -620,7 +621,7 @@ PVP.orgi = () => {
     if (target) {
         PVP.org_pending[target] = true;
         setTimeout(() => {
-            window.warx = target;
+            var warx = target;
             $('#kom_con .kom').remove();
             GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
             setTimeout(() => PVP.waitForOrgHireResult(target, 6), 300);
@@ -711,9 +712,9 @@ GAME.parseListPlayer = function (entry, pvp_master) {
         var qb = '';
         var klan = '', erank = '';
         if (pd.klan_id) {
-            var cls = '';
-            if (this.clan_enemies.indexOf(pd.klan_id) != -1) cls = 'enemy';
-            klan = '<b class="poption player_clan ' + cls + '" data-option="show_clan" data-klan_id="' + pd.klan_id + '">' + pd.klan_short + ' <img src="' + pd.emblem + '" /></b>';
+            var clanCls = '';
+            if (this.clan_enemies.indexOf(pd.klan_id) != -1) clanCls = 'enemy';
+            klan = '<b class="poption player_clan ' + clanCls + '" data-option="show_clan" data-klan_id="' + pd.klan_id + '">' + pd.klan_short + ' <img src="' + pd.emblem + '" /></b>';
         }
         var cls = '';
         if (entry.cd) {

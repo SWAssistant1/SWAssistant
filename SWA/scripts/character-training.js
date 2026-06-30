@@ -2,7 +2,7 @@
 if (window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__) return;
 window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__ = true;
 
-BOT = {
+var BOT = {
     chars:[],
     timeout:1000,
 }
@@ -18,7 +18,7 @@ BOT.Start = function(){
 }
 
 BOT.LogIn = function(){
-    char_id = parseInt(this.chars);
+    var char_id = parseInt(this.chars);
     GAME.emitOrder({a:2,char_id:char_id});
 
     setTimeout(function(){ BOT.ustawTreny(); },this.timeout);
@@ -45,16 +45,15 @@ BOT.ustawTrening = function(stat, czas, mistrz) {
     GAME.emitOrder({a:8,type:2,stat:stat,duration:czas,master:mistrz});
 }
 
-BOT.ulepszTrening = function(double) {
-    var czyPodwojny = true == double;
+BOT.ulepszTrening = function() {
     GAME.emitOrder({ a: 8, type: 5, doublec: false, multi: false, code: undefined, apud: 'vzaaa' });
     this.chars.shift();
     setTimeout(function(){ BOT.Start(); },this.timeout);
 }
 
 BOT.GetChars = function(){
-    for(i=0; i<GAME.player_chars; i++){
-        char = $("li[data-option=select_char]").eq(i);
+    for(var i=0; i<GAME.player_chars; i++){
+        var char = $("li[data-option=select_char]").eq(i);
         BOT.chars.push(char.attr("data-char_id"));
     }
     

@@ -6,7 +6,7 @@ class KwsCharactersManager {
     }
     setCurrentCharacterId(charId) {
         this.currentCharacterId = charId;
-        this.currentIndex = this.characters.findIndex((value, index, array) => {
+        this.currentIndex = this.characters.findIndex((value) => {
             return value == charId;
         });
     }
@@ -55,7 +55,7 @@ function getCharacters() {
             setTimeout(getCharacters, 200);
         } else {
             var swaCharactersManager = new KwsCharactersManager();
-            allCharacters.forEach((element, index, array) => {
+            allCharacters.forEach((element) => {
                 swaCharactersManager.characters.push(element.getAttribute("data-char_id"));
             });
             swaLocalCharacters = swaCharactersManager;

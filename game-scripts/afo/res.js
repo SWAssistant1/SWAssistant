@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 var RES = {
     stop: true,
     last_loc: 0,
@@ -51,6 +51,7 @@ RES.Action = function() {
     }
 };
 RES.GetCooldown = function() {
+    var cd, r;
     if (Object.entries(GAME.map_mines.mine_data).length > 0 && GAME.map_mines.coords[parseInt(GAME.char_data.x) + "_" + parseInt(GAME.char_data.y)][0][2] > 0) {
         cd = GAME.map_mines.coords[parseInt(GAME.char_data.x) + "_" + parseInt(GAME.char_data.y)][0][2] - GAME.getTime();
         cd += 5;
@@ -62,9 +63,9 @@ RES.GetCooldown = function() {
     return r;
 };
 RES.getMinesPos = function() {
-    coords = Object.entries(GAME.map_mines.coords);
+    var coords = Object.entries(GAME.map_mines.coords);
     var mines = [];
-    for (i = 0; i < coords.length; i++) {
+    for (var i = 0; i < coords.length; i++) {
         if (this.mined_id.includes(coords[i][1][0][1])) {
             mines.push(coords[i]);
         }
@@ -73,8 +74,8 @@ RES.getMinesPos = function() {
 };
 RES.prepareMines = function(mines) {
     this.steps = [];
-    for (i = 0; i < mines.length; i++) {
-        pos = mines[i][0].split("_");
+    for (var i = 0; i < mines.length; i++) {
+        var pos = mines[i][0].split("_");
         if (i == 0) {
             RES.first_mine = [parseInt(pos[0]), parseInt(pos[1])];
         }
@@ -87,9 +88,9 @@ RES.prepareMines = function(mines) {
     this.steps.push(RES.first_mine);
 };
 RES.listMines = function() {
-    html = "";
-    mdt = Object.entries(GAME.map_mines.mine_data);
-    for (i = 0; i < mdt.length; i++) {
+    var html = "";
+    var mdt = Object.entries(GAME.map_mines.mine_data);
+    for (var i = 0; i < mdt.length; i++) {
         if (i == 0) {
             RES.mined_id.push(mdt[i][1].id);
             html += "<div style='margin-bottom:5px; border-bottom:solid gray 1px; padding:3px;'><input class='select_mine' type='checkbox' checked='true' value='" + mdt[i][1].id + "' " + ((mdt.length == 1) ? "disabled" : '') + "> " + mdt[i][1].name + "</div>";
@@ -128,11 +129,11 @@ RES.Mine = function() {
 RES.Go = function() {
     if (this.steps_clone.length > 0) {
         this.finder.findPath(GAME.char_data.x - 1, GAME.char_data.y - 1, this.steps_clone[0][0] - 1, this.steps_clone[0][1] - 1, function(path) {
-            if (path === null) {} else {
+            if (path !== null) {
                 RES.path = path;
                 if (RES.steps_clone.length > 0) {
                     RES.path.shift();
-                    cur = [GAME.char_data.x, GAME.char_data.y];
+                    var cur = [GAME.char_data.x, GAME.char_data.y];
                     setTimeout(() => {
                         if (!RES.stop && RES.mines[parseInt(GAME.char_data.x) + "_" + parseInt(GAME.char_data.y)] && $("button[data-mid='" + RES.mines[parseInt(GAME.char_data.x) + "_" + parseInt(GAME.char_data.y)] + "']").length == 1 && RES.steps.some(r => r.length == cur.length && r.every((value, index) => cur[index] == value))) {
                             setTimeout(function() {
@@ -263,7 +264,7 @@ GAME.socket.on('gr', function(res) {
     RES.HandleResponse(res);
 });
 RES.LoadES = function() {
-    esjs = document.createElement('script');
+    var esjs = document.createElement('script');
     esjs.src = 'https://cdn.jsdelivr.net/npm/easystarjs@0.4.3/bin/easystar-0.4.3.min.js';
     esjs.onload = () => {
         RES.finder = new EasyStar.js();
