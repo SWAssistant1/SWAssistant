@@ -17,5 +17,50 @@
   "extends": "eslint:recommended",
   "rules": {
     "no-unused-vars": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["game-scripts/afo/**/*.js", "game-scripts/afo-panel.js"],
+      "globals": {
+        "PVP": "writable",
+        "RESP": "writable",
+        "RES": "writable",
+        "EQS": "writable",
+        "KARTY": "writable",
+        "KOM": "writable",
+        "INNE": "writable",
+        "createPanel": "readonly",
+        "JQS": "readonly",
+        "LNG": "readonly",
+        "kom_clear": "readonly",
+        "EasyStar": "readonly"
+      }
+    },
+    {
+      "files": ["game-scripts/assistant/**/*.js", "game-scripts/assistant-core.js"],
+      "globals": {
+        "Assistant": "writable",
+        "assistant": "writable",
+        "ballManager": "readonly",
+        "arena_count": "writable",
+        "pvp_count": "writable",
+        "adimp": "writable",
+        "roll1": "writable",
+        "roll2": "writable",
+        "roll3": "writable",
+        "version": "writable",
+        "swaLocalCharacters": "writable",
+        "extrapremium": "readonly",
+        "JQS": "readonly",
+        "LNG": "readonly",
+        "kom_clear": "readonly",
+        "kom_close_bind": "readonly",
+        "option_bind": "readonly",
+        "page_bind": "readonly",
+        "tooltip_bind": "readonly",
+        "reroll_item": "readonly",
+        "upgrade_item": "readonly"
+      }
+    }
+  ]
 }
