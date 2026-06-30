@@ -57,8 +57,11 @@ GAME.cached_data = function () {
     }, {
         a: 29,
         type: 0
+    }, {
+        a: 22,
+        type: 3
     },];
-    let cd = [300, 600, 900];
+    let cd = [300, 600, 900, 1200];
     emitCalls.forEach((data, i) => {
         setTimeout(() => {
             GAME.socket.emit('ga', data);
@@ -120,6 +123,23 @@ GAME.parseQuickOpts = function (newq_bar = false) {
     tooltip_bind();
     page_bind();
 }
+GAME.swa_quest_locs = GAME.swa_quest_locs || {};
+var swa_orig_parseData = GAME.parseData;
+GAME.parseData = function (type, res) {
+    var ret = swa_orig_parseData.apply(this, arguments);
+    if (type == 32 && res.qb) {
+        var qbLen = res.qb.length;
+        for (var qi = 0; qi < qbLen; qi++) {
+            if (res.qb[qi].sd && res.qb[qi].sd.loc) {
+                GAME.swa_quest_locs[res.qb[qi].id] = {
+                    loc: res.qb[qi].sd.loc,
+                    loc_name: res.qb[qi].sd.loc_name
+                };
+            }
+        }
+    }
+    return ret;
+};
 GAME.parseTracker = function (track) {
     var con='';
     var localQuestIds={};
@@ -142,11 +162,15 @@ GAME.parseTracker = function (track) {
             var qn=track[i].header;
             if(qn&&qn.length>20) qn=qn.slice(0,20)+'...';
             var hereCls=localQuestIds[track[i].qb_id]?' swa_quest_here':'';
-            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b> '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
+            var qloc=this.swa_quest_locs[track[i].qb_id];
+            var goBtn=qloc?' <i class="upgrade_icon tpp option swa_quest_goto" data-option="quick_travel" data-loc="'+qloc.loc+'" data-toggle="tooltip" data-original-title="<div class=tt>'+qloc.loc_name+'</div>"></i>':'';
+            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
         }
     }
     con+='<div class="clr"></div>';
     $('#quest_track_con').html(con);
+    option_bind();
+    tooltip_bind();
 }
 
 GAME.endQuest = function (quest_end) {
