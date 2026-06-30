@@ -61,6 +61,43 @@
         "reroll_item": "readonly",
         "upgrade_item": "readonly"
       }
+    },
+    {
+      "files": ["game-scripts/ball-manager.js"],
+      "globals": {
+        "ballReset": "readonly",
+        "ballExp": "readonly",
+        "ballUpgrade": "readonly"
+      }
+    },
+    {
+      "files": ["SWA/scripts/**/*.js"],
+      "globals": {
+        "LNG": "readonly",
+        "Graph": "writable",
+        "astar": "writable",
+        "arr1": "writable",
+        "arr2": "writable",
+        "arr3": "writable",
+        "arr4": "writable",
+        "arr5": "writable",
+        "arr6": "writable",
+        "arr7": "writable",
+        "arr8": "writable",
+        "arr9": "writable",
+        "arr10": "writable",
+        "arr11": "writable",
+        "arr12": "writable",
+        "arr13": "writable",
+        "arr14": "writable",
+        "blocker": "writable",
+        "blocker2": "writable",
+        "blocker3": "writable",
+        "blocker5": "writable",
+        "moby_bij": "writable",
+        "multi": "writable",
+        "variab": "writable"
+      }
     }
   ]
 }

@@ -2,7 +2,7 @@
 if (window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__) return;
 window.__SWA_CHAR_TRAINING_ENGINE_RUNNING__ = true;
 
-BOT = {
+var BOT = {
     chars:[],
     timeout:1000,
 }
@@ -18,7 +18,7 @@ BOT.Start = function(){
 }
 
 BOT.LogIn = function(){
-    char_id = parseInt(this.chars);
+    var char_id = parseInt(this.chars);
     GAME.emitOrder({a:2,char_id:char_id});
 
     setTimeout(function(){ BOT.ustawTreny(); },this.timeout);
@@ -53,8 +53,8 @@ BOT.ulepszTrening = function(double) {
 }
 
 BOT.GetChars = function(){
-    for(i=0; i<GAME.player_chars; i++){
-        char = $("li[data-option=select_char]").eq(i);
+    for(var i=0; i<GAME.player_chars; i++){
+        var char = $("li[data-option=select_char]").eq(i);
         BOT.chars.push(char.attr("data-char_id"));
     }
     

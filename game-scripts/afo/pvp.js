@@ -104,14 +104,14 @@ PVP.checkkkk = () => {
             buff: buff_id
         });
         return true;
-    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((emp == 1 || emp == 3) && who_win)) {
+    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((PVP.emp == 1 || PVP.emp == 3) && who_win)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 6,
             buff: buff_id
         });
         return true;
-    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((emp == 2 || emp == 4) && !who_win)) {
+    } else if (imp == GAME.char_id && PVP.buff_imp && buff && buff_id < 7 && ((PVP.emp == 2 || PVP.emp == 4) && !who_win)) {
         GAME.socket.emit('ga', {
             a: 50,
             type: 6,
@@ -621,7 +621,7 @@ PVP.orgi = () => {
     if (target) {
         PVP.org_pending[target] = true;
         setTimeout(() => {
-            window.warx = target;
+            var warx = target;
             $('#kom_con .kom').remove();
             GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
             setTimeout(() => PVP.waitForOrgHireResult(target, 6), 300);

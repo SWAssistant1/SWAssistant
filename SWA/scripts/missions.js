@@ -592,7 +592,7 @@ function getPathToMissionLocation() {
 
 	graph = new Graph(grid, { diagonal: true });
 
-	startFrom = graph.grid[check_X()][check_y()];
+	var startFrom = graph.grid[check_X()][check_y()];
 	end = graph.grid[GAME.current_mission.x][GAME.current_mission.y];
 	result = astar.search(graph, startFrom, end);
 	

@@ -233,12 +233,8 @@ function stopIfAnotherPlayer(){
 if(stopIfAnotherPlayerOn){
 //if(Object.keys(GAME.map_players).length <= 2 && GAME.map_players[1499].y >=39){//Sprawdzanie czy na planszy sa inni gracze
 if(Object.keys(GAME.map_players).length <= 0){
-wait_resp_resp = 1;
-//scriptOn();
 return true;
 }else{
-//scriptOff();
-wait_resp_resp = 1;
 return false;
 }
 }else{

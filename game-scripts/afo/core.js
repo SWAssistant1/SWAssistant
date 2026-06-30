@@ -521,8 +521,8 @@ var createPanel = function () {
             PVP.chars = [];
         } else {
             $(".pvp_zmieniaj .pvp_status").removeClass("red").addClass("green").html("On");
-            for(i=0; i<GAME.player_chars; i++){
-                char = $("li[data-option=select_char]").eq(i);
+            for(var i=0; i<GAME.player_chars; i++){
+                var char = $("li[data-option=select_char]").eq(i);
                 PVP.chars.push(char.attr("data-char_id"));
             }
             PVP.zmieniaj = true;
@@ -697,7 +697,7 @@ var createPanel = function () {
             $('.select_mine').prop('checked', false);
             $(this).prop('checked', true);
             $('#res_Panel .select_mine:checked').each(function() {
-                id = parseInt($(this).val());
+                var id = parseInt($(this).val());
                 RES.mined_id.push(id);
             });
         } else {
