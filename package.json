@@ -1,6 +1,6 @@
 {
   "name": "swassistant",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "SWAssistant Chrome extension tooling and Electron package build",
   "private": true,
   "main": "electron/main.js",
