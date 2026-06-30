@@ -141,6 +141,7 @@ GAME.parseData = function (type, res) {
         }
         if (gotNew && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
     }
+    if (type == 5 && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
     return ret;
 };
 GAME.parseTracker = function (track) {
@@ -171,31 +172,36 @@ GAME.parseTracker = function (track) {
             if(locEntry.mobs[m]&&locEntry.mobs[m].rank) hereRanks[locEntry.mobs[m].rank]=true;
         }
     }
+    var hasNormalHere=false;
+    if(this.field_mobs){
+        for(var fm=0;fm<this.field_mobs.length;fm++){
+            var fmEntry=this.field_mobs[fm];
+            if(!fmEntry) continue;
+            var fr=fmEntry.custom_rank;
+            if(fr) hereRanks[fr]=true;
+            else hasNormalHere=true;
+        }
+    }
     if(track&&track.length){
         var len=track.length;
         con+='<div class="sekcja">'+LNG.lab181+'</div>';
         for(var i=0;i<len;i++){
             var qn=track[i].header;
-            var fullHeader=qn||'';
             if(qn&&qn.length>20) qn=qn.slice(0,20)+'...';
+            var wantHtml=this.quest_want(track[i].want,track[i].qb_id);
+            var wantText=wantHtml.replace(/<[^>]*>/g,'').toLowerCase();
             var isHere=!!localQuestIds[track[i].qb_id];
-            if(!isHere&&track[i].want&&track[i].want.canbeanymob){
-                var wnt=track[i].want;
-                if(wnt.rank){
-                    if(hereRanks[wnt.rank]) isHere=true;
-                }
-                else{
-                    var headerLow=fullHeader.toLowerCase();
-                    for(var r in hereRanks){
-                        var rankName=LNG['mob_rank'+r];
-                        if(rankName&&headerLow.indexOf(rankName.toLowerCase())!==-1){ isHere=true; break; }
-                    }
+            if(!isHere&&hasNormalHere&&wantText.indexOf('normal')!==-1) isHere=true;
+            if(!isHere){
+                for(var r in hereRanks){
+                    var rankName=LNG['mob_rank'+r];
+                    if(rankName&&wantText.indexOf(rankName.toLowerCase())!==-1){ isHere=true; break; }
                 }
             }
             var hereCls=isHere?' swa_quest_here':'';
             var qloc=this.swa_quest_locs[track[i].qb_id];
             var goBtn=qloc?' <i class="upgrade_icon tpp option swa_quest_goto" data-option="quick_travel" data-loc="'+qloc.loc+'" data-toggle="tooltip" data-original-title="<div class=tt>'+qloc.loc_name+'</div>"></i>':'';
-            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
+            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+wantHtml+'</div>';
         }
     }
     con+='<div class="clr"></div>';
