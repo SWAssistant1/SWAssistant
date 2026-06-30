@@ -159,6 +159,8 @@ GAME.processCharDataUpdate = function (field, value) {
     return ret;
 };
 GAME.swa_quest_locs = GAME.swa_quest_locs || {};
+GAME.swa_hidden_quests = GAME.swa_hidden_quests || {};
+GAME.swa_quest_panel_min = GAME.swa_quest_panel_min || false;
 var swa_orig_parseData = GAME.parseData;
 GAME.parseData = function (type, res) {
     var ret = swa_orig_parseData.apply(this, arguments);
@@ -179,9 +181,75 @@ GAME.parseData = function (type, res) {
     if (type == 5 && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
     return ret;
 };
+// quest_want(res, qid) z full=0 (rendering dziennika/trackera) nadpisuje globalny stan
+// quest_action_count/start/tmp dla zadań typu 39 ("zabij X mobków"), tym samym państw
+// na żywo zliczany progres w otwartym oknie podświetlonego zadania jest cofany za każdym
+// razem gdy GAME.parseTracker odświeży się po danych pola (typ 5) - czyli ciągle podczas
+// farmienia. Renderowanie trackera nie powinno ruszać tego stanu, więc zachowujemy go
+// przy wywołaniach bez full=1 (czyli poza otwarciem właściwego okna zadania).
+var swa_orig_quest_want = GAME.quest_want;
+GAME.quest_want = function (res, qid, full = 0) {
+    if (!full && res && res.type == 39) {
+        var savedAction = this.quest_action;
+        var savedTmp = this.quest_action_tmp;
+        var savedStart = this.quest_action_start;
+        var savedCount = this.quest_action_count;
+        var savedMax = this.quest_action_max;
+        var savedQid = this.quest_action_qid;
+        var ret = swa_orig_quest_want.apply(this, arguments);
+        this.quest_action = savedAction;
+        this.quest_action_tmp = savedTmp;
+        this.quest_action_start = savedStart;
+        this.quest_action_count = savedCount;
+        this.quest_action_max = savedMax;
+        this.quest_action_qid = savedQid;
+        return ret;
+    }
+    return swa_orig_quest_want.apply(this, arguments);
+};
+
+GAME.socket.on('gr', function (res) {
+    if (!res || res.e || res.me || res.game_progress) return;
+    if (res.a != 22 || !res.track || !GAME.swa_last_track || !GAME.swa_last_track.length) return;
+    for (var i = 0; i < GAME.swa_last_track.length; i++) {
+        var entry = GAME.swa_last_track[i];
+        if (entry && entry.qb_id == res.track && entry.want) {
+            var max = entry.want.maxv;
+            var cnt = (res.track == GAME.quest_action_qid && typeof res.new_amount !== 'undefined')
+                ? res.new_amount
+                : (entry.want.count || 0) + (res.amount || 0);
+            if (max && cnt > max) cnt = max;
+            entry.want.count = cnt;
+            if (max && cnt >= max) entry.want.is_met = true;
+            GAME.parseTracker(GAME.swa_last_track);
+            break;
+        }
+    }
+});
 GAME.parseTracker = function (track) {
     var con='';
     var localQuestIds={};
+
+    if (this.swa_last_track && this.swa_last_track !== track && track && track.length) {
+        var prevByQid = {};
+        for (var pi = 0; pi < this.swa_last_track.length; pi++) {
+            var pe = this.swa_last_track[pi];
+            if (pe && pe.qb_id) prevByQid[pe.qb_id] = pe;
+        }
+        for (var ni = 0; ni < track.length; ni++) {
+            var ne = track[ni];
+            var pe2 = ne && prevByQid[ne.qb_id];
+            // Scalaj tylko gdy to wciąż ten sam etap zadania (ten sam warunek/typ i maxv) -
+            // inaczej przy przejściu np. z "zabij 125k mobków" na kolejny etap "zabij 125
+            // bossów" w tym samym qb_id, stary, dużo większy count z poprzedniego etapu
+            // zostałby błędnie doczepiony do nowego (świeżego) wymagania.
+            if (pe2 && pe2.want && ne.want && pe2.want.maxv === ne.want.maxv && pe2.want.type === ne.want.type
+                && typeof pe2.want.count === 'number' && typeof ne.want.count === 'number' && pe2.want.count > ne.want.count) {
+                ne.want.count = pe2.want.count;
+                if (ne.want.maxv && ne.want.count >= ne.want.maxv) ne.want.is_met = true;
+            }
+        }
+    }
     this.swa_last_track=track;
     if(this.map_quests){
         for(var key in this.map_quests){
@@ -219,8 +287,13 @@ GAME.parseTracker = function (track) {
     }
     if(track&&track.length){
         var len=track.length;
-        con+='<div class="sekcja">'+LNG.lab181+'</div>';
+        con+='<div class="sekcja swa_qtrack_header">'+LNG.lab181+
+            '<span class="swa_qtrack_btn swa_qtrack_min" data-toggle="tooltip" data-original-title="<div class=tt>'+(this.swa_quest_panel_min?'Pokaż panel':'Minimalizuj panel')+'</div>">'+(this.swa_quest_panel_min?'▢':'—')+'</span>'+
+            '<span class="swa_qtrack_btn swa_qtrack_showall" data-toggle="tooltip" data-original-title="<div class=tt>Pokaż schowane zadania</div>">⟲</span>'+
+        '</div>';
+        con+='<div class="swa_qtrack_body" style="display:'+(this.swa_quest_panel_min?'none':'block')+';">';
         for(var i=0;i<len;i++){
+            if(this.swa_hidden_quests[track[i].qb_id]) continue;
             var qn=track[i].header;
             if(qn&&qn.length>20) qn=qn.slice(0,20)+'...';
             var wantHtml=this.quest_want(track[i].want,track[i].qb_id);
@@ -236,14 +309,31 @@ GAME.parseTracker = function (track) {
             var hereCls=isHere?' swa_quest_here':'';
             var qloc=this.swa_quest_locs[track[i].qb_id];
             var goBtn=qloc?' <i class="upgrade_icon tpp option swa_quest_goto" data-option="quick_travel" data-loc="'+qloc.loc+'" data-toggle="tooltip" data-original-title="<div class=tt>'+qloc.loc_name+'</div>"></i>':'';
-            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+wantHtml+'</div>';
+            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack swa_qtrack_item'+hereCls+'" data-qb_id="'+track[i].qb_id+'" data-toggle="tooltip" data-original-title="<div class=tt>Kliknij, aby schować to zadanie</div>"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+wantHtml+'</div>';
         }
+        con+='</div>';
     }
     con+='<div class="clr"></div>';
     $('#quest_track_con').html(con);
     option_bind();
     tooltip_bind();
 }
+$("body").off("click.swaQtrackMin").on("click.swaQtrackMin", ".swa_qtrack_min", function (e) {
+    e.stopPropagation();
+    GAME.swa_quest_panel_min = !GAME.swa_quest_panel_min;
+    if (GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
+});
+$("body").off("click.swaQtrackShowAll").on("click.swaQtrackShowAll", ".swa_qtrack_showall", function (e) {
+    e.stopPropagation();
+    GAME.swa_hidden_quests = {};
+    if (GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
+});
+$("body").off("click.swaQtrackHide").on("click.swaQtrackHide", ".swa_qtrack_item", function (e) {
+    if ($(e.target).closest('.option, input, select, textarea, button, a').length) return;
+    var qbId = $(this).data('qb_id');
+    if (qbId) GAME.swa_hidden_quests[qbId] = true;
+    if (GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
+});
 
 GAME.endQuest = function (quest_end) {
     JQS.qcc.hide();
@@ -325,12 +415,6 @@ GAME.initiate = function () {
 };
 new ballManager();
 
-// game.js already called the original GAME.parseQuickOpts once during its
-// own init, before this override (with the load_afo button) was attached.
-// Re-render the quick bar so the button shows up without needing a
-// character switch to trigger another render. GAME.char_id/quick_opts
-// timing relative to this script loading isn't guaranteed, so retry a
-// few times instead of relying on a single immediate call.
 (function ensureAfoButton(attempt) {
     if ($('#quick_bar .qlink.load_afo').length) return;
     if (GAME.char_id && GAME.quick_opts) {
