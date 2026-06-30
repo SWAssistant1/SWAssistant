@@ -242,12 +242,12 @@ function registerCardSwitchShortcut() {
     {
       label: 'SWAssistant',
       submenu: [
-        { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { debugLog('accelerator fired: next'); switchToAdjacentCard(1); } },
-        { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { debugLog('accelerator fired: previous'); switchToAdjacentCard(-1); } },
+        { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { switchToAdjacentCard(1); } },
+        { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { switchToAdjacentCard(-1); } },
       ],
     },
   ]);
-  
+
   const applied = Menu.setApplicationMenu(menu);
   mainWindow.setMenuBarVisibility(false);
 
