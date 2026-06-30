@@ -1,5 +1,5 @@
 if (typeof GAME !== 'undefined') {
-function loadGithubScript(path, loadedFlagName, onSuccess) {
+var loadGithubScript = function (path, loadedFlagName, onSuccess) {
     if (window[loadedFlagName]) {
         if (onSuccess) onSuccess();
         return;
@@ -18,22 +18,22 @@ function loadGithubScript(path, loadedFlagName, onSuccess) {
         console.error('[AFO] Script load failed:', path);
         GAME.komunikat('Błąd ładowania skryptu (' + path + '), spróbuj ponownie!');
     });
-}
-function loadExpEngine() {
+};
+var loadExpEngine = function () {
     loadGithubScript('SWA/scripts/exp.js', '__SWA_EXP_LOADED__');
-}
-function loadRespawnEngine() {
+};
+var loadRespawnEngine = function () {
     loadGithubScript('SWA/scripts/respawn.js', '__SWA_RESPAWN_LOADED__');
-}
-function loadMissionsEngine() {
+};
+var loadMissionsEngine = function () {
     loadGithubScript('SWA/scripts/missions.js', '__SWA_MISSIONS_LOADED__');
-}
+};
 // Ranki misji odblokowane na postaci są częścią char_data (GAME.char_data.a_1..a_5,
 // patrz GAME.useChar / GAME.parseData case 10 w game.js) — dostępne od razu po wejściu
 // do gry, więc można je pokazać i pozwolić je wybrać zanim w ogóle wystartuje automat misji.
 // a_1..a_5 to ile misji danego ranku jest aktualnie do zrobienia — pokazujemy tylko
 // te z ilością > 0, resztę i tak nie da się włączyć (nie ma czego robić).
-function renderRanksFromCharData() {
+var renderRanksFromCharData = function () {
     var ranks = [];
     for (var r = 1; r <= 5; r++) {
         if (parseInt(GAME.char_data['a_' + r]) > 0) {
@@ -42,16 +42,16 @@ function renderRanksFromCharData() {
     }
     localStorage.setItem('swa_mission_available_ranks', JSON.stringify(ranks));
     renderMissionRankButtons(ranks);
-}
-function scanMissionRanks() {
+};
+var scanMissionRanks = function () {
     if (typeof GAME === 'undefined' || !GAME.char_data) return;
     renderRanksFromCharData();
     // char_data.a_1..a_5 jest świeże tylko po odwiedzeniu strony obozu (emitOrder a:207) —
     // odświeżamy w tle i renderujemy jeszcze raz, żeby liczby nie były nieaktualne.
     try { GAME.page_switch('game_camp'); } catch (e) { /* page_switch unavailable, skip refresh */ }
     window.setTimeout(renderRanksFromCharData, 600);
-}
-function renderMissionRankButtons(ranks) {
+};
+var renderMissionRankButtons = function (ranks) {
     var $container = $('#misje_Panel .misje_ranks_container');
     if (!$container.length) return;
     var enabled = {};
@@ -72,9 +72,9 @@ function renderMissionRankButtons(ranks) {
         });
         $container.append($btn);
     });
-}
+};
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
-function createPanel() {
+var createPanel = function () {
     const css = `
         #main_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
         #main_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
@@ -754,7 +754,7 @@ function createPanel() {
     var storedMissionRanks = [];
     try { storedMissionRanks = JSON.parse(localStorage.getItem('swa_mission_available_ranks')) || []; } catch (e) { storedMissionRanks = []; }
     renderMissionRankButtons(storedMissionRanks);
-}
+};
 GAME.emit = function(order, data, force) {
     if (!this.is_loading || force) {
         this.load_start();
