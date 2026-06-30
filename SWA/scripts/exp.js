@@ -419,7 +419,7 @@ function handleResponse (res) {
             fight(mobs.mob_num)
             return
         }
-         fight()
+        move()
     }, wait2_exp);
 
     // on fight response (single attack or multi attack)
