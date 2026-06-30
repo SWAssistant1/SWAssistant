@@ -123,6 +123,41 @@ GAME.parseQuickOpts = function (newq_bar = false) {
     tooltip_bind();
     page_bind();
 }
+Assistant.prototype.notifyAntybot = function () {
+    GAME.komunikat2('<b class="red">Gra została zablokowana przez zagadkę antybotową!</b>');
+    if (typeof Notification === 'undefined') return;
+    var fire = function () {
+        try {
+            new Notification('SWAssistant', {
+                body: 'Gra została zablokowana przez zagadkę antybotową!',
+                icon: '/gfx/favicon.ico'
+            });
+        } catch (e) { /* OS notifications unavailable (e.g. no permission, headless) */ }
+    };
+    if (Notification.permission === 'granted') {
+        fire();
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (perm) {
+            if (perm === 'granted') fire();
+        });
+    }
+};
+GAME.swa_antybot_active = false;
+var swa_orig_parsePremiumData = GAME.parsePremiumData;
+GAME.parsePremiumData = function (_res) {
+    var ret = swa_orig_parsePremiumData.apply(this, arguments);
+    if (!GAME.swa_antybot_active) {
+        GAME.swa_antybot_active = true;
+        assistant.notifyAntybot();
+    }
+    return ret;
+};
+var swa_orig_processCharDataUpdate = GAME.processCharDataUpdate;
+GAME.processCharDataUpdate = function (field, value) {
+    var ret = swa_orig_processCharDataUpdate.apply(this, arguments);
+    if (field == 'bot_lock' && value == 0) GAME.swa_antybot_active = false;
+    return ret;
+};
 GAME.swa_quest_locs = GAME.swa_quest_locs || {};
 var swa_orig_parseData = GAME.parseData;
 GAME.parseData = function (type, res) {
