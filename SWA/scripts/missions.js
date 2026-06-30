@@ -535,7 +535,7 @@ function getMissionCount() {
 	}
 
 	publishAvailableRanks();
-};
+}
 
 function getMissionStartId() {
 	// pomiń ranki bez misji do zrobienia albo wyłączone w panelu AFO
