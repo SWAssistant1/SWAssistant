@@ -144,7 +144,10 @@ GAME.map_move(6);
 downb = true;
 }
 function kill_auto(){
-GAME.emitOrder({a:13,mob_num:0,fo:GAME.map_options.ma});
+var mob = GAME.field_mobs && GAME.field_mobs[0];
+if (!mob || !mob.ranks[0]) return;
+if (GAME.field_mf && GAME.field_mf[0] >= 0) GAME.emitOrder({a:13,mob_num:0,fo:GAME.map_options.ma}); // multi fight unlocked
+else GAME.emitOrder({a:7,mob_num:0,rank:0,quick:1}); // normal fight until multi fight unlocks
 }
 function kill_mystic() {
 $('[data-mob-rank="1"]').click();

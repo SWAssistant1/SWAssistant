@@ -355,24 +355,6 @@ function useSub () {
 }
 
 // ===================================
-// SSJ
-function useSSJ () {
-    GAME.emitOrder({a: 18, type: 5, tech_id: GAME.quick_opts.ssj[0]})
-}
-
-// ===================================
-// CSK
-function collectCSK () {
-if($(".black_db").length>0){
-
-    GAME.emitOrder({a:21,bid:document.getElementsByClassName("black_db")[0].attributes[2].value});
-    document.getElementsByClassName("black_db")[0].remove();
-//if($(".black_db")[$(".black_db").length-1].style[3] != "opacity")
-//$(".black_db")[$(".black_db").length-1].click();
-}
-}
-
-// ===================================
 // MOVE
 function move () {
     if (($(".resp_rare .resp_status").hasClass("red"))) {
@@ -448,7 +430,7 @@ function handleResponse (res) {
             fight(mobs.mob_num)
             return
         }
-        if(!collectCSK()) move()
+        move()
     }, wait2_exp);
 
     // on speed potion use response
@@ -459,7 +441,7 @@ function handleResponse (res) {
 
     // on collect CSK use response
     else if (res.a === 21) {
-        if (!collectCSK()) fight()
+        move()
     }
 
     // on empty response (e.g. when player can't move)
