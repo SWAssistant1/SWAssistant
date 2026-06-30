@@ -29,6 +29,7 @@ var RESP = {
     usedRamen: 0,
     lastSenzuType: null,
     minPa: 5000,
+    maxPaPercent: 80,
     bless: false,
     checkOST_timer: 0,
     normal: false,
@@ -175,6 +176,13 @@ RESP.min_pa = () => {
     }
     return RESP.minPa;
 };
+// Próg na bazie procentu maxPA zamiast samego maxPA - char_data.pr aktualizuje się
+// z opóźnieniem po zjedzeniu ramena, więc pętla feedStep potrafi wystrzelić kilka
+// kolejnych ramenów zanim PA faktycznie się zaktualizuje. Zatrzymanie się wcześniej
+// (np. 80% maxPA) daje margines na to opóźnienie i nie pozwala jeść w nieskończoność.
+RESP.maxPaThreshold = () => {
+    return Math.floor(GAME.getCharMaxPr() * (RESP.maxPaPercent / 100));
+};
 RESP.populateSubSelect = () => {
     var subs = (GAME.quick_opts && GAME.quick_opts.sub) || [];
     var $sel = $('#resp_Panel select[name=resp_sub_select]');
@@ -274,7 +282,7 @@ RESP.consumeSenzuOnce = () => {
 };
 RESP.feeding = false;
 RESP.feedStep = () => {
-    if (RESP.stop || GAME.char_data.pr >= GAME.getCharMaxPr()) {
+    if (RESP.stop || GAME.char_data.pr >= RESP.maxPaThreshold()) {
         RESP.feeding = false;
         return;
     }
