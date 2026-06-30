@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 function loadGithubScript(path, loadedFlagName, onSuccess) {
     if (window[loadedFlagName]) {
         if (onSuccess) onSuccess();

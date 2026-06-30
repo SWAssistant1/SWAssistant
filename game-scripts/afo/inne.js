@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 var INNE = {
     ronin: false,
     karciana: false,
@@ -13,7 +13,7 @@ INNE.start = () => {
         INNE.action();
     } else if (GAME.is_loading) {
         window.setTimeout(INNE.start, wait_wymiana);
-    } else {}
+    }
 };
 
 INNE.action = () => {

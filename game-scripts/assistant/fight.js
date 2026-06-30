@@ -50,7 +50,7 @@ Assistant.prototype.wojny2 = function () {
         setTimeout(() => {
             this.wojny2();
         }, 300);
-    } else { }
+    }
 };
 
 Assistant.prototype.check_imp = function () {

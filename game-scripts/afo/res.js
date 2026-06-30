@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 var RES = {
     stop: true,
     last_loc: 0,
@@ -128,7 +128,7 @@ RES.Mine = function() {
 RES.Go = function() {
     if (this.steps_clone.length > 0) {
         this.finder.findPath(GAME.char_data.x - 1, GAME.char_data.y - 1, this.steps_clone[0][0] - 1, this.steps_clone[0][1] - 1, function(path) {
-            if (path === null) {} else {
+            if (path !== null) {
                 RES.path = path;
                 if (RES.steps_clone.length > 0) {
                     RES.path.shift();

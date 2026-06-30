@@ -1,4 +1,4 @@
-if (typeof GAME === 'undefined') {} else {
+if (typeof GAME !== 'undefined') {
 
 var PVP = {
     stop: true,
@@ -154,7 +154,7 @@ PVP.start = () => {
         PVP.action();
     } else if (GAME.is_loading) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
-    } else {}
+    }
 };
 PVP.action = () => {
     console.log("pvp action", PVP.caseNumber)

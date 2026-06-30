@@ -388,7 +388,7 @@ Assistant.prototype.bindClickHandlers = function () {
                 this.goToPreviousChar();
             } else if (event.key === ".") {
                 this.goToNextChar();
-            } else if (event.key === "9" && JQS.qcc.is(":visible")) { }
+            } else if (event.key === "9" && JQS.qcc.is(":visible")) { /* suppress shortcut while quest tracker is open */ }
         }
     });
     $("body").on("click", ".qlink.load_afo", () => {
