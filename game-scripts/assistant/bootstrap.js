@@ -220,6 +220,7 @@ GAME.socket.on('gr', function (res) {
                 : (entry.want.count || 0) + (res.amount || 0);
             if (max && cnt > max) cnt = max;
             entry.want.count = cnt;
+            if (max && cnt >= max) entry.want.is_met = true;
             GAME.parseTracker(GAME.swa_last_track);
             break;
         }
@@ -238,8 +239,14 @@ GAME.parseTracker = function (track) {
         for (var ni = 0; ni < track.length; ni++) {
             var ne = track[ni];
             var pe2 = ne && prevByQid[ne.qb_id];
-            if (pe2 && pe2.want && ne.want && typeof pe2.want.count === 'number' && typeof ne.want.count === 'number' && pe2.want.count > ne.want.count) {
+            // Scalaj tylko gdy to wciąż ten sam etap zadania (ten sam warunek/typ i maxv) -
+            // inaczej przy przejściu np. z "zabij 125k mobków" na kolejny etap "zabij 125
+            // bossów" w tym samym qb_id, stary, dużo większy count z poprzedniego etapu
+            // zostałby błędnie doczepiony do nowego (świeżego) wymagania.
+            if (pe2 && pe2.want && ne.want && pe2.want.maxv === ne.want.maxv && pe2.want.type === ne.want.type
+                && typeof pe2.want.count === 'number' && typeof ne.want.count === 'number' && pe2.want.count > ne.want.count) {
                 ne.want.count = pe2.want.count;
+                if (ne.want.maxv && ne.want.count >= ne.want.maxv) ne.want.is_met = true;
             }
         }
     }
