@@ -213,7 +213,7 @@ GAME.initiate = function () {
     $('#available_servers').html(con);
     $('#available_servers option[value=' + this.server + ']').prop('selected', true);
 };
-const kulka = new ballManager();
+new ballManager();
 
 // game.js already called the original GAME.parseQuickOpts once during its
 // own init, before this override (with the load_afo button) was attached.
@@ -231,10 +231,10 @@ const kulka = new ballManager();
     }
 })(0);
 
-let adimp = false;
-let arena_count = 0;
-let pvp_count = 0;
-let roll2 = false;
-let roll1 = false;
-let roll3 = false;
-let version = '1.0.0';
+var adimp = false;
+var arena_count = 0;
+var pvp_count = 0;
+var roll2 = false;
+var roll1 = false;
+var roll3 = false;
+var version = '1.0.0';

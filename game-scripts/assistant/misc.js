@@ -33,7 +33,7 @@ Assistant.prototype.activateAllClanBuffs = function () {
     }
 };
 
-Assistant.prototype.parseMapInfo = function (quests, where) {
+Assistant.prototype.parseMapInfo = function (quests) {
     let mapInfo = Object.values(quests).filter(this.filterQuests);
     let mapSK = Object.keys(GAME.map_balls) ? Object.keys(GAME.map_balls).length : 0;
     $(`#swa_locInfo .content`).html(`Zadania: ${mapInfo.length}<br>SK: ${mapSK}`);
@@ -138,7 +138,7 @@ Assistant.prototype.bless = function () {
         type: 3
     });
     setTimeout(() => {
-        var arr = $.map($('.use_buff:checked'), function (e, i) {
+        var arr = $.map($('.use_buff:checked'), function (e) {
             return +e.value;
         });
         var btype = $('input[name="bless_type"]:checked').val();

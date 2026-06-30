@@ -131,30 +131,10 @@ RESP.check = () => {
     return false;
 };
 
-RESP.SetPageAsActive = (page, klasa) => {
-    window.setTimeout(function() {
-        let activePageElement = document.querySelector('.ekw_pag.option.active');
-        let firstPageElement = document.querySelector('.ekw_pag.option[data-page="'+1+'"]');
-        activePageElement.classList.remove('active');
-        firstPageElement.classList.add('active');
-        console.log("active page:", parseInt(firstPageElement.getAttribute('data-page')));
-
-        window.setTimeout(function() {
-            var items=[];
-            $('#ekw_page_items .nonstackable[data-class="'+1+'"]').each(function( index ) {
-                items.push(parseInt($(this).data('item_id')));
-            });
-            if(items.length){
-                GAME.emitOrder({a:12,type:11,items:items,page:GAME.ekw_page});
-                console.log("niszczenie itemow na stronie:", 1, 1);
-            }
-        }, 20);
-    }, 20);
-}
 RESP.DestroyItemsAtPage = () => {
     var items=[];
     window.setTimeout(function() {
-    $('#ekw_page_items .nonstackable[data-class="'+1+'"]').each(function( index ) {
+    $('#ekw_page_items .nonstackable[data-class="'+1+'"]').each(function () {
                         items.push(parseInt($(this).data('item_id')));
                     });
                     if(items.length){
@@ -162,7 +142,7 @@ RESP.DestroyItemsAtPage = () => {
                     }
     }, 50);
     window.setTimeout(function() {
-    $('#ekw_page_items .nonstackable[data-class="'+2+'"]').each(function( index ) {
+    $('#ekw_page_items .nonstackable[data-class="'+2+'"]').each(function () {
                         items.push(parseInt($(this).data('item_id')));
                     });
                     if(items.length){
@@ -170,7 +150,7 @@ RESP.DestroyItemsAtPage = () => {
                     }
     }, 100);
     window.setTimeout(function() {
-    $('#ekw_page_items .nonstackable[data-class="'+3+'"]').each(function( index ) {
+    $('#ekw_page_items .nonstackable[data-class="'+3+'"]').each(function () {
                         items.push(parseInt($(this).data('item_id')));
                     });
                     if(items.length){
@@ -180,7 +160,7 @@ RESP.DestroyItemsAtPage = () => {
 
     if (RESP.leg)  {
         window.setTimeout(function() {
-            $('#ekw_page_items .nonstackable[data-class="'+4+'"]').each(function( index ) {
+            $('#ekw_page_items .nonstackable[data-class="'+4+'"]').each(function () {
                 items.push(parseInt($(this).data('item_id')));
                     });
                     if(items.length){
@@ -318,7 +298,7 @@ RESP.useSenzu = () => {
     RESP.feeding = true;
     RESP.feedStep();
 };
-RESP.useBlue = (amount = RESP.CONF_BLUE_AMOUNT()) => {
+RESP.useBlue = () => {
     const blue = RESP.getSenzu(RESP.SENZU_BLUE);
     if (!blue) {
         return;
@@ -331,7 +311,7 @@ RESP.useBlue = (amount = RESP.CONF_BLUE_AMOUNT()) => {
         am: 2
     });
 };
-RESP.useGreen = (amount = RESP.CONF_GREEN_AMOUNT()) => {
+RESP.useGreen = () => {
     const green = RESP.getSenzu(RESP.SENZU_GREEN);
     console.log("use green", green);
     if (!green) {
@@ -345,7 +325,7 @@ RESP.useGreen = (amount = RESP.CONF_GREEN_AMOUNT()) => {
         am: 5
     });
 };
-RESP.usePurple = (amount = RESP.CONF_PURPLE_AMOUNT) => {
+RESP.usePurple = () => {
     const purple = RESP.getSenzu(RESP.SENZU_PURPLE);
     if (!purple) {
         return;
@@ -358,7 +338,7 @@ RESP.usePurple = (amount = RESP.CONF_PURPLE_AMOUNT) => {
         am: 3
     });
 };
-RESP.useYellow = (amount = RESP.CONF_YELLOW_AMOUNT) => {
+RESP.useYellow = () => {
     const yellow = RESP.getSenzu(RESP.SENZU_YELLOW);
     if (!yellow) {
         return;

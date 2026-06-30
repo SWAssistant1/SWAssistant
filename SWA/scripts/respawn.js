@@ -4,12 +4,8 @@ if (window.__SWA_RESPAWN_ENGINE_RUNNING__) return;
 window.__SWA_RESPAWN_ENGINE_RUNNING__ = true;
 
 var wait_resp = 2; //szybkość skryptu 1-1000 im mniejsza wartość tym szybciej
-var maxDown = 0; // ustawić 0 jeśli nie używane, maksymalna wartość na mapie do której ma się poruszać postać w dół
-var maxUp = 0; // ustawić 0 jeśli nie używane, maksymalna wartość na mapie do której ma się poruszać postać w górę
-var maxLeft = 0; // ustawić 0 jeśli nie używane, maksymalna wartość na mapie do której ma się poruszać postać w lewo
 var useBlueBeans = false; // czy ma być użyta niebieska fasolka
 var useRedBeans = true; // czy ma być użyta czerwona fasolka
-var quantityBlue = 1000; //ile ma być użytych niebieskich fasolek
 var collectBlueSenzuOn = false; //zatrzyamnie skryptu po zebraniu maksymalnej ilości niebieskich fasolek
 var limitPA = 1400 // ilość PA przy której używana jest fasolka
 var stopIfAnotherPlayerOn = true;
@@ -19,22 +15,13 @@ var killEpic = true; // zbijanie epic
 var killMystic = true; //zbijanie mistic
 var killAuto = true; // zbijanie autowalka
 var collectDB = true; // skrypt do zbierania czarnych kul
-var buttonArray = $( "button[data-option='arena_attack']");
 var moveCount = 0;
 var moveCountTarget = 13;
 
 //---------------------------------------------------------------------------------------------------------
-var minX = 1;
-var minY = 1;
-var mapay = Math.sqrt(Object.keys(GAME.mapcell).length);
-var leftb = true;
-var rightb = false;
-var upb = false;
 var downb = false;
 var whatNow = 0;
-var arena_courent = 0;
 var max_Senzu = Math.floor(GAME.char_data.pr_max/100*2*(1+GAME.getStat(99)/100));
-var refresh_arena = 0;
 //---------------------WYGLAD----------------------------------
 
 // const $css = `<style>
@@ -156,17 +143,10 @@ function go_up(){
 GAME.map_move(6);
 downb = true;
 }
-function check_X(){
-return GAME.map_players[GAME.char_data.id].x;
-}
-function check_y(){
-return GAME.map_players[GAME.char_data.id].y;
-}
 function kill_auto(){
 GAME.emitOrder({a:13,mob_num:0,fo:GAME.map_options.ma});
 }
 function kill_mystic() {
-//GAME.emitOrder({a:7,mob_num:0,rank:1,quick:1});
 $('[data-mob-rank="1"]').click();
 $('#fight_con').css('display', 'none');
 $('#fight_t1').css('display', 'none');
@@ -202,12 +182,6 @@ $('#fight_con').remove();
 $('#fight_t1').remove();
 $('#fight_t0').remove();
 }, 100);
-}
-function use_blue(x){
-GAME.emitOrder({a:12,type:14,iid:GAME.quick_opts.senzus[0].id,page:GAME.ekw_page,am:x})
-}
-function use_red(){
-GAME.emitOrder({a:12,type:14,iid:GAME.quick_opts.senzus[4].id,page:GAME.ekw_page,am:1})
 }
 function click_db(){
 

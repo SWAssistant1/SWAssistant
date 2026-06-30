@@ -4,8 +4,6 @@ let wait2_exp = 2
 // -----------------------------------
 
 // global constants
-const VERSION = 'v0.1.3'
-
 const SENZU_BLUE = 'SENZU_BLUE'
 const SENZU_GREEN = 'SENZU_GREEN'
 const SENZU_YELLOW = 'SENZU_YELLOW'
@@ -70,46 +68,6 @@ let antybotPath = false
 let stop_exp = true
 let moveTimeout
 
-let collectedCSK = 0
-// -----------------------------------
-
-// -----------------------------------
-/* TEMPLATE */
-const $css = `<style>
-    .gh_btn {background: url(/gfx/layout/zalogowany-button-bg.png) no-repeat left top;
-        height: 26px;
-        line-height: 26px;
-        display: inline-block;
-        text-align: center;
-        width: 103px;
-        color: #01070d;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: Bold;
-        text-transform: uppercase;
-        border: none;
-        cursor: pointer;
-    }</style>`
-const $main = '<div id="gh_game_helper" style="position: fixed; top: 30px; left: 0; padding: 10px; background: rgba(70,128,193,0.9); z-index: 5;"></div>'
-const $version = `<span style="position: absolute; bottom: 2px; right: 3px; color: rgb(6, 47, 88); line-height: 1; font-size: 13px; font-weight: 700;">${VERSION}</span>`
-const $exp = '<button id="gh_exp_button" class="gh_btn" style="display: block; margin-bottom: 10px;">Exp: <span id="gh_exp_status" class="red">Off</span></button>'
-
-// $('body').append($main).append($css);
-// $('#gh_game_helper')
-// 	.append($version)
-// 	.append($exp);
-
-// /* ACTIONS */
-// $('#gh_exp_button').click(() => {
-// 	if (stop_exp) {
-// 		$('#gh_exp_status').text('On').attr('class', 'green');
-// 		stop_exp = false
-// 		move()
-// 	} else {
-// 		$('#gh_exp_status').text('Off').attr('class', 'red');
-// 		stop_exp = true
-// 	}
-// });
 // -----------------------------------
 
 // -----------------------------------

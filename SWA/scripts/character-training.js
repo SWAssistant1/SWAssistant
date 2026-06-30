@@ -45,8 +45,7 @@ BOT.ustawTrening = function(stat, czas, mistrz) {
     GAME.emitOrder({a:8,type:2,stat:stat,duration:czas,master:mistrz});
 }
 
-BOT.ulepszTrening = function(double) {
-    var czyPodwojny = true == double;
+BOT.ulepszTrening = function() {
     GAME.emitOrder({ a: 8, type: 5, doublec: false, multi: false, code: undefined, apud: 'vzaaa' });
     this.chars.shift();
     setTimeout(function(){ BOT.Start(); },this.timeout);

@@ -1,7 +1,7 @@
 window.Assistant = class Assistant {
     constructor(charactersManager) {
         this.charactersManager = charactersManager;
-        this.isLogged((data) => {
+        this.isLogged(() => {
             Object.defineProperty(GAME, 'pid', {
                 writable: false
             });

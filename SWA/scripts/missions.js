@@ -412,7 +412,6 @@ function check_y(){
 
 var missionsCount = [];
 var missionsRanks = [];
-var count = 0;
 var z = 0;
 var grid = [];
 var x = 0;
@@ -422,7 +421,6 @@ var end;
 var result;
 var moveCounter = 0;
 var wait = 500;
-var waitMove = 100;
 var whatNow = 0;
 var missionTime = 0;
 var waiting = false;
@@ -523,7 +521,6 @@ function clickMissionPage() {
 function getMissionCount() {
 	missionsCount = [];
 	missionsRanks = [];
-	count = 0;
 
 	// Gra nie ma tabeli #camp_tab — liczby misji per rank są w GAME.char_data.a_1..a_5
 	// (patrz GAME.parseData case 10 / bindings rank_miss{r}_ava w game.js).
@@ -531,7 +528,6 @@ function getMissionCount() {
 		let cnt = parseInt(GAME.char_data['a_' + r]) || 0;
 		missionsRanks[r - 1] = LNG['ninja_class' + r];
 		missionsCount[r - 1] = cnt;
-		count += cnt;
 	}
 
 	publishAvailableRanks();

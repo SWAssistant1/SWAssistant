@@ -17,8 +17,6 @@ window.setTimeout(function() {
 window.blocker2 = 0;
 window.blocker3 = 0;
 window.setTimeout(function() {
-    var checker = document.getElementById("inst_rooms_container").getElementsByTagName("tr")[0].getElementsByTagName("td")[0].innerHTML; // sprawdza który pokój Twój
-
     var liczba_pokoi = document.getElementById("inst_rooms_container").childElementCount; // sprawdza ile jest pokoi
 
     for (var x = 0; x < liczba_pokoi; x++) {

@@ -204,7 +204,7 @@ Assistant.prototype.bindClickHandlers = function () {
     $("body").on("click", `.qlink.manage_autoExpeditions`, () => {
         this.manageAutoExpeditions();
     });
-    $("body").on("click", `#secondary_char_stats .activities`, (event) => {
+    $("body").on("click", `#secondary_char_stats .activities`, () => {
         GAME.socket.emit('ga', {
             a: 49,
             type: 0
