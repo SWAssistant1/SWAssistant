@@ -122,13 +122,27 @@ GAME.parseQuickOpts = function (newq_bar = false) {
 }
 GAME.parseTracker = function (track) {
     var con='';
+    var localQuestIds={};
+    if(this.map_quests){
+        for(var key in this.map_quests){
+            if(Object.prototype.hasOwnProperty.call(this.map_quests,key)){
+                var arr=this.map_quests[key];
+                if(arr){
+                    for(var j=0;j<arr.length;j++){
+                        if(arr[j]&&arr[j].qb_id) localQuestIds[arr[j].qb_id]=true;
+                    }
+                }
+            }
+        }
+    }
     if(track&&track.length){
         var len=track.length;
         con+='<div class="sekcja">'+LNG.lab181+'</div>';
         for(var i=0;i<len;i++){
             var qn=track[i].header;
             if(qn&&qn.length>20) qn=qn.slice(0,20)+'...';
-            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack"><div class="sep2"></div><b>'+qn+'</b> '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
+            var hereCls=localQuestIds[track[i].qb_id]?' swa_quest_here':'';
+            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b> '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
         }
     }
     con+='<div class="clr"></div>';
