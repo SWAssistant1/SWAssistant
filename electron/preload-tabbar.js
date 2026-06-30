@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('swaCards', {
   remove: (id) => ipcRenderer.invoke('cards-remove', id),
   switch: (id) => ipcRenderer.invoke('cards-switch', id),
   rename: (id, label) => ipcRenderer.invoke('cards-rename', id, label),
+  split: (id) => ipcRenderer.invoke('cards-split', id),
   onChanged: (callback) => {
     ipcRenderer.on('cards-changed', (_event, state) => callback(state));
   },

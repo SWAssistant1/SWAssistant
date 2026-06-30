@@ -158,6 +158,46 @@ GAME.processCharDataUpdate = function (field, value) {
     if (field == 'bot_lock' && value == 0) GAME.swa_antybot_active = false;
     return ret;
 };
+// Okno "Przekaż przedmiot" (case 'tra_item' w game.js) otwierane jest przez
+// GAME.komunikat() i zawiera <input id="trade_nick">. Dorzucamy pod to pole
+// klikalną listę postaci z tego samego konta (li[data-option=select_char]),
+// żeby nie trzeba było wpisywać nicku ręcznie. Zwykły <select> nie wchodzi w
+// grę - jego rozwinięta lista opcji renderuje się natywnie (system/przeglądarka)
+// i nie da się jej dopasować do ciemnego motywu okna, więc budujemy zwykłe
+// klikalne "pigułki" (ten sam wzorzec co przyciski w panelach AFO).
+function injectTradeNickPicker() {
+    var $nick = $('#trade_nick');
+    if (!$nick.length || $('#swa_trade_char_picker').length) return;
+    var $picker = $('<div id="swa_trade_char_picker" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px; justify-content:center;"></div>');
+    $('li[data-option=select_char]').each(function () {
+        var charId = parseInt($(this).attr('data-char_id'));
+        if (charId === GAME.char_id) return;
+        var $h3 = $(this).find('h3').clone();
+        $h3.find('span').remove();
+        var name = $h3.text().trim();
+        if (!name) return;
+        var $pill = $('<span></span>').text(name).css({
+            cursor: 'pointer',
+            padding: '3px 9px',
+            'border-radius': '10px',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid #3a3a42',
+            color: '#eee',
+            'font-size': '12px'
+        });
+        $pill.on('mouseenter', function () { $pill.css('background', 'rgba(227,64,44,0.28)'); });
+        $pill.on('mouseleave', function () { $pill.css('background', 'rgba(255,255,255,0.08)'); });
+        $pill.on('click', function () { $nick.val(name); });
+        $picker.append($pill);
+    });
+    if ($picker.children().length) $nick.closest('.game_input').after($picker);
+}
+var swa_orig_komunikat = GAME.komunikat;
+GAME.komunikat = function () {
+    var ret = swa_orig_komunikat.apply(this, arguments);
+    if ($('#trade_nick').length) injectTradeNickPicker();
+    return ret;
+};
 GAME.swa_quest_locs = GAME.swa_quest_locs || {};
 GAME.swa_hidden_quests = GAME.swa_hidden_quests || {};
 GAME.swa_quest_panel_min = GAME.swa_quest_panel_min || false;

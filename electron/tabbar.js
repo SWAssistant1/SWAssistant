@@ -2,10 +2,14 @@ const tabbar = document.getElementById('tabbar');
 
 function renderTabs(state) {
   tabbar.innerHTML = '';
+  const isSplit = !!state.splitId;
 
   state.cards.forEach((card) => {
+    const isActive = card.id === state.activeId;
+    const isSecondary = card.id === state.splitId;
+
     const tab = document.createElement('div');
-    tab.className = 'tab' + (card.id === state.activeId ? ' active' : '');
+    tab.className = 'tab' + (isActive ? ' active' : '') + (isSecondary ? ' split-secondary' : '');
 
     const label = document.createElement('span');
     label.className = 'label';
@@ -27,11 +31,33 @@ function renderTabs(state) {
     });
 
     tab.appendChild(label);
+
+    // Show split-pin on every non-active tab: ⊞ to add as secondary, ⊟ to remove
+    if (!isActive) {
+      const pin = document.createElement('span');
+      pin.className = 'split-pin';
+      pin.textContent = isSecondary ? '⊟' : '⊞';
+      pin.title = isSecondary ? 'Usuń z widoku split' : 'Pokaż obok (split)';
+      pin.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.swaCards.split(card.id);
+      });
+      tab.appendChild(pin);
+    }
+
     tab.appendChild(close);
     tab.addEventListener('click', () => window.swaCards.switch(card.id));
 
     tabbar.appendChild(tab);
   });
+
+  // Global split toggle button
+  const splitToggle = document.createElement('div');
+  splitToggle.className = 'split-toggle' + (isSplit ? ' active' : '');
+  splitToggle.textContent = '⊞';
+  splitToggle.title = isSplit ? 'Wyłącz split' : 'Włącz split';
+  splitToggle.addEventListener('click', () => window.swaCards.split());
+  tabbar.appendChild(splitToggle);
 
   const addTab = document.createElement('div');
   addTab.className = 'add-tab';
