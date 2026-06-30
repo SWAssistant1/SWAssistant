@@ -57,8 +57,11 @@ GAME.cached_data = function () {
     }, {
         a: 29,
         type: 0
+    }, {
+        a: 22,
+        type: 3
     },];
-    let cd = [300, 600, 900];
+    let cd = [300, 600, 900, 1200];
     emitCalls.forEach((data, i) => {
         setTimeout(() => {
             GAME.socket.emit('ga', data);
@@ -120,19 +123,126 @@ GAME.parseQuickOpts = function (newq_bar = false) {
     tooltip_bind();
     page_bind();
 }
+Assistant.prototype.notifyAntybot = function () {
+    GAME.komunikat2('<b class="red">Gra została zablokowana przez zagadkę antybotową!</b>');
+    if (typeof Notification === 'undefined') return;
+    var fire = function () {
+        try {
+            new Notification('SWAssistant', {
+                body: 'Gra została zablokowana przez zagadkę antybotową!',
+                icon: '/gfx/favicon.ico'
+            });
+        } catch (e) { /* OS notifications unavailable (e.g. no permission, headless) */ }
+    };
+    if (Notification.permission === 'granted') {
+        fire();
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (perm) {
+            if (perm === 'granted') fire();
+        });
+    }
+};
+GAME.swa_antybot_active = false;
+var swa_orig_parsePremiumData = GAME.parsePremiumData;
+GAME.parsePremiumData = function (_res) {
+    var ret = swa_orig_parsePremiumData.apply(this, arguments);
+    if (!GAME.swa_antybot_active) {
+        GAME.swa_antybot_active = true;
+        assistant.notifyAntybot();
+    }
+    return ret;
+};
+var swa_orig_processCharDataUpdate = GAME.processCharDataUpdate;
+GAME.processCharDataUpdate = function (field, value) {
+    var ret = swa_orig_processCharDataUpdate.apply(this, arguments);
+    if (field == 'bot_lock' && value == 0) GAME.swa_antybot_active = false;
+    return ret;
+};
+GAME.swa_quest_locs = GAME.swa_quest_locs || {};
+var swa_orig_parseData = GAME.parseData;
+GAME.parseData = function (type, res) {
+    var ret = swa_orig_parseData.apply(this, arguments);
+    if (type == 32 && res.qb) {
+        var qbLen = res.qb.length;
+        var gotNew = false;
+        for (var qi = 0; qi < qbLen; qi++) {
+            if (res.qb[qi].sd && res.qb[qi].sd.loc) {
+                GAME.swa_quest_locs[res.qb[qi].id] = {
+                    loc: res.qb[qi].sd.loc,
+                    loc_name: res.qb[qi].sd.loc_name
+                };
+                gotNew = true;
+            }
+        }
+        if (gotNew && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
+    }
+    if (type == 5 && GAME.swa_last_track) GAME.parseTracker(GAME.swa_last_track);
+    return ret;
+};
 GAME.parseTracker = function (track) {
     var con='';
+    var localQuestIds={};
+    this.swa_last_track=track;
+    if(this.map_quests){
+        for(var key in this.map_quests){
+            if(Object.prototype.hasOwnProperty.call(this.map_quests,key)){
+                var arr=this.map_quests[key];
+                if(arr){
+                    for(var j=0;j<arr.length;j++){
+                        if(arr[j]&&arr[j].qb_id) localQuestIds[arr[j].qb_id]=true;
+                    }
+                }
+            }
+        }
+    }
+    var hereRanks={};
+    var locEntry=null;
+    if(this.worldData){
+        for(var w=0;w<this.worldData.length;w++){
+            if(this.worldData[w].id==this.char_data.loc){ locEntry=this.worldData[w]; break; }
+        }
+    }
+    if(locEntry&&locEntry.mobs){
+        for(var m=0;m<locEntry.mobs.length;m++){
+            if(locEntry.mobs[m]&&locEntry.mobs[m].rank) hereRanks[locEntry.mobs[m].rank]=true;
+        }
+    }
+    var hasNormalHere=false;
+    if(this.field_mobs){
+        for(var fm=0;fm<this.field_mobs.length;fm++){
+            var fmEntry=this.field_mobs[fm];
+            if(!fmEntry) continue;
+            var fr=fmEntry.custom_rank;
+            if(fr) hereRanks[fr]=true;
+            else hasNormalHere=true;
+        }
+    }
     if(track&&track.length){
         var len=track.length;
         con+='<div class="sekcja">'+LNG.lab181+'</div>';
         for(var i=0;i<len;i++){
             var qn=track[i].header;
             if(qn&&qn.length>20) qn=qn.slice(0,20)+'...';
-            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack"><div class="sep2"></div><b>'+qn+'</b> '+this.quest_want(track[i].want,track[i].qb_id)+'</div>';
+            var wantHtml=this.quest_want(track[i].want,track[i].qb_id);
+            var wantText=wantHtml.replace(/<[^>]*>/g,'').toLowerCase();
+            var isHere=!!localQuestIds[track[i].qb_id];
+            if(!isHere&&hasNormalHere&&wantText.indexOf('normal')!==-1) isHere=true;
+            if(!isHere){
+                for(var r in hereRanks){
+                    var rankName=LNG['mob_rank'+r];
+                    if(rankName&&wantText.indexOf(rankName.toLowerCase())!==-1){ isHere=true; break; }
+                }
+            }
+            var hereCls=isHere?' swa_quest_here':'';
+            var qloc=this.swa_quest_locs[track[i].qb_id];
+            var goBtn=qloc?' <i class="upgrade_icon tpp option swa_quest_goto" data-option="quick_travel" data-loc="'+qloc.loc+'" data-toggle="tooltip" data-original-title="<div class=tt>'+qloc.loc_name+'</div>"></i>':'';
+            con+='<div id="track_quest_'+track[i].qb_id+'" class="qtrack'+hereCls+'"><div class="sep2"></div><b>'+qn+'</b>'+goBtn+' '+wantHtml+'</div>';
         }
     }
     con+='<div class="clr"></div>';
     $('#quest_track_con').html(con);
+    option_bind();
+    tooltip_bind();
 }
 
 GAME.endQuest = function (quest_end) {
