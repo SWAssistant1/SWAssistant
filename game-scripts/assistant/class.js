@@ -8,6 +8,7 @@ window.Assistant = class Assistant {
             Object.defineProperty(GAME, 'login', {
                 writable: false
             });
+            this.autoCollectActivities();
         });
         this.isCheckingTournaments = false;
         this.tournamentCategory = undefined;

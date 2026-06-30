@@ -39,6 +39,21 @@ Assistant.prototype.collectActivities = function () {
     }
 };
 
+// Runs once per character login (see isLogged in class.js). Refreshes activity
+// progress from the server, then collects every unlocked reward tier in one
+// pass via collectActivities()'s loop. #act_prizes/#char_activity are only
+// populated by the server's 'a:59' response, which is why this re-requests
+// them (a:49,type:0) before checking instead of reading stale DOM state.
+Assistant.prototype.autoCollectActivities = function () {
+    GAME.socket.emit('ga', {
+        a: 49,
+        type: 0
+    });
+    setTimeout(() => {
+        this.collectActivities();
+    }, 1000);
+};
+
 Assistant.prototype.markDaily = function () {
     let daily = ["ZADANIE PVM", "Zadanie PvP", "ROZWÓJ PLANETY ", "ZADANIE IMPERIUM", "ZADANIE KLANOWE", "NAJLEPSZY KUCHA...", "REPUTACJA", "SYMBOL WYMIARÓW", "WYMIANA CHI", "ERMITA", "Nuda", "DOSTAWCA", "BOSKA MOC", "ROZGRZEWKA", "BOSKI ULEPSZACZ", "CZAS PODRÓŻNIKÓ...", "STRAŻNIK PORZĄD...", "CODZIENNY INSTY...", "HIPER SCALACZ", "DZIWNY MEDYK"];
     daily = daily.map(item => item.trim().toLowerCase());
