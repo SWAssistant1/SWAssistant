@@ -1,4 +1,4 @@
-const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, protocol, net, session, Menu, globalShortcut } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const url = require('node:url');
@@ -229,6 +229,36 @@ function switchCard(id) {
   broadcastCards();
 }
 
+function switchToAdjacentCard(offset) {
+  const ids = [...cards.keys()];
+  if (ids.length < 2) return;
+  const currentIndex = ids.indexOf(activeCardId);
+  const nextIndex = (currentIndex + offset + ids.length) % ids.length;
+  switchCard(ids[nextIndex]);
+}
+
+function registerCardSwitchShortcut() {
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'SWAssistant',
+      submenu: [
+        { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { switchToAdjacentCard(1); } },
+        { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { switchToAdjacentCard(-1); } },
+      ],
+    },
+  ]);
+
+  const applied = Menu.setApplicationMenu(menu);
+  mainWindow.setMenuBarVisibility(false);
+
+  const nextOk = globalShortcut.register('CmdOrCtrl+Tab', () => {
+    switchToAdjacentCard(1);
+  });
+  const prevOk = globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
+    switchToAdjacentCard(-1);
+  });
+}
+
 function renameCard(id, label) {
   const card = cards.get(id);
   if (!card || !label) return;
@@ -296,6 +326,7 @@ function createWindows() {
 
   mainWindow.loadFile(path.join(__dirname, 'tabbar.html'));
   mainWindow.on('resize', layoutActiveCard);
+  registerCardSwitchShortcut();
 
   registerIpcHandlers();
 
@@ -328,4 +359,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
