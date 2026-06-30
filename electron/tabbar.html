@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #02070d;
+      overflow: hidden;
+    }
+
+    #tabbar {
+      display: flex;
+      align-items: stretch;
+      height: 38px;
+      background: #0c1620;
+      border-bottom: 1px solid #1f2d3a;
+      font-family: sans-serif;
+      font-size: 13px;
+      color: #f7ede2;
+      -webkit-app-region: drag;
+    }
+
+    .tab {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      cursor: pointer;
+      border-right: 1px solid #1f2d3a;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+
+    .tab.active {
+      background: #1c2a38;
+    }
+
+    .tab .label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab .close {
+      opacity: 0.6;
+    }
+
+    .tab .close:hover {
+      opacity: 1;
+    }
+
+    .add-tab {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      cursor: pointer;
+    }
+
+    .add-tab:hover {
+      background: #1c2a38;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="tabbar"></div>
+  <script src="tabbar.js"></script>
+</body>
+
+</html>
