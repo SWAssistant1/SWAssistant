@@ -210,6 +210,7 @@ PVP.action = () => {
         case 12:
             PVP.caseNumber = 0;
             PVP.zmien_postc();
+            break;
         default:
     }
 };
@@ -711,9 +712,9 @@ GAME.parseListPlayer = function (entry, pvp_master) {
         var qb = '';
         var klan = '', erank = '';
         if (pd.klan_id) {
-            var cls = '';
-            if (this.clan_enemies.indexOf(pd.klan_id) != -1) cls = 'enemy';
-            klan = '<b class="poption player_clan ' + cls + '" data-option="show_clan" data-klan_id="' + pd.klan_id + '">' + pd.klan_short + ' <img src="' + pd.emblem + '" /></b>';
+            var clanCls = '';
+            if (this.clan_enemies.indexOf(pd.klan_id) != -1) clanCls = 'enemy';
+            klan = '<b class="poption player_clan ' + clanCls + '" data-option="show_clan" data-klan_id="' + pd.klan_id + '">' + pd.klan_short + ' <img src="' + pd.emblem + '" /></b>';
         }
         var cls = '';
         if (entry.cd) {

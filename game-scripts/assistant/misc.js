@@ -102,9 +102,10 @@ Assistant.prototype.getTitlesList = function (cb) {
 Assistant.prototype.vip = function () {
     var month = $("#monthly_vip_rewards").find(".vip_cat.option" + ":not(.disabled)" + ":not(.received)");
     var general = $("#general_vip_rewards").find(".vip_cat.option" + ":not(.disabled)" + ":not(.received)");
+    var id, lvl;
     if (month.length) {
-        var id = parseInt(month.attr("data-vip"));
-        var lvl = parseInt(month.attr("data-level"));
+        id = parseInt(month.attr("data-vip"));
+        lvl = parseInt(month.attr("data-level"));
         GAME.socket.emit('ga', {
             a: 54,
             type: 1,
@@ -115,8 +116,8 @@ Assistant.prototype.vip = function () {
             this.vip();
         }, 500);
     } else if (general.length) {
-        var id = parseInt(general.attr("data-vip"));
-        var lvl = parseInt(general.attr("data-level"));
+        id = parseInt(general.attr("data-vip"));
+        lvl = parseInt(general.attr("data-level"));
         GAME.socket.emit('ga', {
             a: 54,
             type: 1,
@@ -304,6 +305,7 @@ Assistant.prototype.handleSockets = function (res) {
             } else {
                 break;
             }
+            // falls through
         case 57: //Tournament related
             if(res.tours) {
                 if (res.a === 57 && res.tours) {
@@ -316,15 +318,16 @@ Assistant.prototype.handleSockets = function (res) {
             } else {
                 break;
             }
-        
+            // falls through
         case 12:
+            var item;
             console.log(res);
             if (res.ekw) {
                 for (var i = 0; i < res.ekw.length; i++) {
                     console.log(res.ekw[i].id, this.item_id);
                     if (res.ekw[i].id == this.item_id) {
                         console.log("item found");
-                        var item = document.querySelector('.player_ekw_item[data-item_id="'+ this.item_id +'"]')
+                        item = document.querySelector('.player_ekw_item[data-item_id="'+ this.item_id +'"]')
                         item.dispatchEvent(mouseOverEvent);
                         break;
                     }
@@ -332,7 +335,7 @@ Assistant.prototype.handleSockets = function (res) {
                 break;
             }
             if (res.tip_id) {
-                    var item = document.querySelector('.player_ekw_item[data-item_id="'+ this.item_id +'"]')
+                    item = document.querySelector('.player_ekw_item[data-item_id="'+ this.item_id +'"]')
                     item.dispatchEvent(mouseOutEvent);
 
                     if (res.tip_id == this.item_id) {
@@ -364,6 +367,7 @@ Assistant.prototype.handleSockets = function (res) {
                     }
                 break;
             }
+            // falls through
         default:
             break;
     }

@@ -139,7 +139,7 @@ GAME.endQuest = function (quest_end) {
     JQS.qcc.hide();
     $('#field_q_' + quest_end).fadeOut();
     for (var ind in this.map_quests) {
-        if (this.map_quests.hasOwnProperty(ind)) {
+        if (Object.prototype.hasOwnProperty.call(this.map_quests, ind)) {
             var len = this.map_quests[ind].length;
             for (var i = 0; i < len; i++) {
                 if (this.map_quests[ind][i].qb_id == quest_end) {
@@ -157,7 +157,7 @@ GAME.moveQuest = function (quest_move) {
         JQS.qcc.hide();
         $('#field_q_' + quest_move.qb_id).fadeOut();
         for (var ind in this.map_quests) {
-            if (this.map_quests.hasOwnProperty(ind)) {
+            if (Object.prototype.hasOwnProperty.call(this.map_quests, ind)) {
                 var len = this.map_quests[ind].length;
                 for (var i = 0; i < len; i++) {
                     if (this.map_quests[ind][i].qb_id == quest_move.qb_id) {

@@ -4,7 +4,7 @@ if (window.__SWA_MISSIONS_ENGINE_RUNNING__) return;
 window.__SWA_MISSIONS_ENGINE_RUNNING__ = true;
 
 (function(definition) {
-  /* global module, define */
+  /* global define */
   if (typeof module === 'object' && typeof module.exports === 'object') {
     module.exports = definition();
   } else if (typeof define === 'function' && define.amd) {
@@ -353,6 +353,7 @@ BinaryHeap.prototype = {
     var element = this.content[n];
     var elemScore = this.scoreFunction(element);
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       // Compute the indices of the child elements.
       var child2N = (n + 1) << 1;
@@ -417,7 +418,6 @@ var grid = [];
 var x = 0;
 var y = 0;
 var graph;
-var start;
 var end;
 var result;
 var moveCounter = 0;

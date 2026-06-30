@@ -146,10 +146,6 @@ Assistant.prototype.createAlternativePilot = function () {
 
 Assistant.prototype.bindAlternativePilotButtons = function () {
             $('#klawiszspacja').click(() => {
-                const originalCreateAlternativePilot = createAlternativePilot;
-                function createAlternativePilot() {
-                }
-
                 delete window.createAlternativePilot;
 
                 $('#klawiszw, #klawiszy, #klawisz1, #klawisz2, #klawisz3, #klawisz4, #klawisz5, #klawisz6, #klawisz7, #klawisz8, #klawisz9, #klawiszq, #klawisze, #klawiszs, #klawisza, #klawiszd, #klawiszx, #klawiszz, #klawiszc, #klawiszr, #klawiszy, #klawiszv, #klawiszqx3, #klawiszwx3, #klawiszex3, #klawiszax3, #klawiszsx3, #klawiszdx3, #klawiszzx3, #klawiszcx3, #klawiszvx3, #klawiszb5, #klawiszspacja, #klawiszn').remove();
@@ -166,7 +162,6 @@ Assistant.prototype.bindAlternativePilotButtons = function () {
                 var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
                 swaHidePilotElement.dispatchEvent(clickEvent);
                 }
-                createAlternativePilot = originalCreateAlternativePilot;
             });
 
     $('#klawiszw').click(() => {

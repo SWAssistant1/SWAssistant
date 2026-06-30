@@ -77,7 +77,7 @@ class ballExp {
         var expKuli = $('#ss_exp').text();
         var expKuliBezSpacji = expKuli.replace(/\s/g, '');
         var expKuliPodzielony = expKuliBezSpacji.split('/');
-        var expKuli = parseInt(expKuliPodzielony[0]);
+        expKuli = parseInt(expKuliPodzielony[0]);
         var expKuliPotrzebny = parseInt(expKuliPodzielony[1]);
         
         if (expKuli < expKuliPotrzebny || this.nonStopExp) {

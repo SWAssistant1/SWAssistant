@@ -395,7 +395,7 @@ Assistant.prototype.bindClickHandlers = function () {
         if (typeof this.afo_is_loaded == 'undefined') {
             this.afo_is_loaded = true;
             $.get("https://raw.githubusercontent.com/SWAssistant1/SWAssistant/" + (window.__SWA_BRANCH__ || 'main') + "/game-scripts/afo-panel.js?t=" + Date.now(), (data) => {
-                $("body").append(`<script>${data}<\/script>`);
+                $("body").append(`<script>${data}</script>`);
                 GAME.komunikat("załadowano afo!");
             }).fail(() => {
                 this.afo_is_loaded = undefined;
