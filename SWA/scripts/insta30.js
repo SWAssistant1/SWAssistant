@@ -2,16 +2,8 @@
 if (window.__SWA_INSTA30_ENGINE_RUNNING__) return;
 window.__SWA_INSTA30_ENGINE_RUNNING__ = true;
 
-// Cały ten skrypt to jeden wielki łańcuch setTimeout/setInterval bez żadnego
-// mechanizmu zatrzymania - stąd nie dało się go wyłączyć po starcie (przycisk
-// "Insta 30" w core.js tylko blokował ponowne wczytanie skryptu, nie miał
-// żadnego "off"). scheduleTimeout/scheduleInterval owijają natywne wywołania
-// tak, żeby dało się scentralizowanie anulować WSZYSTKIE zaplanowane kroki
-// jednym window.__SWA_INSTA30_STOP__() - bez przerabiania każdej z osobna
-// z ~15 zagnieżdżonych funkcji tego skryptu.
 var insta30Stopped = false;
 var insta30Timeouts = [];
-var insta30Intervals = [];
 function scheduleTimeout(fn, delay) {
     var id = window.setTimeout(function () {
         if (insta30Stopped) return;
@@ -20,602 +12,409 @@ function scheduleTimeout(fn, delay) {
     insta30Timeouts.push(id);
     return id;
 }
-function scheduleInterval(fn, delay) {
-    var id = window.setInterval(function () {
-        if (insta30Stopped) { window.clearInterval(id); return; }
-        fn();
-    }, delay);
-    insta30Intervals.push(id);
-    return id;
-}
 window.__SWA_INSTA30_STOP__ = function () {
     insta30Stopped = true;
-    insta30Intervals.forEach(function (id) { window.clearInterval(id); });
     insta30Timeouts.forEach(function (id) { window.clearTimeout(id); });
+    if (currentWalk && currentWalk.fallback) window.clearTimeout(currentWalk.fallback);
+    currentWalk = null;
+    GAME.socket.off('gr', onGr);
     window.__SWA_INSTA30_ENGINE_RUNNING__ = false;
 };
 
-scheduleTimeout(function() {
+function rawDir(dx, dy) {
+    if (dx === 0 && dy === 0) return 0;
+    if (dx === 0) return dy === 1 ? 1 : 2;
+    if (dy === 0) return dx === 1 ? 7 : 8;
+    if (dx === 1 && dy === 1) return 3;
+    if (dx === -1 && dy === 1) return 4;
+    if (dx === 1 && dy === -1) return 5;
+    return 6; // dx===-1 && dy===-1
+}
+
+function canStepDir(x, y, dir) {
+    var nx = x, ny = y;
+    if (dir === 1) ny++;
+    else if (dir === 2) ny--;
+    else if (dir === 3) { nx++; ny++; }
+    else if (dir === 4) { nx--; ny++; }
+    else if (dir === 5) { nx++; ny--; }
+    else if (dir === 6) { nx--; ny--; }
+    else if (dir === 7) nx++;
+    else if (dir === 8) nx--;
+    var cell = GAME.mapcell && GAME.mapcell[nx + '_' + ny];
+    return !!(cell && cell.m != 0);
+}
+
+function pickDir(x, y, tx, ty) {
+    var dx = tx === null ? 0 : (tx > x ? 1 : (tx < x ? -1 : 0));
+    var dy = ty === null ? 0 : (ty > y ? 1 : (ty < y ? -1 : 0));
+    var ideal = rawDir(dx, dy);
+    if (ideal === 0) return 0;
+    if (canStepDir(x, y, ideal)) return ideal;
+    var altX = dx !== 0 ? (dx === 1 ? 7 : 8) : 0;
+    if (altX && canStepDir(x, y, altX)) return altX;
+    var altY = dy !== 0 ? (dy === 1 ? 1 : 2) : 0;
+    if (altY && canStepDir(x, y, altY)) return altY;
+    return ideal; // nic wolnego wokół - i tak spróbuj, żeby zobaczyć realny komunikat gry
+}
+function arrived(x, y, tx, ty) {
+    return (tx === null || x === tx) && (ty === null || y === ty);
+}
+
+var currentWalk = null; // {tx, ty, onArrive, fallback}
+function walkTick() {
+    if (!currentWalk || insta30Stopped) return;
+    var w = currentWalk;
+    var x = GAME.char_data.x, y = GAME.char_data.y;
+    if (arrived(x, y, w.tx, w.ty)) {
+        currentWalk = null;
+        window.clearTimeout(w.fallback);
+        w.onArrive();
+        return;
+    }
+    GAME.map_move(pickDir(x, y, w.tx, w.ty));
+    w.fallback = scheduleTimeout(walkTick, 900); // zabezpieczenie na wypadek zgubionej odpowiedzi 'gr'
+}
+
+function walkTo(tx, ty, onArrive) {
+    if (currentWalk) window.clearTimeout(currentWalk.fallback);
+    currentWalk = { tx: tx, ty: ty, onArrive: onArrive, fallback: null };
+    walkTick();
+}
+
+var pendingAttackTick = null;
+var pendingByA = {}; // a-code -> callback czekający na najbliższą odpowiedź serwera z tym 'a'
+function onGr(res) {
+    if (insta30Stopped) return;
+    if (currentWalk && res.a === 4 && res.char_id === GAME.char_id) {
+        window.clearTimeout(currentWalk.fallback);
+        scheduleTimeout(walkTick, 2);
+    }
+    // faza 1 walki (patrz fight()) reaguje na potwierdzenie ataku zamiast na sztywny timer
+    if (pendingAttackTick && (res.a === 7 || res.a === 13)) {
+        var tick = pendingAttackTick;
+        pendingAttackTick = null;
+        scheduleTimeout(tick, 2);
+    }
+    if (res.a !== undefined && pendingByA[res.a]) {
+        var cb = pendingByA[res.a];
+        pendingByA[res.a] = null;
+        cb();
+    }
+}
+GAME.socket.on('gr', onGr);
+
+function waitFor(check, onReady, timeout, interval) {
+    timeout = timeout || 4000;
+    interval = interval || 100;
+    var elapsed = 0;
+    (function poll() {
+        if (insta30Stopped) return;
+        if (check()) { onReady(); return; }
+        elapsed += interval;
+        if (elapsed >= timeout) { onReady(); return; }
+        scheduleTimeout(poll, interval);
+    })();
+}
+
+function waitForA(aCode, onDone, timeoutMs, settleMs) {
+    var done = false;
+    function resolve() {
+        if (done) return;
+        done = true;
+        pendingByA[aCode] = null;
+        scheduleTimeout(onDone, settleMs === undefined ? 400 : settleMs);
+    }
+    pendingByA[aCode] = resolve;
+    scheduleTimeout(resolve, timeoutMs || 3000);
+}
+
+function clickFieldQuest(onDone) {
+    waitFor(function () { return $('#field_opts_con .field_quest').length > 0; }, function () {
+        var el = $('#field_opts_con .field_quest')[0];
+        if (!el) { onDone(); return; }
+        el.click();
+        waitForA(22, onDone);
+    });
+}
+
+function clickQuestNext(onDone) {
+    pollQuestButtons(onDone, 0);
+}
+function pollQuestButtons(onDone, elapsedMs) {
+    var finishEl = $('.quest_win button[data-option="finish_quest"]')[0];
+    if (finishEl) {
+        finishEl.click();
+        waitForA(22, onDone);
+        return;
+    }
+    var retryEl = $('.quest_win button[data-option="quest_try_again"]')[0];
+    if (retryEl) {
+        retryEl.click();
+        waitForA(22, function () { pollQuestButtons(onDone, elapsedMs); }, 3000, 300);
+        return;
+    }
+    if (elapsedMs >= 60000) { onDone(); return; } // etap z limitem czasu potrafi wymagać realnie sporo czekania - długi, ale nie nieskończony timeout
+    scheduleTimeout(function () {
+        clickFieldQuest(function () {
+            pollQuestButtons(onDone, elapsedMs + 1500);
+        });
+    }, 1500);
+}
+
+function findOwnRoomRow() {
+    var myLabel = GAME.char_data.name + " [S " + GAME.server + "]";
+    var rows = document.querySelectorAll('#inst_rooms_container tr');
+    for (var i = 0; i < rows.length; i++) {
+        var tds = rows[i].getElementsByTagName('td');
+        if (tds.length && tds[0].innerHTML === myLabel) return rows[i];
+    }
+    return null;
+}
+function clickRoomButton(optionName, onDone) {
+    waitFor(function () {
+        var row = findOwnRoomRow();
+        return !!(row && row.querySelector('button[data-option="' + optionName + '"]'));
+    }, function () {
+        var row = findOwnRoomRow();
+        var btn = row && row.querySelector('button[data-option="' + optionName + '"]');
+        if (btn) btn.click();
+        onDone();
+    }, 6000, 150);
+}
+
+scheduleTimeout(function () {
     document.getElementsByClassName("select_page")[28].click(); // włącza okienko z instancjami
 }, 300);
 
-scheduleTimeout(function() {
+scheduleTimeout(function () {
     document.getElementsByClassName("instance_name")[1].click(); // włącza instancję Ronina
-}, 900);
+}, 700);
 
-scheduleTimeout(function() {
-    GAME.emitOrder({a:29,type:2,instance:GAME.current_instance}); // tworzy pokój
-}, 1500);
-
-window.blocker2 = 0;
-window.blocker3 = 0;
-scheduleTimeout(function() {
-    var liczba_pokoi = document.getElementById("inst_rooms_container").childElementCount; // sprawdza ile jest pokoi
-
-    for (var x = 0; x < liczba_pokoi; x++) {
-        var xy = document.getElementById("inst_rooms_container").getElementsByTagName("tr")[x].getElementsByTagName("td")[0].innerHTML;
-
-        var tekst = GAME.char_data.name + " [S " + GAME.server + "]";
-
-        if (xy == tekst) { // sprawdza który pokój jest Twój
-            var y = x;
-            document.getElementById("inst_rooms_container").getElementsByTagName("tr")[y].getElementsByTagName("td")[4].getElementsByTagName("button")[0].click(); // rozpoczyna instancje
-            
-            scheduleTimeout(function() {
-                document.getElementById("inst_rooms_container").getElementsByTagName("tr")[y].getElementsByTagName("td")[4].getElementsByTagName("button")[0].click(); //wchodzi do instancji
-            }, 1200);
-            
-            scheduleTimeout(function() {
-                GAME.page_switch("game_map"); // włącza mape
-            }, 2400);
-            
-            scheduleTimeout(function() {
-                document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-            }, 3600);
-            
-            scheduleTimeout(function() {
-                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-            }, 4800);
-            
-            scheduleTimeout(function() {
-                window.arr1 = [];
-                window.arr2 = [];
-                window.arr3 = [];
-                window.blocker = 1;
-                // idzie do góry
-                if (blocker == 1) {
-                    arr1.push(scheduleInterval(function() {
-                        if (GAME.char_data.y > 14) {
-                            GAME.map_move(2);
-                        } else if (GAME.char_data.y == 14) {
-                           scheduleTimeout(function() {
-                                blocker = 0;
-                                arr1.map((a) => {
-                                    clearInterval(a);
-                                    arr1 = [];
+scheduleTimeout(function () {
+    GAME.emitOrder({ a: 29, type: 2, instance: GAME.current_instance }); // tworzy pokój
+    waitFor(function () { return !!findOwnRoomRow(); }, function () {
+        clickRoomButton('start_instance_room', function () {
+            clickRoomButton('enter_instance_room', function () {
+                scheduleTimeout(function () {
+                    GAME.page_switch("game_map"); // włącza mapę
+                    scheduleTimeout(function () {
+                        clickFieldQuest(function () {
+                            scheduleTimeout(function () {
+                                clickQuestNext(function () {
+                                    scheduleTimeout(leg1, 300);
                                 });
-                                scheduleTimeout(function() {
-                                    go2();
-                                }, 780);
-                                
-                           }, 300);
-                        }
-                        if (GAME.char_data.y < 14) {
-                            GAME.map_move(1);
-                        }
-                    }, 300));
-                }
-            
-            }, 6600);
-            
-        }
-        //break;
-    }
-}, 2100);
+                            }, 400);
+                        });
+                    }, 600);
+                }, 300);
+            });
+        });
+    }, 6000, 150);
+}, 1100);
 
-window.blocker4 = 0;
-
-function go2() {
-    arr2.push(scheduleInterval(function() {
-        if (blocker3 == 0) {
-        if (GAME.char_data.x < 19) {
-            GAME.map_move(7);
-        } else if (GAME.char_data.x == 19) {
-            scheduleTimeout(function() {
-                blocker3 = 1;
-                arr2.map((a) => {
-                    clearInterval(a);
-                    arr2 = [];
-                });
-                scheduleTimeout(function() {
-                    go3();
-                }, 720);
-            }, 300);
-        }
-        if (GAME.char_data.x > 19) {
-            GAME.map_move(8);
-        }
-        }
-    }, 600));
+function leg1() {
+    walkTo(null, 14, function () {
+        scheduleTimeout(leg2, 400);
+    });
 }
-
-function go3() {
-    arr3.push(scheduleInterval(function() {
-        if (GAME.char_data.y > 12) {
-            GAME.map_move(2);
-        } else if (GAME.char_data.y == 12) {
-            scheduleTimeout(function() {
-                arr3.map((a) => {
-                    clearInterval(a);
-                    arr3 = [];
-                });
-                scheduleTimeout(function() {
-                    go4();
-                }, 720);
-            }, 300);
-        }
-        if (GAME.char_data.y < 12) {
-            GAME.map_move(1);
-        }
-    }, 600));
-    
+// Odcinek 2: korytarz w prawo (tylko oś X)
+function leg2() {
+    walkTo(19, null, function () {
+        scheduleTimeout(leg3, 400);
+    });
 }
-
-window.blocker5 = 0;
+// Odcinek 3: korytarz w górę (tylko oś Y)
+function leg3() {
+    walkTo(null, 12, function () {
+        scheduleTimeout(go4, 400);
+    });
+}
 
 function go4() {
-    document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-    
-    scheduleTimeout(function() {
-        
-        if (blocker2 == 0) {
-        blocker2 = 1;
-        for (var x = 0; x <= 1000; x++) {
-            GAME.questAction();
-        }
-        
-        scheduleTimeout(function() {
-            document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-        }, 600);
-        
-        console.log('1');
-        scheduleTimeout(function() {
-            document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-            
-            scheduleTimeout(function() {
-                document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                
-                scheduleTimeout(function() {
-                    if (blocker5 == 0) {
-                        blocker5 = 1;
-                        for (var x = 0; x <= 1000; x++) {
-                            GAME.questAction();
-                            console.log('2');
-                        }
-                        
-                        scheduleTimeout(function() {
-                            document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                            
-                            scheduleTimeout(function() {
-                                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                            }, 480);
-                            
-                            scheduleTimeout(function() {
-                                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                            }, 1020);
-                            
-                            scheduleTimeout(function() {
-                                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                
-                                scheduleTimeout(function() {
-                                    go5();
-                                }, 480);
-                            
-                            }, 1560);
-                            
-                        }, 2880);
-                    }
-                }, 900);
-            }, 900);
-            
-        }, 2700);
-        }
-    }, 900);
+    clickFieldQuest(function () {
+        scheduleTimeout(function () {
+            for (var x = 0; x <= 1000; x++) GAME.questAction(); // patrz GAME.questAction (game.js:6657) - debounce 300ms, ta pętla tylko od razu dobija licznik do maksimum, realny emit (a:22 type:7) leci po debounce
+            waitForA(22, function () {
+                clickFieldQuest(function () {
+                    clickQuestNext(function () {
+                        clickFieldQuest(function () {
+                            scheduleTimeout(function () {
+                                for (var x = 0; x <= 1000; x++) GAME.questAction();
+                                waitForA(22, function () {
+                                    clickFieldQuest(function () {
+                                        clickQuestNext(function () {
+                                            clickQuestNext(function () {
+                                                clickQuestNext(function () {
+                                                    scheduleTimeout(go5, 300);
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            }, 400);
+                        });
+                    });
+                });
+            }, 400);
+        }, 400);
+    });
 }
 
 function go5() {
-    window.arr4 = [];
-    window.arr5 = [];
-    window.arr6 = [];
-    
-    arr4.push(scheduleInterval(function() {
-        if (GAME.char_data.x > 25) {
-            GAME.map_move(8);
-        }
-        if (GAME.char_data.x < 25) {
-            GAME.map_move(7);
-        }
-        if (GAME.char_data.y > 16) {
-            GAME.map_move(2);
-        }
-        if (GAME.char_data.y < 16) {
-            GAME.map_move(1);
-        }
-        
-        if (GAME.char_data.x == 25 && GAME.char_data.y == 16) {
-            arr4.map((a) => {
-                clearInterval(a);
-                arr4 = [];
+    walkTo(25, 16, function () {
+        scheduleTimeout(function () {
+            clickFieldQuest(function () {
+                clickQuestNext(function () {
+                    scheduleTimeout(leg5, 250);
+                });
             });
-            
-            scheduleTimeout(function() {
-                document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                
-                scheduleTimeout(function() {
-                    document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                    
-                    scheduleTimeout(function() {
-                        arr5.push(scheduleInterval(function() {
-                            if (GAME.char_data.x > 24) {
-                                GAME.map_move(8);
-                            }
-                            
-                            if (GAME.char_data.x == 24) {
-                                arr5.map((a) => {
-                                    clearInterval(a);
-                                    arr5 = [];
-                                });
-                                
-                                scheduleTimeout(function() {
-                                    document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                    }, 600);
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                    }, 1200);
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                        
-                                        scheduleTimeout(function() {
-                                            arr6.push(scheduleInterval(function() {
-                                                if (GAME.char_data.x < 25) {
-                                                    GAME.map_move(7);
-                                                }
-                                                if (GAME.char_data.x > 25) {
-                                                    GAME.map_move(8);
-                                                }
-                                                if (GAME.char_data.x == 25) {
-                                                    arr6.map((a) => {
-                                                        clearInterval(a);
-                                                        arr6 = [];
-                                                    });
-                                                    
-                                                    scheduleTimeout(function() {
-                                                        document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                                                        
-                                                        scheduleTimeout(function() {
-                                                            for (var x = 0; x <= 1000; x++) {
-                                                                GAME.questAction();
-                                                            }
-                                                            
-                                                            scheduleTimeout(function() {
-                                                                go6();
-                                                            }, 2700);
-                                                        }, 300);
-                                                    }, 300);
-                                                }
-                                            }, 500));
-                                        }, 300);
-                                    
-                                    }, 1800);
-                                }, 33000); // celowo nietknięte przy skracaniu odstępów - 33s odstaje od reszty (rząd 1-3s), możliwe że to realny wymagany czas oczekiwania w grze w tym miejscu, a nie tylko zapas na animację; do zweryfikowania na żywo
-                            }
-                        }, 500));
-                        
-                    }, 240);
-                }, 300);
-            }, 420);
-        }
-    }, 500));
+        }, 300);
+    });
+}
+
+function leg5() {
+    walkTo(24, null, function () {
+        scheduleTimeout(function () {
+            clickFieldQuest(function () {
+                clickQuestNext(function () {
+                    clickQuestNext(function () {
+                        clickQuestNext(function () {
+                            scheduleTimeout(leg6, 400);
+                        });
+                    });
+                });
+            });
+        }, 300);
+    });
+}
+// powrót tylko oś X
+function leg6() {
+    walkTo(25, null, function () {
+        scheduleTimeout(function () {
+            clickFieldQuest(function () {
+                scheduleTimeout(function () {
+                    for (var x = 0; x <= 1000; x++) GAME.questAction();
+                    waitForA(22, function () {
+                        scheduleTimeout(go6, 150);
+                    });
+                }, 150);
+            });
+        }, 150);
+    });
 }
 
 function go6() {
-    document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-    
-    scheduleTimeout(function() {
-        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-    }, 600);
-    
-    scheduleTimeout(function() {
-        document.getElementsByClassName("quest_desc")[1].getElementsByTagName("div")[0].getElementsByTagName("strong")[0].getElementsByTagName("button")[0].click(); // atakuje Tatewaki
-        
-        scheduleTimeout(function() {
-            document.getElementById("fight_view").style.display = "none";
-        }, 150);
-    }, 1200);
-    
-    scheduleTimeout(function() {
-        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-        
-        scheduleTimeout(function() {
-            go7();
-        }, 900);
-    }, 1800);
+    clickFieldQuest(function () {
+        clickQuestNext(function () {
+            waitFor(function () { return $('.quest_desc').length > 1; }, function () {
+                document.getElementsByClassName("quest_desc")[1].getElementsByTagName("div")[0].getElementsByTagName("strong")[0].getElementsByTagName("button")[0].click(); // atakuje Tatewaki
+                scheduleTimeout(function () {
+                    document.getElementById("fight_view").style.display = "none";
+                    clickQuestNext(function () {
+                        scheduleTimeout(go7, 300);
+                    });
+                }, 150);
+            });
+        });
+    });
 }
 
 function go7() {
-    window.arr7 = [];
-    window.arr8 = [];
-    window.arr9 = [];
-    window.arr10 = [];
-    
-    arr7.push(scheduleInterval(function() {
-        if (GAME.char_data.x > 20) {
-            GAME.map_move(8);
-        }
-        if (GAME.char_data.x < 20) {
-            GAME.map_move(7);
-        }
-        if (GAME.char_data.y > 11) {
-            GAME.map_move(2);
-        }
-        if (GAME.char_data.y < 11) {
-            GAME.map_move(1);
-        }
-        
-        if (GAME.char_data.x == 20 && GAME.char_data.y == 11) {
-            arr7.map((a) => {
-                clearInterval(a);
-                arr7 = [];
-            });
-            
-            scheduleTimeout(function() {
-                arr8.push(scheduleInterval(function() {
-                    if (GAME.char_data.x > 29) {
-                        GAME.map_move(8);
-                    }
-                    if (GAME.char_data.x < 29) {
-                        GAME.map_move(7);
-                    }
-                    if (GAME.char_data.y > 8) {
-                        GAME.map_move(2);
-                    }
-                    if (GAME.char_data.y < 8) {
-                        GAME.map_move(1);
-                    }
-                    if (GAME.char_data.x == 29 && GAME.char_data.y == 8) {
-                        arr8.map((a) => {
-                            clearInterval(a);
-                            arr8 = [];
-                        });
-                        
-                        scheduleTimeout(function() {
-                            arr9.push(scheduleInterval(function() {
-                                if (GAME.char_data.x > 33) {
-                                    GAME.map_move(8);
-                                }
-                                if (GAME.char_data.x < 33) {
-                                    GAME.map_move(7);
-                                }
-                                if (GAME.char_data.y > 14) {
-                                    GAME.map_move(2);
-                                }
-                                if (GAME.char_data.y < 14) {
-                                    GAME.map_move(1);
-                                }
-                                if (GAME.char_data.x == 33 && GAME.char_data.y == 14) {
-                                    arr9.map((a) => {
-                                        clearInterval(a);
-                                        arr9 = [];
-                                    });
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
+    walkTo(20, 11, function () {
+        scheduleTimeout(function () {
+            walkTo(29, 8, function () {
+                scheduleTimeout(function () {
+                    walkTo(33, 14, function () {
+                        clickFieldQuest(function () {
+                            clickQuestNext(function () {
+                                clickQuestNext(function () {
+                                    scheduleTimeout(function () {
+                                        walkTo(35, null, function () {
+                                            scheduleTimeout(go8, 600);
+                                        });
                                     }, 300);
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                    }, 900);
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                        
-                                        scheduleTimeout(function() {
-                                            arr10.push(scheduleInterval(function() {
-                                                if (GAME.char_data.x > 35) {
-                                                    GAME.map_move(8);
-                                                }
-                                                if (GAME.char_data.x < 35) {
-                                                    GAME.map_move(7);
-                                                }
-                                                if (GAME.char_data.x == 35) {
-                                                    arr10.map((a) => {
-                                                        clearInterval(a);
-                                                        arr10 = [];
-                                                    });
-                                                    
-                                                    scheduleTimeout(function() {
-                                                        go8();
-                                                    }, 1200);
-                                                }
-                                            }, 300));
-                                        }, 600);
-                                    }, 1500);
-                                }
-                            }, 400));
-                        }, 180);
-                        
-                    }
-                    
-                }, 400));
-            }, 210);
-        }
-    }, 450));
+                                });
+                            });
+                        });
+                    });
+                }, 90);
+            });
+        }, 90);
+    });
 }
 
 function go8() {
-    document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-    
-    scheduleTimeout(function() {
-        document.getElementsByClassName("quest_desc")[1].getElementsByTagName("div")[0].getElementsByTagName("strong")[0].getElementsByTagName("button")[0].click(); // atakuje Marionetkę
-        
-        scheduleTimeout(function() {
-            document.getElementById("fight_view").style.display = "none";
-            
-            scheduleTimeout(function() {
-                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-            }, 480);
-            
-            scheduleTimeout(function() {
-                document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                
-                scheduleTimeout(function() {
-                    fight();
-                }, 600);
-            }, 1080);
-        }, 270);
-    }, 600);
+    clickFieldQuest(function () {
+        waitFor(function () { return $('.quest_desc').length > 1; }, function () {
+            document.getElementsByClassName("quest_desc")[1].getElementsByTagName("div")[0].getElementsByTagName("strong")[0].getElementsByTagName("button")[0].click(); // atakuje Marionetkę
+            scheduleTimeout(function () {
+                document.getElementById("fight_view").style.display = "none";
+                clickQuestNext(function () {
+                    clickQuestNext(function () {
+                        scheduleTimeout(fight, 300);
+                    });
+                });
+            }, 150);
+        });
+    });
 }
 
+
+function isTrackedQuestDone() {
+    return $('#quest_track_con .qtrack strong.green').length > 0;
+}
+
+var huntGoingUp = true;
+function huntStep() {
+    var x = GAME.char_data.x, y = GAME.char_data.y;
+    var vertDir = huntGoingUp ? 2 : 1; // 2 = góra, 1 = dół
+    if (canStepDir(x, y, vertDir)) {
+        GAME.map_move(vertDir);
+    } else if (canStepDir(x, y, 7)) {
+        GAME.map_move(7); // krawędź mapy - krok w prawo...
+        huntGoingUp = !huntGoingUp; // ...i zawróć w pionie
+    } else if (canStepDir(x, y, 8)) {
+        GAME.map_move(8); // gdyby prawa krawędź też była zablokowana (przeciwny róg pokoju) - zawróć w lewo zamiast utknąć
+        huntGoingUp = !huntGoingUp;
+    }
+}
 function fight() {
-    window.arr11 = [];
-    window.arr12 = [];
-    window.arr13 = [];
-    window.arr14 = [];
-    
-    window.moby_bij = 0;
-    window.multi = 0;
-    arr11.push(scheduleInterval(function() {
-        GAME.emitOrder({a:7,mob_num:0,rank:0,quick:1});
-        moby_bij++;
-        
-        if (moby_bij > 8) {
-            move_up();
-            moby_bij = 0;
-            multi++;
+    function attackTick() {
+        if (insta30Stopped) return;
+        if (isTrackedQuestDone()) { finishFight(); return; }
+        var mob = GAME.field_mobs && GAME.field_mobs[0];
+        if (mob && mob.ranks && mob.ranks[0] > 0) {
+            if (GAME.field_mf && GAME.field_mf[0] >= 0) multiwalka(); // multi walka odblokowana
+            else GAME.emitOrder({ a: 7, mob_num: 0, rank: 0, quick: 1 }); // walka normalna do czasu odblokowania multi
+            pendingAttackTick = attackTick;
+        } else {
+            huntStep(); // brak moba w zasięgu - przeczesujemy pokój dalej
+            scheduleTimeout(attackTick, 400);
         }
-        
-        if (multi >= 4) {
-            arr11.map((a) => {
-                clearInterval(a);
-                arr11 = [];
-            });
-            
-            scheduleTimeout(function() {
-                
-                window.variab = 10;
-                
-                arr12.push(scheduleInterval(function() {
-                    
-                    if (variab <= 22) {
-                        if (variab % 2 == 0) {
-                            move_up();
-                            variab++;
-                        } else if (variab % 2 == 1) {
-                            variab++;
-                            multiwalka();
-                        }
-                    }
-                    
-                    if (variab > 22) {
-                        
-                        if (variab <= 25) {
-                            GAME.map_move(7);
-                        }
-                        
-                        if (variab % 2 == 0) {
-                            GAME.map_move(1);
-                            variab++;
-                        } else if (variab % 2 == 1) {
-                            multiwalka();
-                            variab++;
-                        }
-                        
-                    }
-                    
-                    if (variab > 60) {
-                        arr12.map((a) => {
-                            clearInterval(a);
-                            arr12 = [];
+    }
+    attackTick();
+}
+function finishFight() {
+    walkTo(35, 14, function () {
+        scheduleTimeout(function () {
+            clickFieldQuest(function () {
+                clickQuestNext(function () {
+                    scheduleTimeout(function () {
+                        walkTo(37, null, function () {
+                            scheduleTimeout(function () {
+                                clickFieldQuest(function () {
+                                    clickQuestNext(function () { /* koniec instancji */ });
+                                });
+                            }, 300);
                         });
-                        
-                        scheduleTimeout(function() {
-                            arr13.push(scheduleInterval(function() {
-                                if (GAME.char_data.x > 35) {
-                                    GAME.map_move(8);
-                                }
-                                if (GAME.char_data.x < 35) {
-                                    GAME.map_move(7);
-                                }
-                                if (GAME.char_data.y > 14) {
-                                    GAME.map_move(2);
-                                }
-                                if (GAME.char_data.y < 14) {
-                                    GAME.map_move(1);
-                                }
-                                if (GAME.char_data.x == 35 && GAME.char_data.y == 14) {
-                                    
-                                    arr13.map((a) => {
-                                        clearInterval(a);
-                                        arr13 = [];
-                                    });
-                        
-                                    scheduleTimeout(function() {
-                                        document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                                    }, 300);
-                                    
-                                    scheduleTimeout(function() {
-                                        document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                    }, 720);
-                                    
-                                    scheduleTimeout(function() {
-                                        arr14.push(scheduleInterval(function() {
-                                            if (GAME.char_data.x > 37) {
-                                                GAME.map_move(8);
-                                            }
-                                            if (GAME.char_data.x < 37) {
-                                                GAME.map_move(7);
-                                            }
-                                            if (GAME.char_data.x == 37) {
-                                                arr14.map((a) => {
-                                                    clearInterval(a);
-                                                    arr14 = [];
-                                                });
-                                                
-                                                scheduleTimeout(function() {
-                                                    document.getElementById("field_opts_con").getElementsByTagName("div")[1].click(); // włącza quest
-                                                }, 420);
-                                                
-                                                scheduleTimeout(function() {
-                                                    document.getElementsByClassName("quest_win")[0].getElementsByTagName("button")[0].click(); // klika "dalej"
-                                                }, 1020);
-                                                
-                                            }
-                                        }, 350));
-                                    }, 1320);
-                                }
-                            }, 350));
-                        }, 480);
-                    }
-                    
-                }, 400));
-                
-            }, 360);
-        }
-    }, 300));
+                    }, 300);
+                });
+            });
+        }, 200);
+    });
 }
-
-function move_up() {
-    scheduleTimeout(function() {
-        GAME.map_move(2);
-    }, 125);
-}
-
 function multiwalka() {
-    GAME.emitOrder({a:13,mob_num:0,fo:GAME.map_options.ma});
+    GAME.emitOrder({ a: 13, mob_num: 0, fo: GAME.map_options.ma });
 }
 })();

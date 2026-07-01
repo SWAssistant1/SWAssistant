@@ -115,7 +115,14 @@ var renderPvpCharsList = function () {
 // DAILY_EXCLUDED to aktywności, których w ogóle nie da się zautomatyzować
 // (np. trening to seria ręcznych decyzji na froncie) - nie pokazujemy ich
 // w panelu, żeby nie sugerować, że da się je tu włączyć.
-var DAILY_EXCLUDED = [/trening/i, /turniej/i];
+// "instanc" (Instancje) też tu ląduje - nie ma jednego przycisku "zbierz wszystkie"
+// (wcześniejsza próba klikała #page_game_emp .newBtn.do_all_instances, ale to
+// selektor Otchłani/a:44, który wg odpowiedzi serwera (game.js case 44, a:44)
+// nigdy nie renderuje takiego przycisku - klik po prostu trafiał w 0 elementów).
+// Realne wykonanie instancji to wieloetapowy przelot przez pokoje (patrz Insta 30
+// w panelu Inne / SWA/scripts/insta30.js), więc nie mieści się w modelu
+// "jedna szybka akcja w kolejce dziennych aktywności".
+var DAILY_EXCLUDED = [/trening/i, /turniej/i, /instanc/i];
 // Kamień dusz (kula) zajmuje slot ekwipunku nr 12 (patrz ekw_list_bind w game.js:
 // "if(slot==12) $('#ekw_menu_bup').show()"), więc szukamy itemu po data-slot="12",
 // najpierw na aktualnie założonym slocie, potem po stronach ekwipunku - tak samo
@@ -225,21 +232,48 @@ var upgradeNonLegendaryItemOnce = function () {
     };
     tryPage(1);
 };
+// Dopasowuje aktywność "Wykonaj misję" niezależnie od jej dokładnej odmiany w LNG
+// (misja/misje/misji) - używane zarówno do wykrycia jej w kolejce dziennych akcji,
+// jak i do przesunięcia jej wiersza na sam dół listy w panelu (patrz renderDailyActivities).
+var MISSION_ACTIVITY_MATCH = /misj/i;
+// Wykonanie 1 misji w ramach dziennych aktywności korzysta z tego samego silnika co
+// panel Misje (missions.js, patrz .misje_main/.misje_status i loadMissionsEngine
+// wyżej) - włączamy go dokładnie tak samo jak klik w przycisk "Misje", tylko że
+// po jednym pełnym cyklu misji (event 'swa-mission-completed' wysyłany z
+// waitForMissionEnd w missions.js) sami go wyłączamy, żeby zrobił dokładnie jedną
+// misję zamiast kręcić się w kółko. Jeśli postać nie ma żadnej dostępnej/włączonej
+// misji, missions.js samo zdejmuje status na Off (getMissionStartId) - to również
+// traktujemy jako "koniec", inaczej kolejka dziennych aktywności zawiesiłaby się
+// w nieskończoność. maxWaitTimer to tylko zabezpieczenie na wypadek, gdyby żaden
+// z powyższych sygnałów nie nadszedł.
+var MISSION_MAX_WAIT_MS = 10 * 60 * 1000;
+var runSingleMissionAndWait = function (callback) {
+    var finished = false;
+    var giveUpPoll = null;
+    var maxWaitTimer = null;
+    var onCompleted = function () { finish(); };
+    var finish = function () {
+        if (finished) return;
+        finished = true;
+        clearInterval(giveUpPoll);
+        clearTimeout(maxWaitTimer);
+        window.removeEventListener('swa-mission-completed', onCompleted);
+        $('.misje_main .misje_status').removeClass('green').addClass('red').html('Off');
+        callback();
+    };
+    window.addEventListener('swa-mission-completed', onCompleted);
+    giveUpPoll = setInterval(function () {
+        if ($('.misje_main .misje_status').hasClass('red')) finish();
+    }, 1000);
+    maxWaitTimer = setTimeout(finish, MISSION_MAX_WAIT_MS);
+    $('.misje_main .misje_status').removeClass('red').addClass('green').html('On');
+    loadMissionsEngine();
+};
 // "duration" to ile ms trzeba odczekać po odpaleniu danej akcji, zanim
 // runEnabledDailyActivities wystartuje kolejną w kolejce (patrz tam niżej -
 // akcje NIE lecą równolegle, bo część z nich współdzieli #ekw_page_items/
 // GAME.ekw_page i nadpisywałyby sobie nawzajem stan).
 var DAILY_ACTIONS = [
-    {
-        match: /instanc/i,
-        duration: 1500,
-        run: function () {
-            GAME.socket.emit('ga', { a: 44, type: 0 });
-            setTimeout(function () {
-                $("#page_game_emp .newBtn.do_all_instances").eq(0).click();
-            }, 1000);
-        }
-    },
     {
         match: /logowanie/i,
         duration: 500,
@@ -272,6 +306,11 @@ var DAILY_ACTIONS = [
         match: /ulepsz.*przedmiot|przedmiot.*ulepsz/i,
         duration: 2000,
         run: upgradeNonLegendaryItemOnce
+    },
+    {
+        match: MISSION_ACTIVITY_MATCH,
+        mission: true,
+        run: runSingleMissionAndWait
     }
 ];
 var scanDailyActivities = function () {
@@ -284,6 +323,11 @@ var renderDailyActivities = function () {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
     $container.empty();
+    // Misje trwają najdłużej (wymagają dojścia do lokacji i powrotu) i muszą wykonać
+    // się jako ostatnie w kolejce (patrz runEnabledDailyActivities), więc ich wiersz
+    // trzymamy osobno i dopisujemy do kontenera dopiero po wszystkich innych - żeby
+    // panel wizualnie odzwierciedlał kolejność wykonywania.
+    var $missionRows = [];
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
         if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
@@ -301,9 +345,11 @@ var renderDailyActivities = function () {
                 if (current[idx]) $status.removeClass('red').addClass('green').html('On');
                 else $status.removeClass('green').addClass('red').html('Off');
             });
-            $container.append($row);
+            if (MISSION_ACTIVITY_MATCH.test(label)) $missionRows.push($row);
+            else $container.append($row);
         })(i, name);
     }
+    $missionRows.forEach(function ($row) { $container.append($row); });
 };
 var collectDailyRewards = function () {
     GAME.socket.emit('ga', { a: 49, type: 0 });
@@ -337,6 +383,7 @@ var runEnabledDailyActivities = function (onComplete) {
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
     var immediateActions = [];
     var deferredActions = [];
+    var missionAction = null;
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
         if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
@@ -345,10 +392,14 @@ var runEnabledDailyActivities = function (onComplete) {
         if (!isOn || done) continue;
         var action = DAILY_ACTIONS.find(function (a) { return a.match.test(name); });
         if (!action) continue;
-        if (action.deferred) deferredActions.push(action);
+        if (action.mission) missionAction = action;
+        else if (action.deferred) deferredActions.push(action);
         else immediateActions.push(action);
     }
-    runDailyActionQueue(immediateActions, function () {
+    // Nagrody dzienne zbieramy dopiero PO misji (nie przed) - ukończenie misji dolicza
+    // punkty aktywności, więc zbieranie ich wcześniej mogłoby pominąć próg odblokowany
+    // właśnie przez tę misję.
+    var afterMission = function () {
         setTimeout(function () {
             collectDailyRewards();
             setTimeout(function () {
@@ -358,6 +409,10 @@ var runEnabledDailyActivities = function (onComplete) {
                 });
             }, 1000);
         }, 1500);
+    };
+    runDailyActionQueue(immediateActions, function () {
+        if (missionAction) missionAction.run(afterMission);
+        else afterMission();
     });
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
