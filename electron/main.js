@@ -19,6 +19,7 @@ let popupWin;
 /** @type {Map<string, { id: string, label: string, autoLabel: boolean, view: WebContentsView, loginPollTimer: NodeJS.Timeout|null }>} */
 const cards = new Map();
 let activeCardId = null;
+let splitCardId = null;
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -61,6 +62,7 @@ function saveCardsConfig() {
   const data = {
     cards: [...cards.values()].map(({ id, label, autoLabel }) => ({ id, label, autoLabel })),
     activeId: activeCardId,
+    splitId: splitCardId,
   };
   fs.mkdirSync(path.dirname(CARDS_FILE), { recursive: true });
   fs.writeFileSync(CARDS_FILE, JSON.stringify(data));
@@ -106,15 +108,12 @@ function injectContentScripts(webContents) {
   webContents.insertCSS(customStyles);
 }
 
-function getCardBounds() {
-  const [width, height] = mainWindow.getContentSize();
-  return { x: 0, y: TAB_BAR_HEIGHT, width, height: Math.max(height - TAB_BAR_HEIGHT, 0) };
-}
 
 function serializeCards() {
   return {
     cards: [...cards.values()].map(({ id, label }) => ({ id, label })),
     activeId: activeCardId,
+    splitId: splitCardId,
   };
 }
 
@@ -159,9 +158,21 @@ function broadcastCards() {
 }
 
 function layoutActiveCard() {
-  const bounds = getCardBounds();
+  const [width, height] = mainWindow.getContentSize();
+  const contentHeight = Math.max(height - TAB_BAR_HEIGHT, 0);
+  const isSplit = splitCardId !== null && cards.has(splitCardId) && splitCardId !== activeCardId;
+  const halfWidth = Math.floor(width / 2);
+
   cards.forEach((card) => {
-    card.view.setBounds(card.id === activeCardId ? bounds : { x: 0, y: 0, width: 0, height: 0 });
+    if (card.id === activeCardId) {
+      card.view.setBounds(isSplit
+        ? { x: 0, y: TAB_BAR_HEIGHT, width: halfWidth, height: contentHeight }
+        : { x: 0, y: TAB_BAR_HEIGHT, width, height: contentHeight });
+    } else if (isSplit && card.id === splitCardId) {
+      card.view.setBounds({ x: halfWidth, y: TAB_BAR_HEIGHT, width: width - halfWidth, height: contentHeight });
+    } else {
+      card.view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+    }
   });
 }
 
@@ -211,18 +222,20 @@ function removeCard(id) {
   card.view.webContents.close();
   cards.delete(id);
 
-  if (activeCardId === id) {
-    const next = [...cards.keys()][0] || null;
-    activeCardId = next;
-    layoutActiveCard();
-  }
+  let needLayout = false;
+  if (splitCardId === id) { splitCardId = null; needLayout = true; }
+  if (activeCardId === id) { activeCardId = [...cards.keys()][0] || null; needLayout = true; }
+  if (needLayout) layoutActiveCard();
 
   saveCardsConfig();
   broadcastCards();
 }
 
 function switchCard(id) {
-  if (!cards.has(id) || activeCardId === id) return;
+  if (!cards.has(id) || id === activeCardId) return;
+  if (splitCardId !== null && id === splitCardId) {
+    splitCardId = activeCardId;
+  }
   activeCardId = id;
   layoutActiveCard();
   saveCardsConfig();
@@ -312,6 +325,16 @@ function registerIpcHandlers() {
   ipcMain.handle('cards-remove', (_event, id) => removeCard(id));
   ipcMain.handle('cards-switch', (_event, id) => switchCard(id));
   ipcMain.handle('cards-rename', (_event, id, label) => renameCard(id, label));
+  ipcMain.handle('cards-split', (_event, id) => {
+    if (id && id !== activeCardId && cards.has(id)) {
+      splitCardId = (splitCardId === id) ? null : id;
+    } else {
+      splitCardId = splitCardId !== null ? null : ([...cards.keys()].find(k => k !== activeCardId) || null);
+    }
+    layoutActiveCard();
+    saveCardsConfig();
+    broadcastCards();
+  });
 }
 
 function createWindows() {
@@ -335,6 +358,9 @@ function createWindows() {
   activeCardId = config.cards.some((c) => c.id === config.activeId)
     ? config.activeId
     : config.cards[0].id;
+  splitCardId = (typeof config.splitId === 'string' && config.cards.some((c) => c.id === config.splitId) && config.splitId !== activeCardId)
+    ? config.splitId
+    : null;
   layoutActiveCard();
   saveCardsConfig();
 

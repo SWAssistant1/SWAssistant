@@ -73,6 +73,100 @@ var renderMissionRankButtons = function (ranks) {
         $container.append($btn);
     });
 };
+// Codzienne aktywności (zakładka "Aktywności") nie mają stałych indeksów w tym
+// skrypcie - nazwy bierzemy live z LNG.activity1..12 (ten sam obiekt, którego
+// używa rdzeń gry do wyrenderowania #char_activieties), a status "zrobione"
+// czytamy z ikonki done.png, którą gra tam wstawia. Dzięki temu lista zawsze
+// odpowiada temu, co naprawdę pokazuje serwer, zamiast zgadywać indeksy.
+// DAILY_ACTIONS dopasowuje znane, już istniejące w bocie jednorazowe akcje po
+// fragmencie nazwy (nie po indeksie) - z tych samych powodów. Aktywności bez
+// dopasowania są tylko wyświetlane/przełączalne, ale przycisk "Start" ich nie
+// dotyka, żeby nie zgadywać nieznanych protokołów gry.
+// DAILY_EXCLUDED to aktywności, których w ogóle nie da się zautomatyzować
+// (np. trening to seria ręcznych decyzji na froncie) - nie pokazujemy ich
+// w panelu, żeby nie sugerować, że da się je tu włączyć.
+var DAILY_EXCLUDED = [/trening/i];
+var DAILY_ACTIONS = [
+    {
+        match: /instanc/i,
+        run: function () {
+            GAME.socket.emit('ga', { a: 44, type: 0 });
+            setTimeout(function () {
+                $("#page_game_emp .newBtn.do_all_instances").eq(0).click();
+            }, 1000);
+        }
+    },
+    {
+        match: /logowanie/i,
+        run: function () {
+            $('.qlink.dail[data-option="daily_reward"]').click();
+        }
+    }
+];
+var scanDailyActivities = function () {
+    GAME.socket.emit('ga', { a: 49, type: 0 });
+    setTimeout(renderDailyActivities, 1000);
+};
+var renderDailyActivities = function () {
+    var $container = $('#daily_Panel .daily_activities_container');
+    if (!$container.length) return;
+    var enabled = {};
+    try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
+    $container.empty();
+    for (var i = 1; i <= 12; i++) {
+        var name = LNG['activity' + i];
+        if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
+        (function (idx, label) {
+            var done = $('#char_activieties .activity').eq(idx - 1).find('img').length > 0;
+            var isOn = idx in enabled && enabled[idx];
+            var $row = $('<div class="daily_button daily_activity' + (done ? ' daily_done' : '') + '" data-idx="' + idx + '">' + label + (done ? ' ✓' : '') + '<b class="daily_status ' + (isOn ? 'green' : 'red') + '">' + (isOn ? 'On' : 'Off') + '</b></div>');
+            $row.click(function () {
+                var current = {};
+                try { current = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { current = {}; }
+                var nowOn = idx in current && current[idx];
+                current[idx] = !nowOn;
+                localStorage.setItem('swa_daily_enabled', JSON.stringify(current));
+                var $status = $row.find('.daily_status');
+                if (current[idx]) $status.removeClass('red').addClass('green').html('On');
+                else $status.removeClass('green').addClass('red').html('Off');
+            });
+            $container.append($row);
+        })(i, name);
+    }
+};
+var collectDailyRewards = function () {
+    GAME.socket.emit('ga', { a: 49, type: 0 });
+    setTimeout(function () {
+        var received = $("#act_prizes").find("div.act_prize.disabled").length;
+        var activity = parseInt($('#char_activity').text());
+        var p = [25, 50, 75, 100, 150];
+        for (var i = 0; i <= 5; i++) {
+            if (received < 5 && activity >= p[i]) {
+                var actPrize = $('#act_prizes button[data-ind=' + i + ']').closest(".act_prize");
+                if (!actPrize.hasClass("disabled")) {
+                    GAME.socket.emit('ga', { a: 49, type: 1, ind: i });
+                }
+            }
+        }
+    }, 1000);
+};
+var runEnabledDailyActivities = function () {
+    var enabled = {};
+    try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
+    for (var i = 1; i <= 12; i++) {
+        var name = LNG['activity' + i];
+        if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
+        var isOn = i in enabled && enabled[i];
+        var done = $('#char_activieties .activity').eq(i - 1).find('img').length > 0;
+        if (!isOn || done) continue;
+        var action = DAILY_ACTIONS.find(function (a) { return a.match.test(name); });
+        if (action) action.run();
+    }
+    setTimeout(function () {
+        collectDailyRewards();
+        renderDailyActivities();
+    }, 1500);
+};
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
 var createPanel = function () {
     const css = `
@@ -186,8 +280,20 @@ var createPanel = function () {
         #karty_Panel .eqs_equip { background: #27ae60; }
         #karty_Panel .eqs_equip:hover { background: #2ecc71; }
     `;
-    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel").remove();
-    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> </div> `;
+    const cssdaily = `
+        #daily_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 1050px); z-index: 9999; width: 220px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
+        #daily_Panel .sekcja { background: linear-gradient(135deg,#e3402c,#9c2a1c); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 34px 9px 12px; margin-bottom: 8px; cursor: all-scroll; border-top-left-radius: 9px; border-top-right-radius: 9px; white-space: nowrap; box-sizing: border-box; width: 100%; position: relative; }
+        #daily_Panel .daily_button { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; margin: 0 8px 6px; border-radius: 6px; background: rgba(255,255,255,0.04); color: #eee; font-size: 13px; transition: background .15s ease, color .15s ease; }
+        #daily_Panel .daily_button:hover { background: rgba(227,64,44,0.28); color: #fff; }
+        #daily_Panel .daily_status { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .3px; }
+        #daily_Panel .daily_status.red { background: #c0392b !important; color: #fff !important; }
+        #daily_Panel .daily_status.green { background: #27ae60 !important; color: #fff !important; }
+        #daily_Panel .daily_done { opacity: 0.55; }
+        #daily_Panel .daily_activities_container { max-height: 280px; overflow-y: auto; }
+        #daily_Panel .daily_hint { text-align: center; color: #888; font-size: 11px; margin: 0 8px 6px; }
+    `;
+    $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel, #daily_Panel").remove();
+    const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> <div class='gh_button gh_daily'>Daily<b class='gh_status red'>Off</b></div> </div> `;
     const SETY_panel = ` <div id="sety_Panel" style="display:none;"> <div class="sekcja sety_dragg">SETY EKWIPUNKU</div>
         <div class='eqs_row'><input class='eqs_name' data-idx='0' value='Set 1' /><button class='eqs_save' data-idx='0'>Zapisz</button><button class='eqs_equip' data-idx='0'>Załóż</button></div>
         <div class='eqs_row'><input class='eqs_name' data-idx='1' value='Set 2' /><button class='eqs_save' data-idx='1'>Zapisz</button><button class='eqs_equip' data-idx='1'>Załóż</button></div>
@@ -206,6 +312,7 @@ var createPanel = function () {
     const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
+    const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
     const INNE_Panel = `<div id="inne_Panel" style="display:none;"> <div class="sekcja inne_dragg">Inne</div> <div class="inne_button inne_wymiana">Wymiana<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_ronin">Ronin<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_karciana">Karciana<strong class="inne_status red">Off</strong></div>
@@ -246,6 +353,7 @@ var createPanel = function () {
     $("body").append(`<style>${csssety}</style>${SETY_panel}`);
     $("body").append(`<style>${csskarty}</style>${KARTY_panel}`);
     $("body").append(`<style>${cssmisje}</style>${MISJE_panel}`);
+    $("body").append(`<style>${cssdaily}</style>${DAILY_panel}`);
     $("#pvp_Panel").hide();
     $("#resp_Panel").hide();
     $("#res_Panel").hide();
@@ -253,6 +361,7 @@ var createPanel = function () {
     $("#sety_Panel").hide();
     $("#karty_Panel").hide();
     $("#misje_Panel").hide();
+    $("#daily_Panel").hide();
     function makeDraggable($panel, handleSelector) {
         var panel = $panel[0];
         if (!panel) return;
@@ -288,6 +397,7 @@ var createPanel = function () {
     makeDraggable($("#sety_Panel"), ".sety_dragg");
     makeDraggable($("#karty_Panel"), ".karty_dragg");
     makeDraggable($("#misje_Panel"), ".misje_dragg");
+    makeDraggable($("#daily_Panel"), ".daily_dragg");
     $('#main_Panel .gh_pvp').click(() => {
         if ($(".gh_pvp .gh_status").hasClass("red")) {
             $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
@@ -382,15 +492,26 @@ var createPanel = function () {
         }
     });
 
+    $('#main_Panel .gh_daily').click(() => {
+        if ($(".gh_daily .gh_status").hasClass("red")) {
+            $(".gh_daily .gh_status").removeClass("red").addClass("green").html("On");
+            $("#daily_Panel").show();
+            scanDailyActivities();
+        } else {
+            $(".gh_daily .gh_status").removeClass("green").addClass("red").html("Off");
+            $("#daily_Panel").hide();
+        }
+    });
+
     $('#main_Panel .gh_close').click((e) => {
         e.stopPropagation();
-        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status, .gh_misje .gh_status").removeClass("green").addClass("red").html("Off");
-        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel").hide();
+        $(".gh_pvp .gh_status, .gh_resp .gh_status, .gh_res .gh_status, .gh_inne .gh_status, .gh_kom .gh_status, .gh_sety .gh_status, .gh_karty .gh_status, .gh_misje .gh_status, .gh_daily .gh_status").removeClass("green").addClass("red").html("Off");
+        $("#pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel, #daily_Panel").hide();
         PVP.stop = true;
         RESP.stop = true;
         RES.stop = true;
         KOM.stop();
-        $(".pvp_pvp .pvp_status, .resp_resp .resp_status, .res_res .res_status, .inne_wymiana .inne_status, .inne_ronin .inne_status, .inne_karciana .inne_status, .misje_main .misje_status").removeClass("green").addClass("red").html("Off");
+        $(".pvp_pvp .pvp_status, .resp_resp .resp_status, .res_res .res_status, .inne_wymiana .inne_status, .inne_ronin .inne_status, .inne_karciana .inne_status, .misje_main .misje_status, .daily_main .daily_status").removeClass("green").addClass("red").html("Off");
         $("#main_Panel").hide();
     });
 
@@ -761,6 +882,14 @@ var createPanel = function () {
     var storedMissionRanks = [];
     try { storedMissionRanks = JSON.parse(localStorage.getItem('swa_mission_available_ranks')) || []; } catch (e) { storedMissionRanks = []; }
     renderMissionRankButtons(storedMissionRanks);
+
+    $('#daily_Panel .daily_main').click(() => {
+        $(".daily_main .daily_status").removeClass("red green").addClass("green").html("...");
+        runEnabledDailyActivities();
+        setTimeout(() => {
+            $(".daily_main .daily_status").removeClass("green").addClass("red").html("Off");
+        }, 2000);
+    });
 };
 GAME.emit = function(order, data, force) {
     if (!this.is_loading || force) {
