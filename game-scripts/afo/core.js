@@ -361,6 +361,58 @@ var runEnabledDailyActivities = function (onComplete) {
     });
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
+// Zadania śledzone przez gracza (widget #quest_track_con, wypełniany przez GAME.parseTracker)
+// pokazują postęp wymagania w <strong class="red|green"> wewnątrz GAME.quest_want - green
+// oznacza, że dany etap (np. "zabij X") został ukończony. To jedyne miejsce, gdzie ten stan
+// aktualizuje się na żywo (przez res.track z serwera) bez potrzeby trzymania otwartego okna
+// zadania, więc właśnie stąd wykrywamy ukończenie etapu podczas farmienia w tle.
+// Domyślnie exp/resp mają jechać dalej mimo ukończenia etapu (np. żeby dojeść PA do końca),
+// dlatego to osobny przełącznik "Stop po zadaniu" w panelu PVM, a nie zawsze-włączone zatrzymanie.
+var swaQuestStageState = {};
+var swaQuestWatchInitialized = false;
+var notifyPvmQuestStop = function (questName) {
+    var msg = 'Zatrzymano PVM (Resp/exp) - etap zadania' + (questName ? ' "' + questName + '"' : '') + ' został zakończony!';
+    if (typeof GAME.komunikat2 === 'function') GAME.komunikat2('<b class="orange">' + msg + '</b>');
+    if (typeof Notification === 'undefined') return;
+    var fire = function () {
+        try {
+            new Notification('SWAssistant', { body: msg, icon: '/gfx/favicon.ico' });
+        } catch (e) { /* powiadomienia systemowe niedostępne (np. brak zgody, headless) */ }
+    };
+    if (Notification.permission === 'granted') fire();
+    else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (perm) { if (perm === 'granted') fire(); });
+    }
+};
+var handlePvmQuestStageDone = function (questName) {
+    if (localStorage.getItem('swa_stop_pvm_on_quest') !== '1') return;
+    var respActive = $('.resp_resp1 .resp_status').hasClass('green');
+    var expActive = $('.resp_rare .resp_status').hasClass('green');
+    if (!respActive && !expActive) return;
+    // klikamy te same przyciski co użytkownik - odpalają istniejącą logikę wyłączania
+    // (m.in. zmianę klasy DOM, którą respawn.js/exp.js sprawdzają w swojej pętli, żeby się zatrzymać)
+    if (respActive) $('#resp_Panel .resp_resp1').click();
+    if (expActive) $('#resp_Panel .resp_rare').click();
+    notifyPvmQuestStop(questName);
+};
+var checkQuestStageCompletion = function () {
+    $('#quest_track_con .qtrack').each(function () {
+        var qbId = ($(this).attr('id') || '').replace('track_quest_', '');
+        if (!qbId) return;
+        var done = $(this).find('strong').first().hasClass('green');
+        var wasDone = swaQuestStageState[qbId];
+        swaQuestStageState[qbId] = done;
+        if (swaQuestWatchInitialized && done && !wasDone) {
+            handlePvmQuestStageDone($(this).find('b').first().text().trim());
+        }
+    });
+    swaQuestWatchInitialized = true;
+};
+var startQuestStageWatcher = function () {
+    if (window.__SWA_QUEST_STAGE_WATCH__) return;
+    window.__SWA_QUEST_STAGE_WATCH__ = true;
+    setInterval(checkQuestStageCompletion, 1500);
+};
 var createPanel = function () {
     const css = `
         #main_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -504,7 +556,7 @@ var createPanel = function () {
         <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
     </div> `;
     const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_chars_hint'>Postacie wykorzystywane przy zmianie:</div> <div class='pvp_chars_container'></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><select style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' name='org_id'><option value='1'>Slayers - 69 złota</option><option value='2'>Akatsuki - 1 złota</option><option value='3'>Ironman - 1 złota</option><option value='7'>Dragon - 1 złota</option><option value='10'>Power - 5000000 złota</option><option value='12'>Amagishi - 10 złota</option><option value='13'>GZSPL - 100000 złota</option></select></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Skrót klanu" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
-    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
+    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_stop_quest">Stop po zadaniu<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
     const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
@@ -892,6 +944,20 @@ var createPanel = function () {
             localStorage.setItem('swa_exp_ranks', JSON.stringify(expRanks));
         });
     });
+
+    if (localStorage.getItem('swa_stop_pvm_on_quest') === '1') {
+        $('.resp_stop_quest .resp_status').removeClass('red').addClass('green').html('On');
+    }
+    $('#resp_Panel .resp_stop_quest').click(() => {
+        if ($(".resp_stop_quest .resp_status").hasClass("red")) {
+            $(".resp_stop_quest .resp_status").removeClass("red").addClass("green").html("On");
+            localStorage.setItem('swa_stop_pvm_on_quest', '1');
+        } else {
+            $(".resp_stop_quest .resp_status").removeClass("green").addClass("red").html("Off");
+            localStorage.setItem('swa_stop_pvm_on_quest', '0');
+        }
+    });
+    startQuestStageWatcher();
 
     $('#resp_Panel .resp_on').hide();
     $('#resp_Panel .resp_off').hide();
