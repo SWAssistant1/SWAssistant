@@ -162,7 +162,9 @@ RESP.DestroyItemsAtPage = () => {
     if (RESP.leg)  {
         window.setTimeout(function() {
             $('#ekw_page_items .nonstackable[data-class="'+4+'"]').each(function () {
-                items.push(parseInt($(this).data('item_id')));
+                if (parseInt($(this).data('upgrade')) === 0) {
+                    items.push(parseInt($(this).data('item_id')));
+                }
                     });
                     if(items.length){
                          GAME.emitOrder({a:12,type:11,items:items,page:GAME.ekw_page});
