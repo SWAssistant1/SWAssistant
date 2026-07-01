@@ -73,6 +73,36 @@ var renderMissionRankButtons = function (ranks) {
         $container.append($btn);
     });
 };
+// Lista postaci z konta do rotacji w "Zmieniaj postki" (patrz PVP.zmien_postc
+// w pvp.js). Domyślnie wszystkie są włączone - użytkownik może wyłączyć
+// konkretne postacie (np. buildy niedostosowane do PVP), a wyłączenie
+// zapisuje się w localStorage i jest respektowane przy każdym starcie rotacji
+// (patrz klik .pvp_zmieniaj niżej, który filtruje PVP.chars wg tej listy).
+var renderPvpCharsList = function () {
+    var $container = $('#pvp_Panel .pvp_chars_container');
+    if (!$container.length) return;
+    var enabled = {};
+    try { enabled = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { enabled = {}; }
+    $container.empty();
+    $("li[data-option=select_char]").each(function () {
+        var charId = $(this).attr('data-char_id');
+        if (!charId) return;
+        var label = $(this).find('h3').text().trim() || ('Postać ' + charId);
+        var isOn = !(charId in enabled) || enabled[charId];
+        var $row = $('<div class="pvp_button pvp_char_row" data-char_id="' + charId + '">' + label + '<b class="pvp_status ' + (isOn ? 'green' : 'red') + '">' + (isOn ? 'On' : 'Off') + '</b></div>');
+        $row.click(function () {
+            var current = {};
+            try { current = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { current = {}; }
+            var nowOn = !(charId in current) || current[charId];
+            current[charId] = !nowOn;
+            localStorage.setItem('swa_pvp_chars_enabled', JSON.stringify(current));
+            var $status = $row.find('.pvp_status');
+            if (current[charId]) $status.removeClass('red').addClass('green').html('On');
+            else $status.removeClass('green').addClass('red').html('Off');
+        });
+        $container.append($row);
+    });
+};
 // Codzienne aktywności (zakładka "Aktywności") nie mają stałych indeksów w tym
 // skrypcie - nazwy bierzemy live z LNG.activity1..12 (ten sam obiekt, którego
 // używa rdzeń gry do wyrenderowania #char_activieties), a status "zrobione"
@@ -176,9 +206,14 @@ var useSpeedSubstance = function () {
         if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
     }, 500);
 };
+// "duration" to ile ms trzeba odczekać po odpaleniu danej akcji, zanim
+// runEnabledDailyActivities wystartuje kolejną w kolejce (patrz tam niżej -
+// akcje NIE lecą równolegle, bo część z nich współdzieli #ekw_page_items/
+// GAME.ekw_page i nadpisywałyby sobie nawzajem stan).
 var DAILY_ACTIONS = [
     {
         match: /instanc/i,
+        duration: 1500,
         run: function () {
             GAME.socket.emit('ga', { a: 44, type: 0 });
             setTimeout(function () {
@@ -188,25 +223,30 @@ var DAILY_ACTIONS = [
     },
     {
         match: /logowanie/i,
+        duration: 500,
         run: function () {
             $('.qlink.dail[data-option="daily_reward"]').click();
         }
     },
     {
         match: /kamie.*dusz|dusz.*kul|kul[aęey]/i,
+        duration: 3000,
         run: upgradeSoulStoneOnce
     },
     {
         match: /odłamk|odlamk/i,
+        duration: 1500,
         run: donateLowestShardToClan
     },
     {
         match: /ramen/i,
         deferred: true,
+        duration: 1500,
         run: useActivityRamenOnce
     },
     {
         match: /substanc|przyspiesz/i,
+        duration: 1500,
         run: useSpeedSubstance
     }
 ];
@@ -257,9 +297,21 @@ var collectDailyRewards = function () {
         }
     }, 1000);
 };
-var runEnabledDailyActivities = function () {
+// Akcje z kolejki odpalają się PO KOLEI, nie równolegle - kilka z nich
+// (kamień dusz, odłamki, ramen, substancja) współdzieli #ekw_page_items /
+// GAME.ekw_page, więc odpalone jednocześnie nadpisywały sobie nawzajem stan
+// i realnie wykonywała się tylko pierwsza z zaznaczonych, mimo że wszystkie
+// miały wystartować.
+var runDailyActionQueue = function (queue, onDone) {
+    if (!queue.length) { onDone(); return; }
+    var action = queue.shift();
+    action.run();
+    setTimeout(function () { runDailyActionQueue(queue, onDone); }, action.duration || 1000);
+};
+var runEnabledDailyActivities = function (onComplete) {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
+    var immediateActions = [];
     var deferredActions = [];
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
@@ -270,15 +322,19 @@ var runEnabledDailyActivities = function () {
         var action = DAILY_ACTIONS.find(function (a) { return a.match.test(name); });
         if (!action) continue;
         if (action.deferred) deferredActions.push(action);
-        else action.run();
+        else immediateActions.push(action);
     }
-    setTimeout(function () {
-        collectDailyRewards();
+    runDailyActionQueue(immediateActions, function () {
         setTimeout(function () {
-            deferredActions.forEach(function (a) { a.run(); });
-            renderDailyActivities();
-        }, 1000);
-    }, 1500);
+            collectDailyRewards();
+            setTimeout(function () {
+                runDailyActionQueue(deferredActions, function () {
+                    renderDailyActivities();
+                    if (onComplete) onComplete();
+                });
+            }, 1000);
+        }, 1500);
+    });
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
 var createPanel = function () {
@@ -305,6 +361,8 @@ var createPanel = function () {
         #pvp_Panel .gamee_input input, #pvp_Panel .gameee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; transition: border-color .15s ease; }
         #pvp_Panel .gamee_input input:focus, #pvp_Panel .gameee_input input:focus { outline: none; border-color: #e3402c !important; }
         #pvp_Panel .gamee_input input::placeholder, #pvp_Panel .gameee_input input::placeholder { color: #6b6b72; }
+        #pvp_Panel .pvp_chars_hint { text-align: center; color: #888; font-size: 11px; margin: 0 8px 6px; }
+        #pvp_Panel .pvp_chars_container { max-height: 220px; overflow-y: auto; }
     `;
     const cssmisje = `
         #misje_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 630px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -421,7 +479,7 @@ var createPanel = function () {
         <div class='eqs_row'><input class='eqs_name' data-idx='3' value='Karty 4' /><button class='eqs_save' data-idx='3'>Zapisz</button><button class='eqs_equip' data-idx='3'>Załóż</button></div>
         <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
     </div> `;
-    const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><select style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' name='org_id'><option value='1'>Slayers - 69 złota</option><option value='2'>Akatsuki - 1 złota</option><option value='3'>Ironman - 1 złota</option><option value='7'>Dragon - 1 złota</option><option value='10'>Power - 5000000 złota</option><option value='12'>Amagishi - 10 złota</option><option value='13'>GZSPL - 100000 złota</option></select></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Skrót klanu" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
+    const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_chars_hint'>Postacie wykorzystywane przy zmianie:</div> <div class='pvp_chars_container'></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><select style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' name='org_id'><option value='1'>Slayers - 69 złota</option><option value='2'>Akatsuki - 1 złota</option><option value='3'>Ironman - 1 złota</option><option value='7'>Dragon - 1 złota</option><option value='10'>Power - 5000000 złota</option><option value='12'>Amagishi - 10 złota</option><option value='13'>GZSPL - 100000 złota</option></select></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Skrót klanu" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
     const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
@@ -515,6 +573,7 @@ var createPanel = function () {
         if ($(".gh_pvp .gh_status").hasClass("red")) {
             $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
             $("#pvp_Panel").show();
+            renderPvpCharsList();
         } else {
             $(".gh_pvp .gh_status").removeClass("green").addClass("red").html("Off");
             $("#pvp_Panel").hide();
@@ -699,6 +758,8 @@ var createPanel = function () {
             PVP.attacked_this_round = false;
             PVP.waiting_for_attack = false;
             PVP.start_wait_timeouts = 0;
+            PVP.stale_enemy_count = null;
+            PVP.stale_enemy_since = 0;
             PVP.start_char_disabled = false;
             PVP.start();
             $('#mapop_view2').prop('checked', true).trigger('change');
@@ -755,9 +816,14 @@ var createPanel = function () {
             PVP.chars = [];
         } else {
             $(".pvp_zmieniaj .pvp_status").removeClass("red").addClass("green").html("On");
+            var pvpCharsEnabled = {};
+            try { pvpCharsEnabled = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { pvpCharsEnabled = {}; }
+            PVP.chars = [];
             for(var i=0; i<GAME.player_chars; i++){
                 var char = $("li[data-option=select_char]").eq(i);
-                PVP.chars.push(char.attr("data-char_id"));
+                var charId = char.attr("data-char_id");
+                var isOn = !(charId in pvpCharsEnabled) || pvpCharsEnabled[charId];
+                if (isOn) PVP.chars.push(charId);
             }
             PVP.zmieniaj = true;
         }
@@ -998,10 +1064,9 @@ var createPanel = function () {
 
     $('#daily_Panel .daily_main').click(() => {
         $(".daily_main .daily_status").removeClass("red green").addClass("green").html("...");
-        runEnabledDailyActivities();
-        setTimeout(() => {
+        runEnabledDailyActivities(() => {
             $(".daily_main .daily_status").removeClass("green").addClass("red").html("Off");
-        }, 3000);
+        });
     });
 };
 GAME.emit = function(order, data, force) {

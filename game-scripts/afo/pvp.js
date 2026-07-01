@@ -38,6 +38,8 @@ var PVP = {
     wait_for_attack_since:0,
     start_wait_timeouts:0,
     start_char_disabled:false,
+    stale_enemy_count:null,
+    stale_enemy_since:0,
 };
 PVP.checkkkk = () => {
     let imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -252,21 +254,44 @@ PVP.check_players2 = () => {
 PVP.isHiddenVillage = () => {
     return $('#map_name').text().trim().toLowerCase().indexOf('ukryta wiosk') !== -1;
 };
-// Postacie z tego samego konta (PVP.chars, patrz zmien_postc/pvp_zmieniaj w core.js)
-// czasem pojawiają się na liście graczy na polu, ale nie da się ich zaatakować.
-// Wcześniej kod ślepo brał [data-quick=1] z kolejnego wiersza .player i wołał
-// .attr("data-option").includes(...) - gdy w tym wierszu nie było w ogóle
-// przycisku ataku (bo to własna postać), .attr() zwracał undefined i
-// .includes rzucał wyjątkiem, który po cichu ubijał całą pętlę PVP (stąd
-// "przycinanie się" bota bez żadnego komunikatu o błędzie). Filtrujemy więc
-// własne postacie z list celów, zamiast zakładać, że każdy wiersz da się zaatakować.
+
+PVP.ownCharIds = () => {
+    var ids = [];
+    $("li[data-option=select_char]").each(function () {
+        var id = $(this).attr("data-char_id");
+        if (id) ids.push(id);
+    });
+    return ids;
+};
 PVP.isOwnChar = (charId) => {
-    return PVP.chars.indexOf(String(charId)) !== -1;
+    return PVP.ownCharIds().indexOf(String(charId)) !== -1;
 };
 PVP.attackableEnemies = () => {
     return $("#player_list_con").find(".player button[data-quick=1]:not(.initial_hide_forced)").filter(function () {
         return !PVP.isOwnChar($(this).attr("data-char_id"));
     });
+};
+
+PVP.refreshPlayerList = () => {
+    GAME.loadMapJson(function () {
+        GAME.socket.emit('ga', {
+            a: 3,
+            vo: GAME.map_options.vo
+        }, 1);
+    });
+};
+PVP.STALE_ENEMY_TIMEOUT = 5;
+PVP.checkStaleEnemies = (count) => {
+    if (count !== PVP.stale_enemy_count) {
+        PVP.stale_enemy_count = count;
+        PVP.stale_enemy_since = GAME.getTime();
+        return;
+    }
+    if (count > 0 && GAME.getTime() - PVP.stale_enemy_since >= PVP.STALE_ENEMY_TIMEOUT) {
+        console.log("PVP - lista przeciwników (" + count + ") nie zmienia się od " + PVP.STALE_ENEMY_TIMEOUT + "s, odświeżam");
+        PVP.stale_enemy_since = GAME.getTime();
+        PVP.refreshPlayerList();
+    }
 };
 PVP.kill_players = () => {
     if (PVP.isHiddenVillage()) {
@@ -275,6 +300,7 @@ PVP.kill_players = () => {
         return;
     }
     var enemy = PVP.attackableEnemies();
+    PVP.checkStaleEnemies(enemy.length);
     if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
         window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
@@ -325,6 +351,7 @@ PVP.kill_players1 = () => {
             return !PVP.isOwnChar($(this).attr("data-char_id"));
         });
         var bbbb = parseInt(bbb.attr("data-char_id"));
+        PVP.checkStaleEnemies(enemy.length);
         if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
             $("#player_list_con").find("[data-option=load_more_players]").click();
             window.setTimeout(PVP.kill_players1, 50);
