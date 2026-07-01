@@ -693,7 +693,7 @@ var createPanel = function () {
     $('#resp_Panel .resp_on').hide();
     $('#resp_Panel .resp_off').hide();
     $('#resp_Panel .resp_resp').click(() => {
-        if (RESP.stop && GAME.field_mobs) {
+        if (RESP.stop) {
             $(".resp_resp .resp_status").removeClass("red").addClass("green").html("On");
             RESP.stop = false;
             RESP.action();
@@ -738,7 +738,7 @@ var createPanel = function () {
     $('#resp_Panel .resp_leg').click(() => {
         if (RESP.leg) {
             $(".resp_leg .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.lge = false;
+            RESP.leg = false;
         } else {
             $(".resp_leg .resp_status").removeClass("red").addClass("green").html("On");
             RESP.leg = true;

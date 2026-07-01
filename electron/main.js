@@ -250,6 +250,12 @@ function switchToAdjacentCard(offset) {
   switchCard(ids[nextIndex]);
 }
 
+function openActiveCardDevTools() {
+  const card = cards.get(activeCardId);
+  if (!card) return;
+  card.view.webContents.toggleDevTools();
+}
+
 function registerCardSwitchShortcut() {
   const menu = Menu.buildFromTemplate([
     {
@@ -257,6 +263,7 @@ function registerCardSwitchShortcut() {
       submenu: [
         { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { switchToAdjacentCard(1); } },
         { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { switchToAdjacentCard(-1); } },
+        { label: 'Konsola (DevTools)', accelerator: 'F12', click: () => { openActiveCardDevTools(); } },
       ],
     },
   ]);
@@ -269,6 +276,9 @@ function registerCardSwitchShortcut() {
   });
   const prevOk = globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
     switchToAdjacentCard(-1);
+  });
+  globalShortcut.register('F12', () => {
+    openActiveCardDevTools();
   });
 }
 
