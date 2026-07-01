@@ -59,6 +59,13 @@ function renderTabs(state) {
   splitToggle.addEventListener('click', () => window.swaCards.split());
   tabbar.appendChild(splitToggle);
 
+  const reloadBtn = document.createElement('div');
+  reloadBtn.className = 'reload-tab';
+  reloadBtn.textContent = '↺';
+  reloadBtn.title = 'Odśwież aktywną kartę (Ctrl+R / F5)';
+  reloadBtn.addEventListener('click', () => window.swaCards.reload());
+  tabbar.appendChild(reloadBtn);
+
   const addTab = document.createElement('div');
   addTab.className = 'add-tab';
   addTab.textContent = '+';

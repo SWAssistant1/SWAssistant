@@ -33,17 +33,22 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
+let storageCache = null;
+
 function readStorage() {
+  if (storageCache !== null) return storageCache;
   try {
-    return JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf8'));
+    storageCache = JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf8'));
   } catch {
-    return {};
+    storageCache = {};
   }
+  return storageCache;
 }
 
 function writeStorage(data) {
+  storageCache = data;
   fs.mkdirSync(path.dirname(STORAGE_FILE), { recursive: true });
-  fs.writeFileSync(STORAGE_FILE, JSON.stringify(data));
+  fs.writeFile(STORAGE_FILE, JSON.stringify(data), () => {});
 }
 
 function loadCardsConfig() {
@@ -250,6 +255,10 @@ function switchToAdjacentCard(offset) {
   switchCard(ids[nextIndex]);
 }
 
+function reloadActiveCard() {
+  cards.get(activeCardId)?.view.webContents.reload();
+}
+
 function registerCardSwitchShortcut() {
   const menu = Menu.buildFromTemplate([
     {
@@ -257,17 +266,19 @@ function registerCardSwitchShortcut() {
       submenu: [
         { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { switchToAdjacentCard(1); } },
         { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { switchToAdjacentCard(-1); } },
+        { label: 'Odśwież kartę', accelerator: 'F5', click: () => { reloadActiveCard(); } },
+        { label: 'Odśwież kartę', accelerator: 'CmdOrCtrl+R', click: () => { reloadActiveCard(); } },
       ],
     },
   ]);
 
-  const applied = Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(menu);
   mainWindow.setMenuBarVisibility(false);
 
-  const nextOk = globalShortcut.register('CmdOrCtrl+Tab', () => {
+  globalShortcut.register('CmdOrCtrl+Tab', () => {
     switchToAdjacentCard(1);
   });
-  const prevOk = globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
+  globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
     switchToAdjacentCard(-1);
   });
 }
@@ -325,6 +336,7 @@ function registerIpcHandlers() {
   ipcMain.handle('cards-remove', (_event, id) => removeCard(id));
   ipcMain.handle('cards-switch', (_event, id) => switchCard(id));
   ipcMain.handle('cards-rename', (_event, id, label) => renameCard(id, label));
+  ipcMain.handle('cards-reload', () => reloadActiveCard());
   ipcMain.handle('cards-split', (_event, id) => {
     if (id && id !== activeCardId && cards.has(id)) {
       splitCardId = (splitCardId === id) ? null : id;
