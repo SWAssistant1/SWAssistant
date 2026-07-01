@@ -28,11 +28,7 @@ var loadRespawnEngine = function () {
 var loadMissionsEngine = function () {
     loadGithubScript('SWA/scripts/missions.js', '__SWA_MISSIONS_LOADED__');
 };
-// Ranki misji odblokowane na postaci są częścią char_data (GAME.char_data.a_1..a_5,
-// patrz GAME.useChar / GAME.parseData case 10 w game.js) — dostępne od razu po wejściu
-// do gry, więc można je pokazać i pozwolić je wybrać zanim w ogóle wystartuje automat misji.
-// a_1..a_5 to ile misji danego ranku jest aktualnie do zrobienia — pokazujemy tylko
-// te z ilością > 0, resztę i tak nie da się włączyć (nie ma czego robić).
+
 var renderRanksFromCharData = function () {
     var ranks = [];
     for (var r = 1; r <= 5; r++) {
@@ -46,8 +42,7 @@ var renderRanksFromCharData = function () {
 var scanMissionRanks = function () {
     if (typeof GAME === 'undefined' || !GAME.char_data) return;
     renderRanksFromCharData();
-    // char_data.a_1..a_5 jest świeże tylko po odwiedzeniu strony obozu (emitOrder a:207) —
-    // odświeżamy w tle i renderujemy jeszcze raz, żeby liczby nie były nieaktualne.
+
     try { GAME.page_switch('game_camp'); } catch (e) { /* page_switch unavailable, skip refresh */ }
     window.setTimeout(renderRanksFromCharData, 600);
 };
@@ -73,39 +68,201 @@ var renderMissionRankButtons = function (ranks) {
         $container.append($btn);
     });
 };
-// Codzienne aktywności (zakładka "Aktywności") nie mają stałych indeksów w tym
-// skrypcie - nazwy bierzemy live z LNG.activity1..12 (ten sam obiekt, którego
-// używa rdzeń gry do wyrenderowania #char_activieties), a status "zrobione"
-// czytamy z ikonki done.png, którą gra tam wstawia. Dzięki temu lista zawsze
-// odpowiada temu, co naprawdę pokazuje serwer, zamiast zgadywać indeksy.
-// DAILY_ACTIONS dopasowuje znane, już istniejące w bocie jednorazowe akcje po
-// fragmencie nazwy (nie po indeksie) - z tych samych powodów. Aktywności bez
-// dopasowania są tylko wyświetlane/przełączalne, ale przycisk "Start" ich nie
-// dotyka, żeby nie zgadywać nieznanych protokołów gry.
-// DAILY_EXCLUDED to aktywności, których w ogóle nie da się zautomatyzować
-// (np. trening to seria ręcznych decyzji na froncie) - nie pokazujemy ich
-// w panelu, żeby nie sugerować, że da się je tu włączyć.
-var DAILY_EXCLUDED = [/trening/i];
+
+var renderPvpCharsList = function () {
+    var $container = $('#pvp_Panel .pvp_chars_container');
+    if (!$container.length) return;
+    var enabled = {};
+    try { enabled = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { enabled = {}; }
+    $container.empty();
+    $("li[data-option=select_char]").each(function () {
+        var charId = $(this).attr('data-char_id');
+        if (!charId) return;
+        var label = $(this).find('h3').text().trim() || ('Postać ' + charId);
+        var isOn = !(charId in enabled) || enabled[charId];
+        var $row = $('<div class="pvp_button pvp_char_row" data-char_id="' + charId + '">' + label + '<b class="pvp_status ' + (isOn ? 'green' : 'red') + '">' + (isOn ? 'On' : 'Off') + '</b></div>');
+        $row.click(function () {
+            var current = {};
+            try { current = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { current = {}; }
+            var nowOn = !(charId in current) || current[charId];
+            current[charId] = !nowOn;
+            localStorage.setItem('swa_pvp_chars_enabled', JSON.stringify(current));
+            var $status = $row.find('.pvp_status');
+            if (current[charId]) $status.removeClass('red').addClass('green').html('On');
+            else $status.removeClass('green').addClass('red').html('Off');
+        });
+        $container.append($row);
+    });
+};
+
+var DAILY_EXCLUDED = [/trening/i, /turniej/i, /instanc/i];
+
+var findSoulStoneItemId = function (callback) {
+    var equipped = parseInt($('.usable_slot[data-slot="12"]').attr('data-item_id'));
+    if (equipped > 0) { callback(equipped); return; }
+    var tryPage = function (page) {
+        if (page > 5) { callback(null); return; }
+        GAME.emitOrder({ a: 12, page: page });
+        GAME.ekw_page = page;
+        setTimeout(function () {
+            var found = parseInt($('#ekw_page_items .player_ekw_item[data-slot="12"]').attr('data-item_id'));
+            if (found > 0) callback(found);
+            else tryPage(page + 1);
+        }, 300);
+    };
+    tryPage(1);
+};
+
+var upgradeSoulStoneOnce = function () {
+    findSoulStoneItemId(function (iid) {
+        if (!iid) return;
+        GAME.emitOrder({ a: 45, type: 0, bid: iid });
+        setTimeout(function () {
+            GAME.emitOrder({ a: 45, type: 3, bid: GAME.ball_id });
+            setTimeout(function () {
+                GAME.emitOrder({ a: 45, type: 5, bid: GAME.ball_id });
+            }, 600);
+        }, 600);
+    });
+};
+
+var donateLowestShardToClan = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var best = null;
+        $('#ekw_page_items [data-option="don_item"]').each(function () {
+            var cls = parseInt($(this).data('class'));
+            var iid = parseInt($(this).data('iid'));
+            if (!best || cls < best.cls) best = { cls: cls, iid: iid };
+        });
+        if (best) GAME.emitOrder({ a: 12, type: 21, iid: best.iid, am: 1 });
+    }, 500);
+};
+
+var useActivityRamenOnce = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var $item = $('#ekw_page_items [data-option="use_usable"]').filter(function () {
+            return /cons\/40\.png/.test($(this).find('img').attr('src') || '');
+        }).first();
+        var iid = parseInt($item.data('iid'));
+        if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
+    }, 500);
+};
+
+var useSpeedSubstance = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var byMultiplier = {};
+        $('#ekw_page_items [data-option="use_usable"][data-type="2"]').each(function () {
+            var title = $(this).attr('data-original-title') || '';
+            var m = title.match(/przyspieszenie x(\d+)/i);
+            if (m) byMultiplier[m[1]] = parseInt($(this).data('iid'));
+        });
+        var iid = byMultiplier[2] || byMultiplier[3] || byMultiplier[4];
+        if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
+    }, 500);
+};
+
+var upgradeNonLegendaryItemOnce = function () {
+    var tryPage = function (page) {
+        if (page > 5) return;
+        GAME.emitOrder({ a: 12, page: page });
+        GAME.ekw_page = page;
+        setTimeout(function () {
+            var $item = $('#ekw_page_items .player_ekw_item').filter(function () {
+                var cls = parseInt($(this).data('class'));
+                var slot = parseInt($(this).data('slot'));
+                return slot !== 12 && cls >= 1 && cls <= 3;
+            }).first();
+            var iid = parseInt($item.data('item_id'));
+            if (iid) GAME.emitOrder({ a: 12, type: 10, iid: iid, page: page });
+            else tryPage(page + 1);
+        }, 300);
+    };
+    tryPage(1);
+};
+
+var MISSION_ACTIVITY_MATCH = /misj/i;
+
+var MISSION_MAX_WAIT_MS = 10 * 60 * 1000;
+var runSingleMissionAndWait = function (callback) {
+    var finished = false;
+    var giveUpPoll = null;
+    var maxWaitTimer = null;
+    var onCompleted = function () { finish(); };
+    var finish = function () {
+        if (finished) return;
+        finished = true;
+        clearInterval(giveUpPoll);
+        clearTimeout(maxWaitTimer);
+        window.removeEventListener('swa-mission-completed', onCompleted);
+        $('.misje_main .misje_status').removeClass('green').addClass('red').html('Off');
+        callback();
+    };
+    window.addEventListener('swa-mission-completed', onCompleted);
+    giveUpPoll = setInterval(function () {
+        if ($('.misje_main .misje_status').hasClass('red')) finish();
+    }, 1000);
+    maxWaitTimer = setTimeout(finish, MISSION_MAX_WAIT_MS);
+    $('.misje_main .misje_status').removeClass('red').addClass('green').html('On');
+    loadMissionsEngine();
+};
+
 var DAILY_ACTIONS = [
     {
-        match: /instanc/i,
-        run: function () {
-            GAME.socket.emit('ga', { a: 44, type: 0 });
-            setTimeout(function () {
-                $("#page_game_emp .newBtn.do_all_instances").eq(0).click();
-            }, 1000);
-        }
-    },
-    {
         match: /logowanie/i,
+        duration: 500,
         run: function () {
             $('.qlink.dail[data-option="daily_reward"]').click();
         }
+    },
+    {
+        match: /kamie.*dusz|dusz.*kul|kul[aęey]/i,
+        duration: 3000,
+        run: upgradeSoulStoneOnce
+    },
+    {
+        match: /odłamk|odlamk/i,
+        duration: 1500,
+        run: donateLowestShardToClan
+    },
+    {
+        match: /ramen/i,
+        deferred: true,
+        duration: 1500,
+        run: useActivityRamenOnce
+    },
+    {
+        match: /substanc|przyspiesz/i,
+        duration: 1500,
+        run: useSpeedSubstance
+    },
+    {
+        match: /ulepsz.*przedmiot|przedmiot.*ulepsz/i,
+        duration: 2000,
+        run: upgradeNonLegendaryItemOnce
+    },
+    {
+        match: MISSION_ACTIVITY_MATCH,
+        mission: true,
+        run: runSingleMissionAndWait
     }
 ];
 var scanDailyActivities = function () {
     GAME.socket.emit('ga', { a: 49, type: 0 });
-    setTimeout(renderDailyActivities, 1000);
+    setTimeout(function () {
+        renderDailyActivities();
+        renderDailyPrizesStatus();
+    }, 1000);
+};
+
+var TOTAL_DAILY_PRIZES = 4;
+var renderDailyPrizesStatus = function () {
+    var $el = $('#daily_Panel .daily_prizes_status');
+    if (!$el.length) return;
+    var received = $('#act_prizes').find('div.act_prize.disabled').length;
+    $el.text('Odebrane progi aktywności: ' + received + '/' + TOTAL_DAILY_PRIZES);
 };
 var renderDailyActivities = function () {
     var $container = $('#daily_Panel .daily_activities_container');
@@ -113,6 +270,8 @@ var renderDailyActivities = function () {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
     $container.empty();
+
+    var $missionRows = [];
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
         if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
@@ -130,9 +289,11 @@ var renderDailyActivities = function () {
                 if (current[idx]) $status.removeClass('red').addClass('green').html('On');
                 else $status.removeClass('green').addClass('red').html('Off');
             });
-            $container.append($row);
+            if (MISSION_ACTIVITY_MATCH.test(label)) $missionRows.push($row);
+            else $container.append($row);
         })(i, name);
     }
+    $missionRows.forEach(function ($row) { $container.append($row); });
 };
 var collectDailyRewards = function () {
     GAME.socket.emit('ga', { a: 49, type: 0 });
@@ -140,19 +301,35 @@ var collectDailyRewards = function () {
         var received = $("#act_prizes").find("div.act_prize.disabled").length;
         var activity = parseInt($('#char_activity').text());
         var p = [25, 50, 75, 100, 150];
+        var claimedAny = false;
         for (var i = 0; i <= 5; i++) {
             if (received < 5 && activity >= p[i]) {
                 var actPrize = $('#act_prizes button[data-ind=' + i + ']').closest(".act_prize");
                 if (!actPrize.hasClass("disabled")) {
                     GAME.socket.emit('ga', { a: 49, type: 1, ind: i });
+                    claimedAny = true;
                 }
             }
         }
+        setTimeout(function () {
+            GAME.socket.emit('ga', { a: 49, type: 0 });
+            setTimeout(renderDailyPrizesStatus, 500);
+        }, claimedAny ? 800 : 0);
     }, 1000);
 };
-var runEnabledDailyActivities = function () {
+
+var runDailyActionQueue = function (queue, onDone) {
+    if (!queue.length) { onDone(); return; }
+    var action = queue.shift();
+    action.run();
+    setTimeout(function () { runDailyActionQueue(queue, onDone); }, action.duration || 1000);
+};
+var runEnabledDailyActivities = function (onComplete) {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
+    var immediateActions = [];
+    var deferredActions = [];
+    var missionAction = null;
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
         if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
@@ -160,14 +337,74 @@ var runEnabledDailyActivities = function () {
         var done = $('#char_activieties .activity').eq(i - 1).find('img').length > 0;
         if (!isOn || done) continue;
         var action = DAILY_ACTIONS.find(function (a) { return a.match.test(name); });
-        if (action) action.run();
+        if (!action) continue;
+        if (action.mission) missionAction = action;
+        else if (action.deferred) deferredActions.push(action);
+        else immediateActions.push(action);
     }
-    setTimeout(function () {
-        collectDailyRewards();
-        renderDailyActivities();
-    }, 1500);
+
+    var afterMission = function () {
+        setTimeout(function () {
+            collectDailyRewards();
+            setTimeout(function () {
+                runDailyActionQueue(deferredActions, function () {
+                    renderDailyActivities();
+                    renderDailyPrizesStatus();
+                    if (onComplete) onComplete();
+                });
+            }, 1000);
+        }, 1500);
+    };
+    runDailyActionQueue(immediateActions, function () {
+        if (missionAction) missionAction.run(afterMission);
+        else afterMission();
+    });
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
+
+var swaQuestStageState = {};
+var swaQuestWatchInitialized = false;
+var notifyPvmQuestStop = function (questName) {
+    var msg = 'Zatrzymano PVM (Resp/exp) - etap zadania' + (questName ? ' "' + questName + '"' : '') + ' został zakończony!';
+    if (typeof GAME.komunikat2 === 'function') GAME.komunikat2('<b class="orange">' + msg + '</b>');
+    if (typeof Notification === 'undefined') return;
+    var fire = function () {
+        try {
+            new Notification('SWAssistant', { body: msg, icon: '/gfx/favicon.ico' });
+        } catch (e) { /* powiadomienia systemowe niedostępne (np. brak zgody, headless) */ }
+    };
+    if (Notification.permission === 'granted') fire();
+    else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function (perm) { if (perm === 'granted') fire(); });
+    }
+};
+var handlePvmQuestStageDone = function (questName) {
+    if (localStorage.getItem('swa_stop_pvm_on_quest') !== '1') return;
+    var respActive = $('.resp_resp1 .resp_status').hasClass('green');
+    var expActive = $('.resp_rare .resp_status').hasClass('green');
+    if (!respActive && !expActive) return;
+    if (respActive) $('#resp_Panel .resp_resp1').click();
+    if (expActive) $('#resp_Panel .resp_rare').click();
+    notifyPvmQuestStop(questName);
+};
+var checkQuestStageCompletion = function () {
+    $('#quest_track_con .qtrack').each(function () {
+        var qbId = ($(this).attr('id') || '').replace('track_quest_', '');
+        if (!qbId) return;
+        var done = $(this).find('strong').first().hasClass('green');
+        var wasDone = swaQuestStageState[qbId];
+        swaQuestStageState[qbId] = done;
+        if (swaQuestWatchInitialized && done && !wasDone) {
+            handlePvmQuestStageDone($(this).find('b').first().text().trim());
+        }
+    });
+    swaQuestWatchInitialized = true;
+};
+var startQuestStageWatcher = function () {
+    if (window.__SWA_QUEST_STAGE_WATCH__) return;
+    window.__SWA_QUEST_STAGE_WATCH__ = true;
+    setInterval(checkQuestStageCompletion, 1500);
+};
 var createPanel = function () {
     const css = `
         #main_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: 80%; z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -192,6 +429,8 @@ var createPanel = function () {
         #pvp_Panel .gamee_input input, #pvp_Panel .gameee_input input { background: #2a2a30 !important; border: 1px solid #3a3a42 !important; border-radius: 4px; color: #eee !important; transition: border-color .15s ease; }
         #pvp_Panel .gamee_input input:focus, #pvp_Panel .gameee_input input:focus { outline: none; border-color: #e3402c !important; }
         #pvp_Panel .gamee_input input::placeholder, #pvp_Panel .gameee_input input::placeholder { color: #6b6b72; }
+        #pvp_Panel .pvp_chars_hint { text-align: center; color: #888; font-size: 11px; margin: 0 8px 6px; }
+        #pvp_Panel .pvp_chars_container { max-height: 220px; overflow-y: auto; }
     `;
     const cssmisje = `
         #misje_Panel { background: rgba(22,22,26,0.96); position: fixed; top: 250px; left: calc(80% - 630px); z-index: 9999; width: 200px; padding: 0 0 10px 0; border-radius: 10px; border: 1px solid #e3402c; box-shadow: 0 8px 24px rgba(0,0,0,0.55); display:block; user-select: none; font-family: 'Segoe UI', Tahoma, sans-serif; color: #ddd; }
@@ -291,6 +530,7 @@ var createPanel = function () {
         #daily_Panel .daily_done { opacity: 0.55; }
         #daily_Panel .daily_activities_container { max-height: 280px; overflow-y: auto; }
         #daily_Panel .daily_hint { text-align: center; color: #888; font-size: 11px; margin: 0 8px 6px; }
+        #daily_Panel .daily_prizes_status { text-align: center; color: #ddd; font-size: 12px; font-weight: 600; margin: 0 8px 8px; }
     `;
     $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel, #daily_Panel").remove();
     const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> <div class='gh_button gh_daily'>Daily<b class='gh_status red'>Off</b></div> </div> `;
@@ -308,11 +548,11 @@ var createPanel = function () {
         <div class='eqs_row'><input class='eqs_name' data-idx='3' value='Karty 4' /><button class='eqs_save' data-idx='3'>Zapisz</button><button class='eqs_equip' data-idx='3'>Załóż</button></div>
         <div class='eqs_row'><input class='eqs_name' data-idx='4' value='Karty 5' /><button class='eqs_save' data-idx='4'>Zapisz</button><button class='eqs_equip' data-idx='4'>Załóż</button></div>
     </div> `;
-    const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><select style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' name='org_id'><option value='1'>Slayers - 69 złota</option><option value='2'>Akatsuki - 1 złota</option><option value='3'>Ironman - 1 złota</option><option value='7'>Dragon - 1 złota</option><option value='10'>Power - 5000000 złota</option><option value='12'>Amagishi - 10 złota</option><option value='13'>GZSPL - 100000 złota</option></select></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Skrót klanu" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
-    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
+    const PVP_panel = ` <div id="pvp_Panel" style="display:none;"> <div class="sekcja pvp_dragg">PVP</div> <div class='pvp_button pvp_pvp'>PVP<b class='pvp_status red'>Off</b></div>  <div class='pvp_button pvp_zmieniaj'>Zmieniaj postki <b class='pvp_status red'>Off</b></div> <div class='pvp_chars_hint'>Postacie wykorzystywane przy zmianie:</div> <div class='pvp_chars_container'></div> <div class='pvp_button pvp_WI'>Wojny <b class='pvp_status red'>Off</b></div> <div class='pvp_button pvp_org'> wynajmij orge <b class='pvp_status red'>Off</b></div>   <div class='gameee_input'><select style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' name='org_id'><option value='1'>Slayers - 69 złota</option><option value='2'>Akatsuki - 1 złota</option><option value='3'>Ironman - 1 złota</option><option value='7'>Dragon - 1 złota</option><option value='10'>Power - 5000000 złota</option><option value='12'>Amagishi - 10 złota</option><option value='13'>GZSPL - 100000 złota</option></select></div> <div class='pvp_button pvp_WK'>Wojny Klanowe<b class='pvp_status red'>Off</b></div>  <div class='gamee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Skrót klanu" name='pvp_capt' value='' /></div> <div class='gameee_input'><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Szybkość 10-100" name='speed_capt' value='50' /></div> </div> `;
+    const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_stop_quest">Stop po zadaniu<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
-    const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
+    const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_prizes_status"></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
     const INNE_Panel = `<div id="inne_Panel" style="display:none;"> <div class="sekcja inne_dragg">Inne</div> <div class="inne_button inne_wymiana">Wymiana<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_ronin">Ronin<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_karciana">Karciana<strong class="inne_status red">Off</strong></div>
@@ -402,6 +642,7 @@ var createPanel = function () {
         if ($(".gh_pvp .gh_status").hasClass("red")) {
             $(".gh_pvp .gh_status").removeClass("red").addClass("green").html("On");
             $("#pvp_Panel").show();
+            renderPvpCharsList();
         } else {
             $(".gh_pvp .gh_status").removeClass("green").addClass("red").html("Off");
             $("#pvp_Panel").hide();
@@ -586,6 +827,8 @@ var createPanel = function () {
             PVP.attacked_this_round = false;
             PVP.waiting_for_attack = false;
             PVP.start_wait_timeouts = 0;
+            PVP.stale_enemy_count = null;
+            PVP.stale_enemy_since = 0;
             PVP.start_char_disabled = false;
             PVP.start();
             $('#mapop_view2').prop('checked', true).trigger('change');
@@ -642,9 +885,14 @@ var createPanel = function () {
             PVP.chars = [];
         } else {
             $(".pvp_zmieniaj .pvp_status").removeClass("red").addClass("green").html("On");
+            var pvpCharsEnabled = {};
+            try { pvpCharsEnabled = JSON.parse(localStorage.getItem('swa_pvp_chars_enabled')) || {}; } catch (e) { pvpCharsEnabled = {}; }
+            PVP.chars = [];
             for(var i=0; i<GAME.player_chars; i++){
                 var char = $("li[data-option=select_char]").eq(i);
-                PVP.chars.push(char.attr("data-char_id"));
+                var charId = char.attr("data-char_id");
+                var isOn = !(charId in pvpCharsEnabled) || pvpCharsEnabled[charId];
+                if (isOn) PVP.chars.push(charId);
             }
             PVP.zmieniaj = true;
         }
@@ -690,10 +938,24 @@ var createPanel = function () {
         });
     });
 
+    if (localStorage.getItem('swa_stop_pvm_on_quest') === '1') {
+        $('.resp_stop_quest .resp_status').removeClass('red').addClass('green').html('On');
+    }
+    $('#resp_Panel .resp_stop_quest').click(() => {
+        if ($(".resp_stop_quest .resp_status").hasClass("red")) {
+            $(".resp_stop_quest .resp_status").removeClass("red").addClass("green").html("On");
+            localStorage.setItem('swa_stop_pvm_on_quest', '1');
+        } else {
+            $(".resp_stop_quest .resp_status").removeClass("green").addClass("red").html("Off");
+            localStorage.setItem('swa_stop_pvm_on_quest', '0');
+        }
+    });
+    startQuestStageWatcher();
+
     $('#resp_Panel .resp_on').hide();
     $('#resp_Panel .resp_off').hide();
     $('#resp_Panel .resp_resp').click(() => {
-        if (RESP.stop && GAME.field_mobs) {
+        if (RESP.stop) {
             $(".resp_resp .resp_status").removeClass("red").addClass("green").html("On");
             RESP.stop = false;
             RESP.action();
@@ -738,7 +1000,7 @@ var createPanel = function () {
     $('#resp_Panel .resp_leg').click(() => {
         if (RESP.leg) {
             $(".resp_leg .resp_status").removeClass("green").addClass("red").html("Off");
-            RESP.lge = false;
+            RESP.leg = false;
         } else {
             $(".resp_leg .resp_status").removeClass("red").addClass("green").html("On");
             RESP.leg = true;
@@ -858,7 +1120,12 @@ var createPanel = function () {
     });
 
     $('#inne_Panel .inne_insta30').click(() => {
-        if (window[INSTA30_SCRIPT.flag]) return;
+        if ($('.inne_insta30 .inne_status').hasClass('green')) {
+            if (typeof window.__SWA_INSTA30_STOP__ === 'function') window.__SWA_INSTA30_STOP__();
+            window[INSTA30_SCRIPT.flag] = false;
+            $('.inne_insta30 .inne_status').removeClass('green').addClass('red').html('Off');
+            return;
+        }
         loadGithubScript(INSTA30_SCRIPT.file, INSTA30_SCRIPT.flag, () => {
             $('.inne_insta30 .inne_status').removeClass('red').addClass('green').html('On');
         });
@@ -885,10 +1152,9 @@ var createPanel = function () {
 
     $('#daily_Panel .daily_main').click(() => {
         $(".daily_main .daily_status").removeClass("red green").addClass("green").html("...");
-        runEnabledDailyActivities();
-        setTimeout(() => {
+        runEnabledDailyActivities(() => {
             $(".daily_main .daily_status").removeClass("green").addClass("red").html("Off");
-        }, 2000);
+        });
     });
 };
 GAME.emit = function(order, data, force) {
@@ -915,5 +1181,13 @@ GAME.initiate = function() {
     }
     $('#available_servers').html(con);
     $('#available_servers option[value=' + this.server + ']').prop('selected', true);
+};
+
+var swaOriginalUseChar = GAME.useChar;
+GAME.useChar = function () {
+    swaOriginalUseChar.apply(this, arguments);
+    if ($('.gh_daily .gh_status').hasClass('green')) {
+        setTimeout(scanDailyActivities, 300);
+    }
 };
 }

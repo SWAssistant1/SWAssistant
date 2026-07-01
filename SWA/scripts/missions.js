@@ -650,6 +650,10 @@ function waitForMissionEnd() {
 		// zamiast działać na nieaktualnych danych z poprzedniego skanu
 		whatNow = 0;
 		waiting = false;
+		// Sygnalizuje na zewnątrz (panel Daily w core.js), że jeden pełny cykl misji
+		// się zakończył - dzięki temu automat dziennych aktywności wie kiedy przestać
+		// czekać i wyłączyć silnik misji, zamiast pozwolić mu kręcić się dalej w kółko.
+		window.dispatchEvent(new CustomEvent('swa-mission-completed'));
 	},missionTime + 5000);
 }
 

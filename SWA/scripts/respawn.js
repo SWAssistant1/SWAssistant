@@ -26,6 +26,8 @@ var max_Senzu = Math.floor(GAME.char_data.pr_max/100*2*(1+GAME.getStat(99)/100))
 var antybotPath = false; // pozostałe kroki do rozwiązania zagadki antybotowej
 var savedPos = false; // kratka, na której skrypt został zatrzymany przez zagadkę
 var returning = false; // czy skrypt wraca na zapisaną kratkę po rozwiązaniu zagadki
+var returnMoveWait = 300; // ms - odstęp między krokami powrotu, żeby serwer zdążył zaktualizować pozycję
+var returnMoveNextAt = 0; // kiedy wolno wysłać kolejny krok powrotu
 //---------------------WYGLAD----------------------------------
 
 // const $css = `<style>
@@ -240,8 +242,16 @@ var y = GAME.char_data.y;
 if(x === savedPos.x && y === savedPos.y){
 savedPos = false;
 returning = false;
+returnMoveNextAt = 0;
 return;
 }
+
+// start() woła tę funkcję co wait_resp (domyślnie 2ms) - bez tego opóźnienia
+// kolejny krok leciał zanim GAME.char_data.x/y zdążyło się zaktualizować po
+// poprzednim, więc kierunek liczył się wciąż z tej samej (już nieaktualnej)
+// pozycji i postać potrafiła wbić się w ścianę i utknąć.
+if(Date.now() < returnMoveNextAt) return;
+returnMoveNextAt = Date.now() + returnMoveWait;
 
 var dir = getDir(x, y, savedPos.x, savedPos.y);
 GAME.emitOrder({a:4, dir: dir, vo:GAME.map_options.vo});
