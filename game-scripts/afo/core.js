@@ -85,7 +85,97 @@ var renderMissionRankButtons = function (ranks) {
 // DAILY_EXCLUDED to aktywności, których w ogóle nie da się zautomatyzować
 // (np. trening to seria ręcznych decyzji na froncie) - nie pokazujemy ich
 // w panelu, żeby nie sugerować, że da się je tu włączyć.
-var DAILY_EXCLUDED = [/trening/i];
+var DAILY_EXCLUDED = [/trening/i, /turniej/i];
+// Kamień dusz (kula) zajmuje slot ekwipunku nr 12 (patrz ekw_list_bind w game.js:
+// "if(slot==12) $('#ekw_menu_bup').show()"), więc szukamy itemu po data-slot="12",
+// najpierw na aktualnie założonym slocie, potem po stronach ekwipunku - tak samo
+// jak RESP.DestroyItemsAtPage przełącza strony przez GAME.emitOrder({a:12,page:N}).
+var findSoulStoneItemId = function (callback) {
+    var equipped = parseInt($('.usable_slot[data-slot="12"]').attr('data-item_id'));
+    if (equipped > 0) { callback(equipped); return; }
+    var tryPage = function (page) {
+        if (page > 5) { callback(null); return; }
+        GAME.emitOrder({ a: 12, page: page });
+        GAME.ekw_page = page;
+        setTimeout(function () {
+            var found = parseInt($('#ekw_page_items .player_ekw_item[data-slot="12"]').attr('data-item_id'));
+            if (found > 0) callback(found);
+            else tryPage(page + 1);
+        }, 300);
+    };
+    tryPage(1);
+};
+// Ulepszanie kul ma już swój automat (ballUpgrade w ball-upgrade.js, przycisk
+// "Ulepszaj wszystkie"), ale on kręci się w kółko dopóki go nie zatrzymać.
+// Tutaj chodzi tylko o jedno losowanie: a:45 type:3 rzuca nowymi statami,
+// type:5 je zatwierdza - dokładnie te same akcje co przyciski "Ulepsz"/"Zaakceptuj"
+// w panelu kuli (patrz game.js case 'ss_upgrade' / 'ss_upgrade_accept').
+var upgradeSoulStoneOnce = function () {
+    findSoulStoneItemId(function (iid) {
+        if (!iid) return;
+        GAME.emitOrder({ a: 45, type: 0, bid: iid });
+        setTimeout(function () {
+            GAME.emitOrder({ a: 45, type: 3, bid: GAME.ball_id });
+            setTimeout(function () {
+                GAME.emitOrder({ a: 45, type: 5, bid: GAME.ball_id });
+            }, 600);
+        }, 600);
+    });
+};
+// Odłamki (materiał rzemieślniczy) leżą w zakładce "stackable" ekwipunku
+// (przycisk data-option="show_ekw_stackable" -> GAME.emitOrder({a:12,type:7})),
+// gdzie każdy item ma data-option="don_item" i data-class=1..4 (normal/rare/
+// unique/leg - patrz game.js GAME.parseStackableItems). Bierzemy ten o
+// najniższej klasie, bo to ta sama logika co "najpierw zbywaj najsłabsze".
+// Donacja to dokładnie ten sam protokół co przycisk "Przekaż" w oknie don_item
+// (case 'donate_item': a:12 type:21 iid am) - z pominięciem samego okna,
+// bo domyślna ilość w tym oknie i tak zawsze wynosi 1.
+var donateLowestShardToClan = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var best = null;
+        $('#ekw_page_items [data-option="don_item"]').each(function () {
+            var cls = parseInt($(this).data('class'));
+            var iid = parseInt($(this).data('iid'));
+            if (!best || cls < best.cls) best = { cls: cls, iid: iid };
+        });
+        if (best) GAME.emitOrder({ a: 12, type: 21, iid: best.iid, am: 1 });
+    }, 500);
+};
+// Mała Porcja Ramen (item_id 40, gfx cons/40.png, "Odnawia Punkty Akcji: 200")
+// to INNY item niż ten z RESP.useGreen (tam chodzi o "zwykły ramen" z
+// GAME.quick_opts.senzus, item_id 1, używany do dokarmiania w trakcie farmienia).
+// Ten tutaj to nagroda za progi punktów aktywności (collectDailyRewards/act_prizes),
+// więc może go jeszcze nie być w eq - stąd deferred:true niżej, żeby ta akcja
+// odpaliła się dopiero PO odebraniu nagrody, a nie razem z resztą kolejki.
+var useActivityRamenOnce = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var $item = $('#ekw_page_items [data-option="use_usable"]').filter(function () {
+            return /cons\/40\.png/.test($(this).find('img').attr('src') || '');
+        }).first();
+        var iid = parseInt($item.data('iid'));
+        if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
+    }, 500);
+};
+// Substancja Przyspieszająca występuje w kilku poziomach (xN), każdy jako osobny
+// item z tooltipem "Aktywuje przyspieszenie xN." (data-type="2" - patrz
+// GAME.parseStackableItems/getUsableItemDesc case effect_type 2 w game.js).
+// Zamiast zgadywać stałe item_id per poziom, czytamy mnożnik wprost z tooltipa
+// i bierzemy wg priorytetu x2 -> x3 -> x4 - pierwszy dostępny w tej kolejności.
+var useSpeedSubstance = function () {
+    GAME.emitOrder({ a: 12, type: 7 });
+    setTimeout(function () {
+        var byMultiplier = {};
+        $('#ekw_page_items [data-option="use_usable"][data-type="2"]').each(function () {
+            var title = $(this).attr('data-original-title') || '';
+            var m = title.match(/przyspieszenie x(\d+)/i);
+            if (m) byMultiplier[m[1]] = parseInt($(this).data('iid'));
+        });
+        var iid = byMultiplier[2] || byMultiplier[3] || byMultiplier[4];
+        if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
+    }, 500);
+};
 var DAILY_ACTIONS = [
     {
         match: /instanc/i,
@@ -101,6 +191,23 @@ var DAILY_ACTIONS = [
         run: function () {
             $('.qlink.dail[data-option="daily_reward"]').click();
         }
+    },
+    {
+        match: /kamie.*dusz|dusz.*kul|kul[aęey]/i,
+        run: upgradeSoulStoneOnce
+    },
+    {
+        match: /odłamk|odlamk/i,
+        run: donateLowestShardToClan
+    },
+    {
+        match: /ramen/i,
+        deferred: true,
+        run: useActivityRamenOnce
+    },
+    {
+        match: /substanc|przyspiesz/i,
+        run: useSpeedSubstance
     }
 ];
 var scanDailyActivities = function () {
@@ -153,6 +260,7 @@ var collectDailyRewards = function () {
 var runEnabledDailyActivities = function () {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
+    var deferredActions = [];
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
         if (!name || DAILY_EXCLUDED.some(function (re) { return re.test(name); })) continue;
@@ -160,11 +268,16 @@ var runEnabledDailyActivities = function () {
         var done = $('#char_activieties .activity').eq(i - 1).find('img').length > 0;
         if (!isOn || done) continue;
         var action = DAILY_ACTIONS.find(function (a) { return a.match.test(name); });
-        if (action) action.run();
+        if (!action) continue;
+        if (action.deferred) deferredActions.push(action);
+        else action.run();
     }
     setTimeout(function () {
         collectDailyRewards();
-        renderDailyActivities();
+        setTimeout(function () {
+            deferredActions.forEach(function (a) { a.run(); });
+            renderDailyActivities();
+        }, 1000);
     }, 1500);
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
@@ -888,7 +1001,7 @@ var createPanel = function () {
         runEnabledDailyActivities();
         setTimeout(() => {
             $(".daily_main .daily_status").removeClass("green").addClass("red").html("Off");
-        }, 2000);
+        }, 3000);
     });
 };
 GAME.emit = function(order, data, force) {

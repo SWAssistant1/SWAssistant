@@ -244,7 +244,7 @@ PVP.check_players = () => {
     PVP.licznik = 1;
 };
 PVP.check_players2 = () => {
-    var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
+    var enemy = PVP.attackableEnemies();
     PVP.kill_players1();
     window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     PVP.licznik = 1;
@@ -252,13 +252,29 @@ PVP.check_players2 = () => {
 PVP.isHiddenVillage = () => {
     return $('#map_name').text().trim().toLowerCase().indexOf('ukryta wiosk') !== -1;
 };
+// Postacie z tego samego konta (PVP.chars, patrz zmien_postc/pvp_zmieniaj w core.js)
+// czasem pojawiają się na liście graczy na polu, ale nie da się ich zaatakować.
+// Wcześniej kod ślepo brał [data-quick=1] z kolejnego wiersza .player i wołał
+// .attr("data-option").includes(...) - gdy w tym wierszu nie było w ogóle
+// przycisku ataku (bo to własna postać), .attr() zwracał undefined i
+// .includes rzucał wyjątkiem, który po cichu ubijał całą pętlę PVP (stąd
+// "przycinanie się" bota bez żadnego komunikatu o błędzie). Filtrujemy więc
+// własne postacie z list celów, zamiast zakładać, że każdy wiersz da się zaatakować.
+PVP.isOwnChar = (charId) => {
+    return PVP.chars.indexOf(String(charId)) !== -1;
+};
+PVP.attackableEnemies = () => {
+    return $("#player_list_con").find(".player button[data-quick=1]:not(.initial_hide_forced)").filter(function () {
+        return !PVP.isOwnChar($(this).attr("data-char_id"));
+    });
+};
 PVP.kill_players = () => {
     if (PVP.isHiddenVillage()) {
         PVP.licznik = 0;
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
-    var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
+    var enemy = PVP.attackableEnemies();
     if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
         window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
@@ -267,23 +283,28 @@ PVP.kill_players = () => {
         window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     } else if (PVP.licznik < $("#player_list_con .player").length) {
         PVP.attacked_this_round = true;
-        if ($("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-option").includes("gxxx")) {
+        var $target = $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]");
+        var targetCharId = $target.attr("data-char_id");
+        if ($target.length === 0 || PVP.isOwnChar(targetCharId)) {
+            PVP.licznik++;
+            window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
+        } else if ($target.attr("data-option").includes("gxxx")) {
             GAME.socket.emit('ga', {
                 a: 24,
                 type: 1,
-                char_id: $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-char_id"),
+                char_id: targetCharId,
                 quick: 1
             });
-            console.log("kill ", $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-char_id"));
+            console.log("kill ", targetCharId);
             PVP.licznik++;
             window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
         } else {
             GAME.socket.emit('ga', {
                 a: 24,
-                char_id: $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-char_id"),
+                char_id: targetCharId,
                 quick: 1
             });
-            console.log("kill ", $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]").attr("data-char_id"));
+            console.log("kill ", targetCharId);
             PVP.licznik++;
             window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
         }
@@ -291,7 +312,7 @@ PVP.kill_players = () => {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         PVP.licznik = 0;
         kom_clear();
-    } 
+    }
 };
 PVP.kill_players1 = () => {
     if (PVP.isHiddenVillage()) {
@@ -299,8 +320,10 @@ PVP.kill_players1 = () => {
         return;
     }
     if (!JQS.chm.is(":focus")) {
-        var enemy = $("#player_list_con").find(".player button" + "[data-quick=1]" + ":not(.initial_hide_forced)");
-        var bbb = $("#player_list_con").find(".player button" + "[data-option=gpvp_attack]" + "[data-quick=1]" + ":not(.initial_hide_forced)");
+        var enemy = PVP.attackableEnemies();
+        var bbb = $("#player_list_con").find(".player button" + "[data-option=gpvp_attack]" + "[data-quick=1]" + ":not(.initial_hide_forced)").filter(function () {
+            return !PVP.isOwnChar($(this).attr("data-char_id"));
+        });
         var bbbb = parseInt(bbb.attr("data-char_id"));
         if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
             $("#player_list_con").find("[data-option=load_more_players]").click();
@@ -340,7 +363,7 @@ PVP.zmien_postc = () => {
         return;
     }
 
-    var attackable = PVP.isHiddenVillage() ? [] : $("#player_list_con").find(".player button[data-quick=1]:not(.initial_hide_forced)");
+    var attackable = PVP.isHiddenVillage() ? [] : PVP.attackableEnemies();
     if (attackable.length > 0 && PVP.wait_for_clear_ticks < 10) {
         PVP.wait_for_clear_ticks++;
         console.log("PVP zmieniaj - jeszcze są przeciwnicy na polu (" + attackable.length + "), nie zmieniam postaci, próba " + PVP.wait_for_clear_ticks);
