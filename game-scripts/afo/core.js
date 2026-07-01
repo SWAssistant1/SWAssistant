@@ -206,6 +206,25 @@ var useSpeedSubstance = function () {
         if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
     }, 500);
 };
+
+var upgradeNonLegendaryItemOnce = function () {
+    var tryPage = function (page) {
+        if (page > 5) return;
+        GAME.emitOrder({ a: 12, page: page });
+        GAME.ekw_page = page;
+        setTimeout(function () {
+            var $item = $('#ekw_page_items .player_ekw_item').filter(function () {
+                var cls = parseInt($(this).data('class'));
+                var slot = parseInt($(this).data('slot'));
+                return slot !== 12 && cls >= 1 && cls <= 3;
+            }).first();
+            var iid = parseInt($item.data('item_id'));
+            if (iid) GAME.emitOrder({ a: 12, type: 10, iid: iid, page: page });
+            else tryPage(page + 1);
+        }, 300);
+    };
+    tryPage(1);
+};
 // "duration" to ile ms trzeba odczekać po odpaleniu danej akcji, zanim
 // runEnabledDailyActivities wystartuje kolejną w kolejce (patrz tam niżej -
 // akcje NIE lecą równolegle, bo część z nich współdzieli #ekw_page_items/
@@ -248,6 +267,11 @@ var DAILY_ACTIONS = [
         match: /substanc|przyspiesz/i,
         duration: 1500,
         run: useSpeedSubstance
+    },
+    {
+        match: /ulepsz.*przedmiot|przedmiot.*ulepsz/i,
+        duration: 2000,
+        run: upgradeNonLegendaryItemOnce
     }
 ];
 var scanDailyActivities = function () {
@@ -1037,7 +1061,16 @@ var createPanel = function () {
     });
 
     $('#inne_Panel .inne_insta30').click(() => {
-        if (window[INSTA30_SCRIPT.flag]) return;
+        if ($('.inne_insta30 .inne_status').hasClass('green')) {
+            // insta30.js rejestruje window.__SWA_INSTA30_STOP__ przy starcie -
+            // odpala go, żeby anulować wszystkie zaplanowane kroki, i czyści
+            // flagę "już wczytany", żeby kolejny klik na "Off->On" pobrał i
+            // uruchomił skrypt od nowa, zamiast tylko podmienić status na On.
+            if (typeof window.__SWA_INSTA30_STOP__ === 'function') window.__SWA_INSTA30_STOP__();
+            window[INSTA30_SCRIPT.flag] = false;
+            $('.inne_insta30 .inne_status').removeClass('green').addClass('red').html('Off');
+            return;
+        }
         loadGithubScript(INSTA30_SCRIPT.file, INSTA30_SCRIPT.flag, () => {
             $('.inne_insta30 .inne_status').removeClass('red').addClass('green').html('On');
         });
