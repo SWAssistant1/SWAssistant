@@ -28,11 +28,7 @@ var loadRespawnEngine = function () {
 var loadMissionsEngine = function () {
     loadGithubScript('SWA/scripts/missions.js', '__SWA_MISSIONS_LOADED__');
 };
-// Ranki misji odblokowane na postaci są częścią char_data (GAME.char_data.a_1..a_5,
-// patrz GAME.useChar / GAME.parseData case 10 w game.js) — dostępne od razu po wejściu
-// do gry, więc można je pokazać i pozwolić je wybrać zanim w ogóle wystartuje automat misji.
-// a_1..a_5 to ile misji danego ranku jest aktualnie do zrobienia — pokazujemy tylko
-// te z ilością > 0, resztę i tak nie da się włączyć (nie ma czego robić).
+
 var renderRanksFromCharData = function () {
     var ranks = [];
     for (var r = 1; r <= 5; r++) {
@@ -46,8 +42,7 @@ var renderRanksFromCharData = function () {
 var scanMissionRanks = function () {
     if (typeof GAME === 'undefined' || !GAME.char_data) return;
     renderRanksFromCharData();
-    // char_data.a_1..a_5 jest świeże tylko po odwiedzeniu strony obozu (emitOrder a:207) —
-    // odświeżamy w tle i renderujemy jeszcze raz, żeby liczby nie były nieaktualne.
+
     try { GAME.page_switch('game_camp'); } catch (e) { /* page_switch unavailable, skip refresh */ }
     window.setTimeout(renderRanksFromCharData, 600);
 };
@@ -73,11 +68,7 @@ var renderMissionRankButtons = function (ranks) {
         $container.append($btn);
     });
 };
-// Lista postaci z konta do rotacji w "Zmieniaj postki" (patrz PVP.zmien_postc
-// w pvp.js). Domyślnie wszystkie są włączone - użytkownik może wyłączyć
-// konkretne postacie (np. buildy niedostosowane do PVP), a wyłączenie
-// zapisuje się w localStorage i jest respektowane przy każdym starcie rotacji
-// (patrz klik .pvp_zmieniaj niżej, który filtruje PVP.chars wg tej listy).
+
 var renderPvpCharsList = function () {
     var $container = $('#pvp_Panel .pvp_chars_container');
     if (!$container.length) return;
@@ -103,30 +94,9 @@ var renderPvpCharsList = function () {
         $container.append($row);
     });
 };
-// Codzienne aktywności (zakładka "Aktywności") nie mają stałych indeksów w tym
-// skrypcie - nazwy bierzemy live z LNG.activity1..12 (ten sam obiekt, którego
-// używa rdzeń gry do wyrenderowania #char_activieties), a status "zrobione"
-// czytamy z ikonki done.png, którą gra tam wstawia. Dzięki temu lista zawsze
-// odpowiada temu, co naprawdę pokazuje serwer, zamiast zgadywać indeksy.
-// DAILY_ACTIONS dopasowuje znane, już istniejące w bocie jednorazowe akcje po
-// fragmencie nazwy (nie po indeksie) - z tych samych powodów. Aktywności bez
-// dopasowania są tylko wyświetlane/przełączalne, ale przycisk "Start" ich nie
-// dotyka, żeby nie zgadywać nieznanych protokołów gry.
-// DAILY_EXCLUDED to aktywności, których w ogóle nie da się zautomatyzować
-// (np. trening to seria ręcznych decyzji na froncie) - nie pokazujemy ich
-// w panelu, żeby nie sugerować, że da się je tu włączyć.
-// "instanc" (Instancje) też tu ląduje - nie ma jednego przycisku "zbierz wszystkie"
-// (wcześniejsza próba klikała #page_game_emp .newBtn.do_all_instances, ale to
-// selektor Otchłani/a:44, który wg odpowiedzi serwera (game.js case 44, a:44)
-// nigdy nie renderuje takiego przycisku - klik po prostu trafiał w 0 elementów).
-// Realne wykonanie instancji to wieloetapowy przelot przez pokoje (patrz Insta 30
-// w panelu Inne / SWA/scripts/insta30.js), więc nie mieści się w modelu
-// "jedna szybka akcja w kolejce dziennych aktywności".
+
 var DAILY_EXCLUDED = [/trening/i, /turniej/i, /instanc/i];
-// Kamień dusz (kula) zajmuje slot ekwipunku nr 12 (patrz ekw_list_bind w game.js:
-// "if(slot==12) $('#ekw_menu_bup').show()"), więc szukamy itemu po data-slot="12",
-// najpierw na aktualnie założonym slocie, potem po stronach ekwipunku - tak samo
-// jak RESP.DestroyItemsAtPage przełącza strony przez GAME.emitOrder({a:12,page:N}).
+
 var findSoulStoneItemId = function (callback) {
     var equipped = parseInt($('.usable_slot[data-slot="12"]').attr('data-item_id'));
     if (equipped > 0) { callback(equipped); return; }
@@ -142,11 +112,7 @@ var findSoulStoneItemId = function (callback) {
     };
     tryPage(1);
 };
-// Ulepszanie kul ma już swój automat (ballUpgrade w ball-upgrade.js, przycisk
-// "Ulepszaj wszystkie"), ale on kręci się w kółko dopóki go nie zatrzymać.
-// Tutaj chodzi tylko o jedno losowanie: a:45 type:3 rzuca nowymi statami,
-// type:5 je zatwierdza - dokładnie te same akcje co przyciski "Ulepsz"/"Zaakceptuj"
-// w panelu kuli (patrz game.js case 'ss_upgrade' / 'ss_upgrade_accept').
+
 var upgradeSoulStoneOnce = function () {
     findSoulStoneItemId(function (iid) {
         if (!iid) return;
@@ -159,14 +125,7 @@ var upgradeSoulStoneOnce = function () {
         }, 600);
     });
 };
-// Odłamki (materiał rzemieślniczy) leżą w zakładce "stackable" ekwipunku
-// (przycisk data-option="show_ekw_stackable" -> GAME.emitOrder({a:12,type:7})),
-// gdzie każdy item ma data-option="don_item" i data-class=1..4 (normal/rare/
-// unique/leg - patrz game.js GAME.parseStackableItems). Bierzemy ten o
-// najniższej klasie, bo to ta sama logika co "najpierw zbywaj najsłabsze".
-// Donacja to dokładnie ten sam protokół co przycisk "Przekaż" w oknie don_item
-// (case 'donate_item': a:12 type:21 iid am) - z pominięciem samego okna,
-// bo domyślna ilość w tym oknie i tak zawsze wynosi 1.
+
 var donateLowestShardToClan = function () {
     GAME.emitOrder({ a: 12, type: 7 });
     setTimeout(function () {
@@ -179,12 +138,7 @@ var donateLowestShardToClan = function () {
         if (best) GAME.emitOrder({ a: 12, type: 21, iid: best.iid, am: 1 });
     }, 500);
 };
-// Mała Porcja Ramen (item_id 40, gfx cons/40.png, "Odnawia Punkty Akcji: 200")
-// to INNY item niż ten z RESP.useGreen (tam chodzi o "zwykły ramen" z
-// GAME.quick_opts.senzus, item_id 1, używany do dokarmiania w trakcie farmienia).
-// Ten tutaj to nagroda za progi punktów aktywności (collectDailyRewards/act_prizes),
-// więc może go jeszcze nie być w eq - stąd deferred:true niżej, żeby ta akcja
-// odpaliła się dopiero PO odebraniu nagrody, a nie razem z resztą kolejki.
+
 var useActivityRamenOnce = function () {
     GAME.emitOrder({ a: 12, type: 7 });
     setTimeout(function () {
@@ -195,11 +149,7 @@ var useActivityRamenOnce = function () {
         if (iid) GAME.emitOrder({ a: 12, type: 8, iid: iid, amount: 1, sel: 0 });
     }, 500);
 };
-// Substancja Przyspieszająca występuje w kilku poziomach (xN), każdy jako osobny
-// item z tooltipem "Aktywuje przyspieszenie xN." (data-type="2" - patrz
-// GAME.parseStackableItems/getUsableItemDesc case effect_type 2 w game.js).
-// Zamiast zgadywać stałe item_id per poziom, czytamy mnożnik wprost z tooltipa
-// i bierzemy wg priorytetu x2 -> x3 -> x4 - pierwszy dostępny w tej kolejności.
+
 var useSpeedSubstance = function () {
     GAME.emitOrder({ a: 12, type: 7 });
     setTimeout(function () {
@@ -232,20 +182,9 @@ var upgradeNonLegendaryItemOnce = function () {
     };
     tryPage(1);
 };
-// Dopasowuje aktywność "Wykonaj misję" niezależnie od jej dokładnej odmiany w LNG
-// (misja/misje/misji) - używane zarówno do wykrycia jej w kolejce dziennych akcji,
-// jak i do przesunięcia jej wiersza na sam dół listy w panelu (patrz renderDailyActivities).
+
 var MISSION_ACTIVITY_MATCH = /misj/i;
-// Wykonanie 1 misji w ramach dziennych aktywności korzysta z tego samego silnika co
-// panel Misje (missions.js, patrz .misje_main/.misje_status i loadMissionsEngine
-// wyżej) - włączamy go dokładnie tak samo jak klik w przycisk "Misje", tylko że
-// po jednym pełnym cyklu misji (event 'swa-mission-completed' wysyłany z
-// waitForMissionEnd w missions.js) sami go wyłączamy, żeby zrobił dokładnie jedną
-// misję zamiast kręcić się w kółko. Jeśli postać nie ma żadnej dostępnej/włączonej
-// misji, missions.js samo zdejmuje status na Off (getMissionStartId) - to również
-// traktujemy jako "koniec", inaczej kolejka dziennych aktywności zawiesiłaby się
-// w nieskończoność. maxWaitTimer to tylko zabezpieczenie na wypadek, gdyby żaden
-// z powyższych sygnałów nie nadszedł.
+
 var MISSION_MAX_WAIT_MS = 10 * 60 * 1000;
 var runSingleMissionAndWait = function (callback) {
     var finished = false;
@@ -269,10 +208,7 @@ var runSingleMissionAndWait = function (callback) {
     $('.misje_main .misje_status').removeClass('red').addClass('green').html('On');
     loadMissionsEngine();
 };
-// "duration" to ile ms trzeba odczekać po odpaleniu danej akcji, zanim
-// runEnabledDailyActivities wystartuje kolejną w kolejce (patrz tam niżej -
-// akcje NIE lecą równolegle, bo część z nich współdzieli #ekw_page_items/
-// GAME.ekw_page i nadpisywałyby sobie nawzajem stan).
+
 var DAILY_ACTIONS = [
     {
         match: /logowanie/i,
@@ -315,7 +251,18 @@ var DAILY_ACTIONS = [
 ];
 var scanDailyActivities = function () {
     GAME.socket.emit('ga', { a: 49, type: 0 });
-    setTimeout(renderDailyActivities, 1000);
+    setTimeout(function () {
+        renderDailyActivities();
+        renderDailyPrizesStatus();
+    }, 1000);
+};
+
+var TOTAL_DAILY_PRIZES = 4;
+var renderDailyPrizesStatus = function () {
+    var $el = $('#daily_Panel .daily_prizes_status');
+    if (!$el.length) return;
+    var received = $('#act_prizes').find('div.act_prize.disabled').length;
+    $el.text('Odebrane progi aktywności: ' + received + '/' + TOTAL_DAILY_PRIZES);
 };
 var renderDailyActivities = function () {
     var $container = $('#daily_Panel .daily_activities_container');
@@ -323,10 +270,7 @@ var renderDailyActivities = function () {
     var enabled = {};
     try { enabled = JSON.parse(localStorage.getItem('swa_daily_enabled')) || {}; } catch (e) { enabled = {}; }
     $container.empty();
-    // Misje trwają najdłużej (wymagają dojścia do lokacji i powrotu) i muszą wykonać
-    // się jako ostatnie w kolejce (patrz runEnabledDailyActivities), więc ich wiersz
-    // trzymamy osobno i dopisujemy do kontenera dopiero po wszystkich innych - żeby
-    // panel wizualnie odzwierciedlał kolejność wykonywania.
+
     var $missionRows = [];
     for (var i = 1; i <= 12; i++) {
         var name = LNG['activity' + i];
@@ -357,21 +301,23 @@ var collectDailyRewards = function () {
         var received = $("#act_prizes").find("div.act_prize.disabled").length;
         var activity = parseInt($('#char_activity').text());
         var p = [25, 50, 75, 100, 150];
+        var claimedAny = false;
         for (var i = 0; i <= 5; i++) {
             if (received < 5 && activity >= p[i]) {
                 var actPrize = $('#act_prizes button[data-ind=' + i + ']').closest(".act_prize");
                 if (!actPrize.hasClass("disabled")) {
                     GAME.socket.emit('ga', { a: 49, type: 1, ind: i });
+                    claimedAny = true;
                 }
             }
         }
+        setTimeout(function () {
+            GAME.socket.emit('ga', { a: 49, type: 0 });
+            setTimeout(renderDailyPrizesStatus, 500);
+        }, claimedAny ? 800 : 0);
     }, 1000);
 };
-// Akcje z kolejki odpalają się PO KOLEI, nie równolegle - kilka z nich
-// (kamień dusz, odłamki, ramen, substancja) współdzieli #ekw_page_items /
-// GAME.ekw_page, więc odpalone jednocześnie nadpisywały sobie nawzajem stan
-// i realnie wykonywała się tylko pierwsza z zaznaczonych, mimo że wszystkie
-// miały wystartować.
+
 var runDailyActionQueue = function (queue, onDone) {
     if (!queue.length) { onDone(); return; }
     var action = queue.shift();
@@ -396,15 +342,14 @@ var runEnabledDailyActivities = function (onComplete) {
         else if (action.deferred) deferredActions.push(action);
         else immediateActions.push(action);
     }
-    // Nagrody dzienne zbieramy dopiero PO misji (nie przed) - ukończenie misji dolicza
-    // punkty aktywności, więc zbieranie ich wcześniej mogłoby pominąć próg odblokowany
-    // właśnie przez tę misję.
+
     var afterMission = function () {
         setTimeout(function () {
             collectDailyRewards();
             setTimeout(function () {
                 runDailyActionQueue(deferredActions, function () {
                     renderDailyActivities();
+                    renderDailyPrizesStatus();
                     if (onComplete) onComplete();
                 });
             }, 1000);
@@ -416,13 +361,7 @@ var runEnabledDailyActivities = function (onComplete) {
     });
 };
 var INSTA30_SCRIPT = { file: 'SWA/scripts/insta30.js', flag: '__SWA_SCRIPT_insta30_LOADED__' };
-// Zadania śledzone przez gracza (widget #quest_track_con, wypełniany przez GAME.parseTracker)
-// pokazują postęp wymagania w <strong class="red|green"> wewnątrz GAME.quest_want - green
-// oznacza, że dany etap (np. "zabij X") został ukończony. To jedyne miejsce, gdzie ten stan
-// aktualizuje się na żywo (przez res.track z serwera) bez potrzeby trzymania otwartego okna
-// zadania, więc właśnie stąd wykrywamy ukończenie etapu podczas farmienia w tle.
-// Domyślnie exp/resp mają jechać dalej mimo ukończenia etapu (np. żeby dojeść PA do końca),
-// dlatego to osobny przełącznik "Stop po zadaniu" w panelu PVM, a nie zawsze-włączone zatrzymanie.
+
 var swaQuestStageState = {};
 var swaQuestWatchInitialized = false;
 var notifyPvmQuestStop = function (questName) {
@@ -444,8 +383,6 @@ var handlePvmQuestStageDone = function (questName) {
     var respActive = $('.resp_resp1 .resp_status').hasClass('green');
     var expActive = $('.resp_rare .resp_status').hasClass('green');
     if (!respActive && !expActive) return;
-    // klikamy te same przyciski co użytkownik - odpalają istniejącą logikę wyłączania
-    // (m.in. zmianę klasy DOM, którą respawn.js/exp.js sprawdzają w swojej pętli, żeby się zatrzymać)
     if (respActive) $('#resp_Panel .resp_resp1').click();
     if (expActive) $('#resp_Panel .resp_rare').click();
     notifyPvmQuestStop(questName);
@@ -593,6 +530,7 @@ var createPanel = function () {
         #daily_Panel .daily_done { opacity: 0.55; }
         #daily_Panel .daily_activities_container { max-height: 280px; overflow-y: auto; }
         #daily_Panel .daily_hint { text-align: center; color: #888; font-size: 11px; margin: 0 8px 6px; }
+        #daily_Panel .daily_prizes_status { text-align: center; color: #ddd; font-size: 12px; font-weight: 600; margin: 0 8px 8px; }
     `;
     $("#main_Panel, #pvp_Panel, #resp_Panel, #res_Panel, #inne_Panel, #sety_Panel, #karty_Panel, #misje_Panel, #daily_Panel").remove();
     const html = ` <div id="main_Panel"> <div class="sekcja panel_dragg">ALL FOR ONE<div class="gh_close">&times;</div></div> <div class='gh_button gh_resp'>PVM<b class='gh_status red'>Off</b></div> <div class='gh_button gh_pvp'>PVP<b class='gh_status red'>Off</b></div>  <div class='gh_button gh_res'>Zbierajka<b class='gh_status red'>Off</b></div> <div class='gh_button gh_inne'>Inne<b class='gh_status red'>Off</b></div> <div class='gh_button gh_kom'>Komunikaty<b class='gh_status red'>Off</b></div> <div class='gh_button gh_sety'>Sety EQ<b class='gh_status red'>Off</b></div> <div class='gh_button gh_karty'>Sety Kart<b class='gh_status red'>Off</b></div> <div class='gh_button gh_misje'>Misje<b class='gh_status red'>Off</b></div> <div class='gh_button gh_daily'>Daily<b class='gh_status red'>Off</b></div> </div> `;
@@ -614,7 +552,7 @@ var createPanel = function () {
     const RESP_panel = ` <div id="resp_Panel" style="display:none;"> <div class="sekcja resp_dragg">SPAWN MOBKóW</div> <div class="resp_button resp_resp">On<b class="resp_status red">Off</b></div>  <div class="resp_button resp_resp1">Resp<b class="resp_status red">Off</b></div> <div class="resp_button resp_rare">exp<b class="resp_status red">Off</b></div> <div class="resp_button resp_stop_quest">Stop po zadaniu<b class="resp_status red">Off</b></div> <div class="resp_button resp_normal">Niszczenie eq<b class="resp_status red">Off</b></div> <div class="resp_button resp_leg">Niszczenie leq<b class="resp_status red">Off</b></div> <div class='resp_senzu_select'><select name='resp_senzu_select'><option value="">Wyłączony</option><option value="BLUE">Ogromny ramen</option><option value="GREEN">maly ramen</option><option value="PURPLE">Powiekszony ramen</option><option value="YELLOW">zolta pigula</option><option value="RED">zielona pigula</option><option value="MAGIC">Czerwona pigula</option></select></div>    <div class="resp_button resp_on">Włącz All<b class="resp_status green">On</b></div> <div class="resp_button resp_off">Wyłącz All<b class="resp_status red">Off</b></div>  <div class='gamee_input'><label>Min PA</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Min PA (próg jedzenia)" name='resp_min_pa' value='5000' /></div> <div class='gamee_input'><label>Ilość ramenów do użycia (0=brak limitu)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Max ramenów (0=brak)" name='resp_max_ramen' value='0' /></div> <div class='gamee_input'><label>Próg regeneracji (% max PA)</label><input style='width:120px; margin-left:-2px; background:grey;text-align:center;font-size:16;' type='text' placeholder="Próg regeneracji % (np. 80)" name='resp_pa_threshold' value='80' /></div> <div class='resp_ramen_used'>Zużyto: 0</div> <div class='resp_sub_select'><select name='resp_sub_select'></select></div> <div class="resp_button resp_rank_normal">Normal<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_champion">Champion<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_elite">Elite<b class="resp_status green">On</b></div> <div class="resp_button resp_rank_boss">Boss<b class="resp_status green">On</b></div>   </div> `;
     const RES_panel = ` <div id="res_Panel" style="display:none;"> <div class="sekcja res_dragg">SUROWCE</div> <div class="res_button res_res">ZBIERAJ<b class="res_status red">Off</b></div> <div class="bt_cool" style="text-align:center; color:white;"></div> <ul></ul> </div> `;
     const MISJE_panel = ` <div id="misje_Panel" style="display:none;"> <div class="sekcja misje_dragg">MISJE</div> <div class="misje_button misje_main">Misje<b class="misje_status red">Off</b></div> <div class="misje_ranks_hint">Misje dostępne dla postaci:</div> <div class="misje_ranks_container"></div> </div> `;
-    const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
+    const DAILY_panel = ` <div id="daily_Panel" style="display:none;"> <div class="sekcja daily_dragg">DZIENNE AKTYWNOŚCI</div> <div class="daily_button daily_main">Start<b class="daily_status red">Off</b></div> <div class="daily_prizes_status"></div> <div class="daily_hint">Aktywności do zrobienia dzisiaj:</div> <div class="daily_activities_container"></div> </div> `;
     const INNE_Panel = `<div id="inne_Panel" style="display:none;"> <div class="sekcja inne_dragg">Inne</div> <div class="inne_button inne_wymiana">Wymiana<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_ronin">Ronin<strong class="inne_status red">Off</strong></div>
         <div class="inne_button inne_karciana">Karciana<strong class="inne_status red">Off</strong></div>
@@ -1183,10 +1121,6 @@ var createPanel = function () {
 
     $('#inne_Panel .inne_insta30').click(() => {
         if ($('.inne_insta30 .inne_status').hasClass('green')) {
-            // insta30.js rejestruje window.__SWA_INSTA30_STOP__ przy starcie -
-            // odpala go, żeby anulować wszystkie zaplanowane kroki, i czyści
-            // flagę "już wczytany", żeby kolejny klik na "Off->On" pobrał i
-            // uruchomił skrypt od nowa, zamiast tylko podmienić status na On.
             if (typeof window.__SWA_INSTA30_STOP__ === 'function') window.__SWA_INSTA30_STOP__();
             window[INSTA30_SCRIPT.flag] = false;
             $('.inne_insta30 .inne_status').removeClass('green').addClass('red').html('Off');
@@ -1247,5 +1181,13 @@ GAME.initiate = function() {
     }
     $('#available_servers').html(con);
     $('#available_servers option[value=' + this.server + ']').prop('selected', true);
+};
+
+var swaOriginalUseChar = GAME.useChar;
+GAME.useChar = function () {
+    swaOriginalUseChar.apply(this, arguments);
+    if ($('.gh_daily .gh_status').hasClass('green')) {
+        setTimeout(scanDailyActivities, 300);
+    }
 };
 }
