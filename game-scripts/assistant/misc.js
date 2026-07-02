@@ -321,12 +321,12 @@ Assistant.prototype.handleSockets = function (res) {
             // falls through
         case 12:
             var item;
-            console.log(res);
+            // console.log(res);   // debug wyciszony - leciał przy każdej odpowiedzi a:12 (spam + retencja obiektów)
             if (res.ekw) {
                 for (var i = 0; i < res.ekw.length; i++) {
-                    console.log(res.ekw[i].id, this.item_id);
+                    // console.log(res.ekw[i].id, this.item_id);
                     if (res.ekw[i].id == this.item_id) {
-                        console.log("item found");
+                        // console.log("item found");
                         item = document.querySelector('.player_ekw_item[data-item_id="'+ this.item_id +'"]')
                         item.dispatchEvent(mouseOverEvent);
                         break;

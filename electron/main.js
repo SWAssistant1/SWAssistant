@@ -256,6 +256,12 @@ function openActiveCardDevTools() {
   card.view.webContents.toggleDevTools();
 }
 
+function reloadActiveCard() {
+  const card = cards.get(activeCardId);
+  if (!card) return;
+  card.view.webContents.reload();
+}
+
 function registerCardSwitchShortcut() {
   const menu = Menu.buildFromTemplate([
     {
@@ -263,19 +269,26 @@ function registerCardSwitchShortcut() {
       submenu: [
         { label: 'Następna karta', accelerator: 'CmdOrCtrl+Tab', click: () => { switchToAdjacentCard(1); } },
         { label: 'Poprzednia karta', accelerator: 'CmdOrCtrl+Shift+Tab', click: () => { switchToAdjacentCard(-1); } },
+        { label: 'Odśwież', accelerator: 'F5', click: () => { reloadActiveCard(); } },
         { label: 'Konsola (DevTools)', accelerator: 'F12', click: () => { openActiveCardDevTools(); } },
       ],
     },
   ]);
 
-  const applied = Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(menu);
   mainWindow.setMenuBarVisibility(false);
 
-  const nextOk = globalShortcut.register('CmdOrCtrl+Tab', () => {
+  globalShortcut.register('CmdOrCtrl+Tab', () => {
     switchToAdjacentCard(1);
   });
-  const prevOk = globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
+  globalShortcut.register('CmdOrCtrl+Shift+Tab', () => {
     switchToAdjacentCard(-1);
+  });
+  globalShortcut.register('F5', () => {
+    reloadActiveCard();
+  });
+  globalShortcut.register('CmdOrCtrl+R', () => {
+    reloadActiveCard();
   });
   globalShortcut.register('F12', () => {
     openActiveCardDevTools();

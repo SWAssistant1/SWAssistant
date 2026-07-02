@@ -33,6 +33,8 @@ var RESP = {
     bless: false,
     checkOST_timer: 0,
     normal: false,
+    destroying: false,
+    EKW_DESTROY_THRESHOLD: 200,   // niszcz eq gdy zajętych slotów >= tyle (gdy Resp/exp ON)
     rare: false,
     leg: false,
     b1: false,
@@ -58,9 +60,9 @@ var RESP = {
     loc: GAME.char_data.loc
 };
 RESP.check = () => {
-    console.log('checking resp');
+    // console.log('checking resp');
     if (GAME.char_data.pr <= RESP.min_pa()) {
-        console.log("resp use sensu");
+        // console.log("resp use sensu");
         RESP.useSenzu();
         return true;
     } else if (RESP.checkOST && $("#doubler_bar").css("display") === "none") {
@@ -78,19 +80,23 @@ RESP.check = () => {
         RESP.checkOST_timer = GAME.getTime() + 60;
         return false;
     } else if (RESP.normal) {
+
+        if (RESP.destroying) return false;
         GAME.emitOrder({a:12,page:GAME.ekw_page});
         let ekwUsedElement = document.getElementById('ekw_used');
-        let ekwUsedValue = ekwUsedElement.textContent;
+        let ekwUsedValue = parseInt(ekwUsedElement.textContent) || 0;
 
-        if ((($(".resp_rare .resp_status").hasClass("green")) && ekwUsedValue < 1000) ||
-        (($(".resp_resp1 .resp_status").hasClass("green")) && ekwUsedValue < 1000)) {
+        if ((($(".resp_rare .resp_status").hasClass("green")) && ekwUsedValue < RESP.EKW_DESTROY_THRESHOLD) ||
+        (($(".resp_resp1 .resp_status").hasClass("green")) && ekwUsedValue < RESP.EKW_DESTROY_THRESHOLD)) {
             return false;
         }
+        RESP.destroying = true;
         const komElements = document.querySelectorAll('#kom_con .kom');
-    
+
         komElements.forEach(kom => {
             const closeButton = kom.querySelector('.close_kom');
-            closeButton.click();
+
+            if (closeButton) closeButton.click();
         });
         window.setTimeout(function() {
             GAME.emitOrder({a:12,page:2});
@@ -127,7 +133,10 @@ RESP.check = () => {
             }, 111);
         }, 2005);
 
-
+        // zwolnij blokadę po zakończeniu całej kaskady (ostatnia strona ~2005ms + odczyt DOM)
+        window.setTimeout(function() {
+            RESP.destroying = false;
+        }, 2400);
     }
     return false;
 };
@@ -203,7 +212,7 @@ RESP.populateSubSelect = () => {
     }
 };
 RESP.action = () => {
-    console.log('resp action');
+    // console.log('resp action');
     if (!RESP.stop) {
         if (!RESP.check()) {
             setTimeout(() => {
@@ -302,7 +311,7 @@ RESP.feedStep = () => {
     setTimeout(RESP.feedStep, 250);
 };
 RESP.useSenzu = () => {
-    console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
+    // console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
     if (RESP.feeding) return;
     if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) return;
     RESP.feeding = true;
@@ -323,7 +332,7 @@ RESP.useBlue = () => {
 };
 RESP.useGreen = () => {
     const green = RESP.getSenzu(RESP.SENZU_GREEN);
-    console.log("use green", green);
+    // console.log("use green", green);
     if (!green) {
         return;
     }

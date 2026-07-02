@@ -7,9 +7,9 @@ var PVP = {
     war_list: 0,
     war_cnt: 0,
     org_cnt: 0,
-    org_skip: {},
-    org_pending: {},
-    war_cooldown_until: 0,
+    charState: {},
+    komBusy: false,
+    attacked_ids: {},
     emp : 0,
     wk: false,
     caseNumber: 0,
@@ -18,6 +18,7 @@ var PVP = {
     czekajpvp: 160,
     WSP: 50,
     licznik: 0,
+    killing: false,
     dogory: false,
     loc: 0,
     g: 1,
@@ -40,6 +41,57 @@ var PVP = {
     start_char_disabled:false,
     stale_enemy_count:null,
     stale_enemy_since:0,
+    emp_wars_next_refresh:0,
+    war_cooldown_log_next:0,
+};
+PVP.EMP_WARS_REFRESH_INTERVAL = 15;
+PVP.WAR_COOLDOWN_SANITY_LIMIT = 7 * 24 * 3600;
+PVP.CAP_TTL = 86400;            // uprawnienia sprawdzamy raz dziennie
+PVP.CAP_STORAGE_KEY = 'swa_pvp_caps';
+PVP.ORG_HIRE_ATTEMPTS = 5;      // ile prób odczytu wyniku najmu (rejestr/OK)
+PVP.ORG_HIRE_RETRY = 20;        // s: bufor między najmem a odświeżeniem emp_wars (>15s refresh)
+PVP.RAPS_LIMIT = 1000;          // kasuj wszystkie raporty, gdy jest ich co najmniej tyle
+PVP.RAPS_CHECK_INTERVAL = 300;  // s: jak często sprawdzać liczbę raportów
+PVP.raps_next_check = 0;
+PVP.raps_check_pending = false;
+
+// ---- Stan per-postać (izolacja: rotacja nie kasuje postępu) ----
+PVP.loadCaps = () => {
+    try { return JSON.parse(localStorage.getItem(PVP.CAP_STORAGE_KEY)) || {}; }
+    catch (e) { return {}; }
+};
+PVP.saveCap = (kind, cap) => {
+    var caps = PVP.loadCaps();
+    if (!caps[GAME.char_id]) caps[GAME.char_id] = {};
+    caps[GAME.char_id][kind] = cap;
+    try { localStorage.setItem(PVP.CAP_STORAGE_KEY, JSON.stringify(caps)); } catch (e) { return; }
+};
+PVP.newCharState = () => {
+    var s = { warCooldownUntil: 0, warCap: null, orgCap: null, orgProgress: {} };
+    var caps = PVP.loadCaps()[GAME.char_id];
+    if (caps) { s.warCap = caps.war || null; s.orgCap = caps.org || null; }
+    return s;
+};
+PVP.cs = () => {
+    var id = GAME.char_id;
+    if (!PVP.charState[id]) PVP.charState[id] = PVP.newCharState();
+    return PVP.charState[id];
+};
+// zwraca true (mamy uprawnienia), false (brak), null (nieznane/wygasło -> spróbuj)
+PVP.getCap = (kind) => {
+    var cap = kind === 'war' ? PVP.cs().warCap : PVP.cs().orgCap;
+    if (cap && (GAME.getTime() - cap.at) < PVP.CAP_TTL) return cap.allowed;
+    return null;
+};
+PVP.setCap = (kind, allowed) => {
+    var cap = { allowed: allowed, at: GAME.getTime() };
+    if (kind === 'war') PVP.cs().warCap = cap; else PVP.cs().orgCap = cap;
+    PVP.saveCap(kind, cap);
+};
+PVP.refreshEmpWars = () => {
+    if (GAME.getTime() < PVP.emp_wars_next_refresh) return;
+    PVP.emp_wars_next_refresh = GAME.getTime() + PVP.EMP_WARS_REFRESH_INTERVAL;
+    GAME.socket.emit('ga', { a: 50, type: 0, empire: GAME.char_data.village_id });
 };
 PVP.checkkkk = () => {
     let imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -158,63 +210,27 @@ PVP.start = () => {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
 };
+
+PVP.duties = [
+    'check_position_x',   // MOVEMENT
+    'check_position_y',   // MOVEMENT
+    'check',              // MOVEMENT (odświeżenie mapy/wojen klanowych)
+    'clean_raps',         // MAINTENANCE (kasowanie nadmiaru raportów)
+    'dec_wars',           // WAR
+    'orgi',               // ORG
+    'check_players',      // COMBAT
+    'kill_players',       // COMBAT
+    'check_players2',     // COMBAT
+    'wojny1',             // COMBAT (pauza)
+    'check_location',     // MOVEMENT
+    'check2',             // BUFF (trening/ssj/buffy)
+    'check_players2',     // COMBAT
+    'zmien_postc',        // ROTATION
+];
 PVP.action = () => {
-    console.log("pvp action", PVP.caseNumber)
-    switch (PVP.caseNumber) {
-        case 0:
-            PVP.caseNumber++;
-            PVP.check_position_x();
-            break;
-        case 1:
-            PVP.caseNumber++;
-            PVP.check_position_y();
-            break;
-        case 2:
-            PVP.caseNumber++;
-            PVP.check();
-            break;
-        case 3:
-            PVP.caseNumber++;
-            PVP.check_players();
-            break;
-        case 4:
-            PVP.caseNumber++;
-            PVP.kill_players();
-            break;
-        case 5:
-            PVP.caseNumber++;
-            PVP.check_players2();
-            break;
-        case 6:
-            PVP.caseNumber++;
-            PVP.wojny1();
-            break;
-        case 7:
-            PVP.caseNumber++;
-            PVP.check_location();
-            break;
-        case 8:
-            PVP.caseNumber++;
-            PVP.check2();
-            break;
-        case 9:
-            PVP.caseNumber++;
-            PVP.check_players2();
-            break;
-        case 10:
-            PVP.caseNumber++;
-            PVP.dec_wars();
-            break;
-        case 11:
-            PVP.caseNumber++;
-            PVP.orgi();
-            break;
-        case 12:
-            PVP.caseNumber = 0;
-            PVP.zmien_postc();
-            break;
-        default:
-    }
+    var i = PVP.caseNumber;
+    PVP.caseNumber = (i + 1) % PVP.duties.length;
+    PVP[PVP.duties[i]]();
 };
 PVP.check_position_x = () => {
     PVP.x = GAME.char_data.x;
@@ -225,6 +241,8 @@ PVP.check_position_y = () => {
     window.setTimeout(PVP.start, 5);
 };
 PVP.check_players = () => {
+    // nowa runda ataku na tym polu -> czyścimy pamięć zaatakowanych celów
+    PVP.attacked_ids = {};
     if ($("#player_list_con").find("[data-option=load_more_players]").length != 0) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
     }
@@ -247,7 +265,9 @@ PVP.check_players = () => {
 };
 PVP.check_players2 = () => {
     var enemy = PVP.attackableEnemies();
-    PVP.kill_players1();
+    // tylko jeden łańcuch kill_players1 naraz — inaczej nakładające się pętle
+    // zapychają event loop i cała rotacja (bieg/atak) zwalnia z czasem
+    if (!PVP.killing) PVP.kill_players1();
     window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     PVP.licznik = 1;
 };
@@ -270,6 +290,24 @@ PVP.attackableEnemies = () => {
     return $("#player_list_con").find(".player button[data-quick=1]:not(.initial_hide_forced)").filter(function () {
         return !PVP.isOwnChar($(this).attr("data-char_id"));
     });
+};
+// cele atakowalne, których jeszcze nie tknęliśmy w tej rundzie (bez cooldownu, bez dubli)
+PVP.freshEnemies = () => {
+    return PVP.attackableEnemies().filter(function () {
+        return !PVP.attacked_ids[$(this).attr("data-char_id")];
+    });
+};
+// jeden atak z właściwym typem: shadow/ukryta wioska (gpvp/gxxx) => type:1, zwykły => bez type
+PVP.attackButton = ($btn) => {
+    var charId = parseInt($btn.attr("data-char_id"));
+    var opt = $btn.attr("data-option") || '';
+    PVP.attacked_ids[$btn.attr("data-char_id")] = true;
+    PVP.attacked_this_round = true;
+    if (opt.indexOf("gxxx") !== -1 || opt.indexOf("gpvp") !== -1) {
+        GAME.socket.emit('ga', { a: 24, type: 1, char_id: charId, quick: 1 });
+    } else {
+        GAME.socket.emit('ga', { a: 24, char_id: charId, quick: 1 });
+    }
 };
 
 PVP.refreshPlayerList = () => {
@@ -299,80 +337,48 @@ PVP.kill_players = () => {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
-    var enemy = PVP.attackableEnemies();
-    PVP.checkStaleEnemies(enemy.length);
     if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
         window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
-    } else if (enemy.length == 0) {
-        PVP.kill_players1();
-        window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
-    } else if (PVP.licznik < $("#player_list_con .player").length) {
-        PVP.attacked_this_round = true;
-        var $target = $("#player_list_con .player").eq(PVP.licznik).find("[data-quick=1]");
-        var targetCharId = $target.attr("data-char_id");
-        if ($target.length === 0 || PVP.isOwnChar(targetCharId)) {
-            PVP.licznik++;
-            window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
-        } else if ($target.attr("data-option").includes("gxxx")) {
-            GAME.socket.emit('ga', {
-                a: 24,
-                type: 1,
-                char_id: targetCharId,
-                quick: 1
-            });
-            console.log("kill ", targetCharId);
-            PVP.licznik++;
-            window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
-        } else {
-            GAME.socket.emit('ga', {
-                a: 24,
-                char_id: targetCharId,
-                quick: 1
-            });
-            console.log("kill ", targetCharId);
-            PVP.licznik++;
-            window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
-        }
+        return;
+    }
+    PVP.checkStaleEnemies(PVP.attackableEnemies().length);
+    var fresh = PVP.freshEnemies();
+    if (fresh.length > 0) {
+        PVP.attackButton(fresh.eq(0));
+        window.setTimeout(PVP.kill_players, PVP.czekajpvp / PVP.WSPP());
     } else {
-        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         PVP.licznik = 0;
         kom_clear();
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
 };
 PVP.kill_players1 = () => {
     if (PVP.isHiddenVillage()) {
+        PVP.killing = false;
         kom_clear();
         return;
     }
-    if (!JQS.chm.is(":focus")) {
-        var enemy = PVP.attackableEnemies();
-        var bbb = $("#player_list_con").find(".player button" + "[data-option=gpvp_attack]" + "[data-quick=1]" + ":not(.initial_hide_forced)").filter(function () {
-            return !PVP.isOwnChar($(this).attr("data-char_id"));
-        });
-        var bbbb = parseInt(bbb.attr("data-char_id"));
-        PVP.checkStaleEnemies(enemy.length);
-        if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
-            $("#player_list_con").find("[data-option=load_more_players]").click();
-            window.setTimeout(PVP.kill_players1, 50);
-        } else if (bbb.length > 0) {
-            PVP.attacked_this_round = true;
-            GAME.socket.emit('ga', {
-                a: 24,
-                type: 1,
-                char_id: bbbb,
-                quick: 1
-            });
-            window.setTimeout(PVP.kill_players1, 110);
-        } else if (enemy.length > 0) {
-            PVP.attacked_this_round = true;
-            enemy.eq(0).click();
-            window.setTimeout(PVP.kill_players1, 110);
-            console.log("zabijanie ", enemy.length);
-        } else {
-            console.log("koniec wroguw", enemy.length);
-            kom_clear();
-        }
+    if (JQS.chm.is(":focus")) {
+        PVP.killing = false;
+        return;
+    }
+    if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
+        $("#player_list_con").find("[data-option=load_more_players]").click();
+        PVP.killing = true;
+        window.setTimeout(PVP.kill_players1, 50);
+        return;
+    }
+    PVP.checkStaleEnemies(PVP.attackableEnemies().length);
+    var fresh = PVP.freshEnemies();
+    if (fresh.length > 0) {
+        PVP.attackButton(fresh.eq(0));
+        PVP.killing = true;
+        window.setTimeout(PVP.kill_players1, 110);
+    } else {
+        PVP.killing = false;
+        // console.log("koniec wroguw", PVP.attackableEnemies().length);
+        kom_clear();
     }
 };
 PVP.wojny1 = () => {
@@ -435,7 +441,7 @@ PVP.zmien_postc = () => {
         }
         PVP.attacked_this_round = false;
 
-        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id) {
+        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id && PVP.canDeclareWar()) {
             console.log("PVP zmieniaj - postać " + currentCharId + " 2 rundy bez ataku, wracam na postać startową i czekam na atak");
             PVP.empty_rounds[currentCharId] = 0;
             PVP.waiting_for_attack = true;
@@ -443,10 +449,12 @@ PVP.zmien_postc = () => {
             GAME.emitOrder({ a: 2, char_id: PVP.start_char_id });
             window.setTimeout(PVP.start, 2000);
             return;
+        } else if (PVP.empty_rounds[currentCharId] >= 2) {
+            PVP.empty_rounds[currentCharId] = 0;
         }
     }
 
-    console.log("PVP ", PVP.start_char, PVP.chars.length)
+    // console.log("PVP ", PVP.start_char, PVP.chars.length)
     if (PVP.start_char == PVP.chars.length) {
         PVP.start_char = 0;
         var charId0 = parseInt(PVP.chars[PVP.start_char++]);
@@ -614,10 +622,10 @@ PVP.check = () => {
 };
 PVP.check2 = () => {
     if (PVP.checkkkk()) {
-        console.log("pvp check 1");
+        // console.log("pvp check 1");
         window.setTimeout(PVP.check2, 1800);
     } else {
-        console.log("pvp check 2");
+        // console.log("pvp check 2");
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
 };
@@ -631,25 +639,69 @@ PVP.clan_list = () => {
 PVP.save_clan_list = () => {
     localStorage.setItem('clan_list', PVP.war);
 };
-PVP.waitForOrgHireResult = (warId, attemptsLeft) => {
-    var failed = false;
+PVP.waitForOrgHireResult = (warId, attemptsLeft, actingChar) => {
+    if (actingChar !== GAME.char_id) { PVP.komBusy = false; return; }
+    var failed = false, failedText = '';
     $('#kom_con .kom .content').each(function () {
-        if ($(this).text().indexOf('Nie masz uprawnień') !== -1) failed = true;
+        var t = $(this).text();
+        if (t.indexOf('Nie masz uprawnień') !== -1) { failed = true; failedText = t.trim(); }
     });
     if (failed) {
-        PVP.org_skip[warId] = true;
-        delete PVP.org_pending[warId];
+        // brak uprawnień jest per-postać: cała postać nie może najmować (dziś)
+        console.log("org - najem odrzucony na postaci " + GAME.char_id + " (\"" + failedText + "\"), wyłączam najem na tej postaci do jutra");
+        PVP.setCap('org', false);
+        delete PVP.cs().orgProgress[warId];
+        PVP.komBusy = false;
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
     if (attemptsLeft > 0) {
-        setTimeout(() => PVP.waitForOrgHireResult(warId, attemptsLeft - 1), 300);
+        setTimeout(() => PVP.waitForOrgHireResult(warId, attemptsLeft - 1, actingChar), 300);
     } else {
-        delete PVP.org_pending[warId];
+        // brak komunikatu o błędzie => najem przyjęty; zapisujemy czas próby.
+        // GAME.emp_wars potwierdzi org != 0 po najbliższym odświeżeniu; do tego czasu
+        // ORG_HIRE_RETRY chroni przed ponownym strzałem w tę samą wojnę.
+        PVP.cs().orgProgress[warId] = GAME.getTime();
+        if (PVP.getCap('org') === null) PVP.setCap('org', true);
+        PVP.komBusy = false;
+        PVP.orgi();   // najmujemy kolejne organizacje w tej samej wizycie
     }
 };
+// ID naszych wojen (village_X == nasza wioska) bez naszej organizacji (org_X == 0) — ze stanu gry.
+PVP.warsNeedingOrg = () => {
+    var out = [];
+    if (GAME.emp_wars && GAME.emp_wars.length) {
+        var myVillage = GAME.char_data.village_id;
+        var matchedOurWar = false;
+        for (var i = 0; i < GAME.emp_wars.length; i++) {
+            var w = GAME.emp_wars[i];
+            var ourOrg;
+            if (w.village_1 == myVillage) ourOrg = w.org_1;
+            else if (w.village_2 == myVillage) ourOrg = w.org_2;
+            else continue;                 // to nie nasza wojna
+            matchedOurWar = true;
+            if (ourOrg == 0) out.push(w.id);
+        }
+        if (matchedOurWar) return out;     // emp_wars dotyczy naszej wioski -> ufamy statusowi org
+        // emp_wars nieświeże / dla innej wioski -> fallback do DOM
+    }
+    // Fallback: wszystkie wojny z panelu (bez wiedzy o statusie org; dedup przez ORG_HIRE_RETRY)
+    var wars = document.getElementsByClassName("war_win");
+    for (var j = 0; j < wars.length; j++) {
+        var btn = wars[j].getElementsByTagName("button")[0];
+        if (btn) {
+            var wid = btn.getAttribute("data-war");
+            if (wid) out.push(wid);
+        }
+    }
+    return out;
+};
 PVP.orgi = () => {
-    console.log("org ", $("#pvp_Panel select[name=org_id]").val());
-    if (!PVP.org) {
+    if (!PVP.org || PVP.getCap('org') === false) {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
+    if (PVP.komBusy) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
@@ -658,30 +710,47 @@ PVP.orgi = () => {
     if ($("#pvp_Panel select[name=org_id]").val() != '')
         org_id = $("#pvp_Panel select[name=org_id]").val();
 
-    var wars = document.getElementsByClassName("war_win");
+    var progress = PVP.cs().orgProgress;
+    var needing = PVP.warsNeedingOrg();
     var target = null;
-    for (var i = 0; i < wars.length; i++) {
-        var wid = wars[i].getElementsByTagName("button")[0].getAttribute("data-war");
-        if (!PVP.org_skip[wid] && !PVP.org_pending[wid]) {
-            target = wid;
-            break;
-        }
+    for (var i = 0; i < needing.length; i++) {
+        var ts = progress[needing[i]];
+        if (ts && (GAME.getTime() - ts) < PVP.ORG_HIRE_RETRY) continue; // niedawno najęte, czekamy na odświeżenie emp_wars
+        target = needing[i];
+        break;
     }
 
     if (target) {
-        PVP.org_pending[target] = true;
+        var actingChar = GAME.char_id;
+        PVP.komBusy = true;
+        console.log("org - org_id=" + org_id + " cel=" + target + " (" + needing.length + " naszych wojen bez organizacji)");
         setTimeout(() => {
-            var warx = target;
+            if (actingChar !== GAME.char_id) { PVP.komBusy = false; return; }
             $('#kom_con .kom').remove();
-            GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
-            setTimeout(() => PVP.waitForOrgHireResult(target, 6), 300);
+            GAME.emitOrder({a:50,type:13,war:target,org:org_id});
+            setTimeout(() => PVP.waitForOrgHireResult(target, PVP.ORG_HIRE_ATTEMPTS, actingChar), 300);
         }, 100);
+    } else {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
-    window.setTimeout(PVP.start, 300);
 }
 PVP.isAtWarWith = (targetId) => {
+    var myVillage = GAME.char_data.village_id;
+    // Pewne, ustrukturyzowane źródło: GAME.emp_wars (to samo co przy najmie organizacji).
+    // Wojna z targetId istnieje, jeśli któraś wojna łączy naszą wioskę z targetId.
+    if (GAME.emp_wars && GAME.emp_wars.length) {
+        for (var i = 0; i < GAME.emp_wars.length; i++) {
+            var w = GAME.emp_wars[i];
+            if ((w.village_1 == myVillage && w.village_2 == targetId) ||
+                (w.village_2 == myVillage && w.village_1 == targetId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    // Fallback (gdyby emp_wars nie było jeszcze załadowane): stara metoda po nazwach z DOM.
     var targetName = LNG['village' + targetId];
-    var ownName = LNG['village' + PVP.emp];
+    var ownName = LNG['village' + myVillage];
     var found = false;
     $('#emp_wars .war_win').each(function () {
         var names = $(this).find('b');
@@ -693,36 +762,84 @@ PVP.isAtWarWith = (targetId) => {
     });
     return found;
 };
-PVP.checkWarCooldownMsg = () => {
+// Uprawnienie do wypowiadania wojen = gra pokazuje panel #emp_war_delare (dla postaci
+// bez uprawnień jest ustawiony display:none). Sygnał natychmiastowy i pewny.
+PVP.canDeclareWar = () => {
+    var el = document.getElementById('emp_war_delare');
+    return !!el && el.style.display !== 'none';
+};
+PVP.WAR_RESULT_ATTEMPTS = 4;   // ~1.4s okna na odczyt cooldownu
+PVP.checkWarCooldownMsg = (actingChar, preCount, attemptsLeft) => {
+    if (actingChar !== GAME.char_id) { PVP.komBusy = false; return; }
+    if (attemptsLeft === undefined) attemptsLeft = PVP.WAR_RESULT_ATTEMPTS;
+
     var $timer = $('#kom_con .kom .content .timer');
     if ($timer.length) {
         var end = parseInt($timer.attr('data-end'));
-        if (end) PVP.war_cooldown_until = end;
+        var now = GAME.getTime();
+        if (end && end > now && end < now + PVP.WAR_COOLDOWN_SANITY_LIMIT) {
+            console.log("dec wars - cooldown ustawiony na " + (end - now) + "s (" + Math.round((end - now) / 60) + " min)");
+            PVP.cs().warCooldownUntil = end;
+        } else if (end) {
+            console.log("dec wars - zignorowałem podejrzanie długi cooldown (" + (end - now) + "s)");
+        }
+        PVP.komBusy = false;
+        return;
+    }
+    if ($('#emp_wars .war_win').length > preCount) { PVP.komBusy = false; return; }
+    if (attemptsLeft > 0) {
+        setTimeout(() => PVP.checkWarCooldownMsg(actingChar, preCount, attemptsLeft - 1), 350);
+    } else {
+        PVP.komBusy = false;
     }
 };
+// Następny prawidłowy cel wojny: pomija własne imperium i wioski, z którymi już trwa wojna.
+PVP.nextWarTarget = () => {
+    var myVillage = GAME.char_data.village_id;
+    var c = PVP.war_cnt;
+    for (var i = 0; i < 10; i++) {
+        if (c > 10 || c < 1) c = 1;
+        if (c != myVillage && !PVP.isAtWarWith(c)) return c;
+        c++;
+    }
+    return null;   // wszystkie wioski już w wojnie
+};
 PVP.dec_wars = () => {
-    console.log("dec wars");
-    if (!PVP.wi) {
+    PVP.refreshEmpWars();
+    if (!PVP.wi || !PVP.canDeclareWar()) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
-    console.log("dec wars ", PVP.war_cnt, PVP.org_cnt);
+    if (PVP.komBusy) {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
 
-    if (PVP.war_cnt > 10)
-        PVP.war_cnt = 0;
-
-    if (PVP.war_cnt == PVP.emp)
-        PVP.war_cnt++;
-
-    if (PVP.isAtWarWith(PVP.war_cnt)) {
-        console.log("already at war with", PVP.war_cnt, "- skipping without cooldown");
-        PVP.war_cnt += 1;
-    } else if (GAME.getTime() >= PVP.war_cooldown_until) {
-        console.log("emit order war");
-        $('#kom_con .kom').remove();
-        GAME.emitOrder({a:50,type:7,target:PVP.war_cnt});
-        PVP.war_cnt += 1;
-        setTimeout(PVP.checkWarCooldownMsg, 500);
+    var cs = PVP.cs();
+    var warDeclared = false;
+    if (GAME.getTime() < cs.warCooldownUntil) {
+        var remaining = cs.warCooldownUntil - GAME.getTime();
+        if (remaining > PVP.WAR_COOLDOWN_SANITY_LIMIT) {
+            console.log("dec wars - cooldown nieprawidłowy (" + remaining + "s), resetuję");
+            cs.warCooldownUntil = 0;
+        } else if (GAME.getTime() >= PVP.war_cooldown_log_next) {
+            PVP.war_cooldown_log_next = GAME.getTime() + 60;
+            console.log("dec wars - cooldown, czekam jeszcze " + remaining + "s (" + Math.round(remaining / 60) + " min)");
+        }
+    } else {
+        var target = PVP.nextWarTarget();
+        var empWarsSeen = $('#emp_wars .war_win').length;
+        if (target != null) {
+            console.log("dec wars - wypowiadam wojnę " + target + " (postać " + GAME.char_id + ", widzę " + empWarsSeen + " aktywnych wojen w panelu)");
+            var actingChar = GAME.char_id;
+            $('#kom_con .kom').remove();
+            PVP.komBusy = true;
+            GAME.emitOrder({a:50,type:7,target:target});
+            PVP.war_cnt = target + 1;   // od następnej wioski przy kolejnej wizycie
+            warDeclared = true;
+            setTimeout(() => PVP.checkWarCooldownMsg(actingChar, empWarsSeen), 500);
+            // UWAGA: nie kasujemy postępu najmu organizacji.
+        }
     }
 
     if (PVP.war_list > $("#ewar_list .timer").length || PVP.war_list < $("#ewar_list .timer").length) {
@@ -734,7 +851,31 @@ PVP.dec_wars = () => {
             }, 1);
         });
     }
+    window.setTimeout(PVP.start, warDeclared ? 1500 : PVP.wait_pvp / PVP.WSPP());
+};
+PVP.clean_raps = () => {
+    if (PVP.raps_check_pending || GAME.getTime() < PVP.raps_next_check) {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
+    PVP.raps_next_check = GAME.getTime() + PVP.RAPS_CHECK_INTERVAL;
+    PVP.raps_check_pending = true;
+    // odpowiedź trafi do GAME.parseData case 13 -> PVP.onRapsData
+    GAME.emitOrder({ a: 11, page: 1, cat: 0 });
     window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+};
+// wołane z parseData(13) po odebraniu listy raportów; reagujemy tylko na nasze zapytanie
+PVP.onRapsData = (res) => {
+    if (!PVP.raps_check_pending) return;
+    PVP.raps_check_pending = false;
+    var perPage = (res && res.raps) ? res.raps.length : 0;
+    if (!perPage || res.all_pages <= 1) return;
+    // dolna granica: pełne strony bez ostatniej (nie znamy liczby na ostatniej stronie)
+    var atLeast = (res.all_pages - 1) * perPage;
+    if (atLeast >= PVP.RAPS_LIMIT) {
+        console.log("clean raps - raportów co najmniej " + atLeast + " (>= " + PVP.RAPS_LIMIT + "), kasuję wszystkie");
+        GAME.emitOrder({ a: 11, type: 5, cat: 0 });
+    }
 };
 PVP.speed = () => {
     var list = localStorage.getItem('pvp_speed');

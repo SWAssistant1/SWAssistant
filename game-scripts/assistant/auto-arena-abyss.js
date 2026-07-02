@@ -11,10 +11,10 @@ Assistant.prototype.manageAutoAbyss = function () {
                 a: 59,
                 type: 1
             });
-        }, 1000);
+        }, 100);
         setTimeout(() => {
             $('#fight_view').fadeOut();
-        }, 2000);
+        }, 200);
         setTimeout(() => {
             if ((GAME.char_data.reborn == 4 || GAME.char_data.reborn == 5) && GAME.char_data.alt_transform_expiry < GAME.getTime()) {
                 GAME.socket.emit('ga', {
@@ -23,25 +23,32 @@ Assistant.prototype.manageAutoAbyss = function () {
                     tech_id: 134
                 });
             }
-        }, 3000);
+        }, 300);
     }
 };
 
 Assistant.prototype.manageAutoArena = function () {
     if (this.auto_arena) {
+        this.arena_loaded_for_char = GAME.char_id;
         GAME.socket.emit('ga', {
             a: 46,
             type: 0
         });
         setTimeout(() => {
             this.attackAutoArena();
-        }, 1000);
+        }, 100);
     } else {
         this.stopAutoArena();
     }
 };
 
 Assistant.prototype.attackAutoArena = function () {
+    if (GAME.char_id !== this.arena_loaded_for_char) {
+        setTimeout(() => {
+            this.manageAutoArena();
+        }, 1000);
+        return;
+    }
     let opponents = $("#arena_players").find(`.player button[data-option="arena_attack"][data-quick="1"]:not(.initial_hide_forced)`);
     let opponent = parseInt(opponents.attr("data-index"));
     if (this.auto_arena) {
@@ -54,11 +61,11 @@ Assistant.prototype.attackAutoArena = function () {
             });
             setTimeout(() => {
                 this.attackAutoArena();
-            }, 500);
+            }, 50);
         } else {
             setTimeout(() => {
                 this.manageAutoArena();
-            }, 5000);
+            }, 500);
         }
     } else {
         this.stopAutoArena();

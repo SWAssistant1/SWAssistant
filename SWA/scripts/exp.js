@@ -368,7 +368,7 @@ function move () {
     moveTimeout = setTimeout(move, 700) // trigger move after 7 seconds without move action
 
     if (isAntybotActive()) {
-        console.log('antybot active')
+        // console.log('antybot active')
 
         const x = GAME.char_data.x
         const y = GAME.char_data.y
@@ -378,14 +378,12 @@ function move () {
         const [tX, tY] = getFinalPosition(premiumData)
 
         if (!antybotPath) {
-            console.time('path')
             const p = {...premiumData, [`${tX}_${tY}`]: 1}
             const result = check(x, y, [], p, tX, tY)
             const moves = result && getMoves(result)
 
             antybotPath = [...moves]
-            console.timeEnd('path')
-            console.log('PATH', antybotPath)
+            // console.timeEnd('path') / console.log('PATH', antybotPath) - debug wyciszony
 
             // moves.pop() // don't move to last cell
             // antybotPath.pop() // don't move to last cell
@@ -409,29 +407,21 @@ function move () {
 
 // ===================================
 // RESPONSE HANDLING
+function moveOrFight () {
+    const mobs = areMobsOnField()
+    if (mobs) {
+        fight(mobs.mob_num)
+        return
+    }
+    move()
+}
+
 function handleResponse (res) {
     // on move response
-    console.log("exp response");
-    if (res.a === 4 && res.char_id === GAME.char_id) setTimeout(() => {
-        // when in the cell are some mobs
-        const mobs = areMobsOnField()
-        if (mobs) {
-            fight(mobs.mob_num)
-            return
-        }
-        move()
-    }, wait2_exp);
+    if (res.a === 4 && res.char_id === GAME.char_id) setTimeout(moveOrFight, wait2_exp);
 
     // on fight response (single attack or multi attack)
-    else if (res.a === 7 || res.a === 13) setTimeout(() => {
-        // when in the cell are some mobs
-        const mobs = areMobsOnField()
-        if (mobs) {
-            fight(mobs.mob_num)
-            return
-        }
-        move()
-    }, wait2_exp);
+    else if (res.a === 7 || res.a === 13) setTimeout(moveOrFight, wait2_exp);
 
     // on speed potion use response
     else if (res.a === 12 && res.type === 8) move()
@@ -446,7 +436,6 @@ function handleResponse (res) {
 
     // on empty response (e.g. when player can't move)
     else if (res.a === undefined) setTimeout(() => {
-        console.log('try to move')
         antybotPath = false
         move()
     }, 50);
