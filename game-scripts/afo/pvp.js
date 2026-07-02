@@ -18,6 +18,7 @@ var PVP = {
     czekajpvp: 160,
     WSP: 50,
     licznik: 0,
+    killing: false,
     dogory: false,
     loc: 0,
     g: 1,
@@ -264,7 +265,9 @@ PVP.check_players = () => {
 };
 PVP.check_players2 = () => {
     var enemy = PVP.attackableEnemies();
-    PVP.kill_players1();
+    // tylko jeden łańcuch kill_players1 naraz — inaczej nakładające się pętle
+    // zapychają event loop i cała rotacja (bieg/atak) zwalnia z czasem
+    if (!PVP.killing) PVP.kill_players1();
     window.setTimeout(PVP.start, PVP.czekajpvp / PVP.WSPP() * (enemy.length) * 2);
     PVP.licznik = 1;
 };
@@ -352,12 +355,17 @@ PVP.kill_players = () => {
 };
 PVP.kill_players1 = () => {
     if (PVP.isHiddenVillage()) {
+        PVP.killing = false;
         kom_clear();
         return;
     }
-    if (JQS.chm.is(":focus")) return;
+    if (JQS.chm.is(":focus")) {
+        PVP.killing = false;
+        return;
+    }
     if ($("#player_list_con").find("[data-option=load_more_players]").length == 1) {
         $("#player_list_con").find("[data-option=load_more_players]").click();
+        PVP.killing = true;
         window.setTimeout(PVP.kill_players1, 50);
         return;
     }
@@ -365,8 +373,10 @@ PVP.kill_players1 = () => {
     var fresh = PVP.freshEnemies();
     if (fresh.length > 0) {
         PVP.attackButton(fresh.eq(0));
+        PVP.killing = true;
         window.setTimeout(PVP.kill_players1, 110);
     } else {
+        PVP.killing = false;
         console.log("koniec wroguw", PVP.attackableEnemies().length);
         kom_clear();
     }

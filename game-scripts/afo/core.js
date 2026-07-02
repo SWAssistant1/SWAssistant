@@ -823,6 +823,7 @@ var createPanel = function () {
             $(".pvp_pvp .pvp_status").removeClass("red").addClass("green").html("On");
             PVP.stop = false;
             PVP.komBusy = false;
+            PVP.killing = false;
             PVP.start_char_id = GAME.char_id;
             PVP.empty_rounds = {};
             PVP.attacked_this_round = false;
