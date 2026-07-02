@@ -2356,6 +2356,7 @@ GAME.parseData = function(type,res){
 					GAME.gatherNewReps();
 				}, 2000 );
 			}
+				if(typeof PVP!=='undefined'&&PVP.onRapsData) PVP.onRapsData(res);
 		break;
 		case 14:
 			var newr=res.new_raps;

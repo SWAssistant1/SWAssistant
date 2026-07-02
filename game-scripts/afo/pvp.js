@@ -49,6 +49,10 @@ PVP.CAP_TTL = 86400;            // uprawnienia sprawdzamy raz dziennie
 PVP.CAP_STORAGE_KEY = 'swa_pvp_caps';
 PVP.ORG_HIRE_ATTEMPTS = 5;      // ile prób odczytu wyniku najmu (rejestr/OK)
 PVP.ORG_HIRE_RETRY = 20;        // s: bufor między najmem a odświeżeniem emp_wars (>15s refresh)
+PVP.RAPS_LIMIT = 1000;          // kasuj wszystkie raporty, gdy jest ich co najmniej tyle
+PVP.RAPS_CHECK_INTERVAL = 300;  // s: jak często sprawdzać liczbę raportów
+PVP.raps_next_check = 0;
+PVP.raps_check_pending = false;
 
 // ---- Stan per-postać (izolacja: rotacja nie kasuje postępu) ----
 PVP.loadCaps = () => {
@@ -210,6 +214,7 @@ PVP.duties = [
     'check_position_x',   // MOVEMENT
     'check_position_y',   // MOVEMENT
     'check',              // MOVEMENT (odświeżenie mapy/wojen klanowych)
+    'clean_raps',         // MAINTENANCE (kasowanie nadmiaru raportów)
     'dec_wars',           // WAR
     'orgi',               // ORG
     'check_players',      // COMBAT
@@ -426,7 +431,7 @@ PVP.zmien_postc = () => {
         }
         PVP.attacked_this_round = false;
 
-        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id && PVP.getCap('war') !== false) {
+        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id && PVP.canDeclareWar()) {
             console.log("PVP zmieniaj - postać " + currentCharId + " 2 rundy bez ataku, wracam na postać startową i czekam na atak");
             PVP.empty_rounds[currentCharId] = 0;
             PVP.waiting_for_attack = true;
@@ -747,22 +752,17 @@ PVP.isAtWarWith = (targetId) => {
     });
     return found;
 };
-PVP.WAR_RESULT_ATTEMPTS = 4;   // ~1.4s okna na wynik (odmowa może przyjść z opóźnieniem)
+// Uprawnienie do wypowiadania wojen = gra pokazuje panel #emp_war_delare (dla postaci
+// bez uprawnień jest ustawiony display:none). Sygnał natychmiastowy i pewny.
+PVP.canDeclareWar = () => {
+    var el = document.getElementById('emp_war_delare');
+    return !!el && el.style.display !== 'none';
+};
+PVP.WAR_RESULT_ATTEMPTS = 4;   // ~1.4s okna na odczyt cooldownu
 PVP.checkWarCooldownMsg = (actingChar, preCount, attemptsLeft) => {
     if (actingChar !== GAME.char_id) { PVP.komBusy = false; return; }
     if (attemptsLeft === undefined) attemptsLeft = PVP.WAR_RESULT_ATTEMPTS;
 
-    var denied = false, deniedText = '';
-    $('#kom_con .kom .content').each(function () {
-        var t = $(this).text();
-        if (t.indexOf('Nie masz uprawnień') !== -1) { denied = true; deniedText = t.trim(); }
-    });
-    if (denied) {
-        console.log("dec wars - wypowiedzenie wojny odrzucone na postaci " + GAME.char_id + " (\"" + deniedText + "\"), wyłączam wojny na tej postaci do jutra");
-        PVP.setCap('war', false);
-        PVP.komBusy = false;
-        return;
-    }
     var $timer = $('#kom_con .kom .content .timer');
     if ($timer.length) {
         var end = parseInt($timer.attr('data-end'));
@@ -773,26 +773,30 @@ PVP.checkWarCooldownMsg = (actingChar, preCount, attemptsLeft) => {
         } else if (end) {
             console.log("dec wars - zignorowałem podejrzanie długi cooldown (" + (end - now) + "s)");
         }
-        PVP.setCap('war', true);   // pojawił się cooldown => deklaracja przeszła
         PVP.komBusy = false;
         return;
     }
-    // brak komunikatu, ale przybyło wojen na liście => sukces
-    if ($('#emp_wars .war_win').length > preCount) {
-        PVP.setCap('war', true);
-        PVP.komBusy = false;
-        return;
-    }
+    if ($('#emp_wars .war_win').length > preCount) { PVP.komBusy = false; return; }
     if (attemptsLeft > 0) {
         setTimeout(() => PVP.checkWarCooldownMsg(actingChar, preCount, attemptsLeft - 1), 350);
     } else {
-        // niejednoznaczne - nie ustawiamy cap, spróbujemy ponownie następnym razem
         PVP.komBusy = false;
     }
 };
+// Następny prawidłowy cel wojny: pomija własne imperium i wioski, z którymi już trwa wojna.
+PVP.nextWarTarget = () => {
+    var myVillage = GAME.char_data.village_id;
+    var c = PVP.war_cnt;
+    for (var i = 0; i < 10; i++) {
+        if (c > 10 || c < 1) c = 1;
+        if (c != myVillage && !PVP.isAtWarWith(c)) return c;
+        c++;
+    }
+    return null;   // wszystkie wioski już w wojnie
+};
 PVP.dec_wars = () => {
     PVP.refreshEmpWars();
-    if (!PVP.wi || PVP.getCap('war') === false) {
+    if (!PVP.wi || !PVP.canDeclareWar()) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
@@ -801,30 +805,9 @@ PVP.dec_wars = () => {
         return;
     }
 
-    if (PVP.war_cnt > 10)
-        PVP.war_cnt = 0;
-
-    if (PVP.war_cnt == PVP.emp)
-        PVP.war_cnt++;
-
     var cs = PVP.cs();
     var warDeclared = false;
-    var empWarsSeen = $('#emp_wars .war_win').length;
-    if (PVP.isAtWarWith(PVP.war_cnt)) {
-        console.log("dec wars - już w wojnie z " + PVP.war_cnt + ", pomijam bez cooldownu (widzę " + empWarsSeen + " aktywnych wojen w panelu)");
-        PVP.war_cnt += 1;
-    } else if (GAME.getTime() >= cs.warCooldownUntil) {
-        console.log("dec wars - wypowiadam wojnę " + PVP.war_cnt + " (postać " + GAME.char_id + ", widzę " + empWarsSeen + " aktywnych wojen w panelu)");
-        var actingChar = GAME.char_id;
-        $('#kom_con .kom').remove();
-        PVP.komBusy = true;
-        GAME.emitOrder({a:50,type:7,target:PVP.war_cnt});
-        PVP.war_cnt += 1;
-        warDeclared = true;
-        setTimeout(() => PVP.checkWarCooldownMsg(actingChar, empWarsSeen), 500);
-        // UWAGA: nie kasujemy postępu najmu organizacji — nowa wojna pojawi się
-        // jako nowy .war_win i zostanie obsłużona przez orgi() bez utraty reszty.
-    } else {
+    if (GAME.getTime() < cs.warCooldownUntil) {
         var remaining = cs.warCooldownUntil - GAME.getTime();
         if (remaining > PVP.WAR_COOLDOWN_SANITY_LIMIT) {
             console.log("dec wars - cooldown nieprawidłowy (" + remaining + "s), resetuję");
@@ -832,6 +815,20 @@ PVP.dec_wars = () => {
         } else if (GAME.getTime() >= PVP.war_cooldown_log_next) {
             PVP.war_cooldown_log_next = GAME.getTime() + 60;
             console.log("dec wars - cooldown, czekam jeszcze " + remaining + "s (" + Math.round(remaining / 60) + " min)");
+        }
+    } else {
+        var target = PVP.nextWarTarget();
+        var empWarsSeen = $('#emp_wars .war_win').length;
+        if (target != null) {
+            console.log("dec wars - wypowiadam wojnę " + target + " (postać " + GAME.char_id + ", widzę " + empWarsSeen + " aktywnych wojen w panelu)");
+            var actingChar = GAME.char_id;
+            $('#kom_con .kom').remove();
+            PVP.komBusy = true;
+            GAME.emitOrder({a:50,type:7,target:target});
+            PVP.war_cnt = target + 1;   // od następnej wioski przy kolejnej wizycie
+            warDeclared = true;
+            setTimeout(() => PVP.checkWarCooldownMsg(actingChar, empWarsSeen), 500);
+            // UWAGA: nie kasujemy postępu najmu organizacji.
         }
     }
 
@@ -845,6 +842,30 @@ PVP.dec_wars = () => {
         });
     }
     window.setTimeout(PVP.start, warDeclared ? 1500 : PVP.wait_pvp / PVP.WSPP());
+};
+PVP.clean_raps = () => {
+    if (PVP.raps_check_pending || GAME.getTime() < PVP.raps_next_check) {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+        return;
+    }
+    PVP.raps_next_check = GAME.getTime() + PVP.RAPS_CHECK_INTERVAL;
+    PVP.raps_check_pending = true;
+    // odpowiedź trafi do GAME.parseData case 13 -> PVP.onRapsData
+    GAME.emitOrder({ a: 11, page: 1, cat: 0 });
+    window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+};
+// wołane z parseData(13) po odebraniu listy raportów; reagujemy tylko na nasze zapytanie
+PVP.onRapsData = (res) => {
+    if (!PVP.raps_check_pending) return;
+    PVP.raps_check_pending = false;
+    var perPage = (res && res.raps) ? res.raps.length : 0;
+    if (!perPage || res.all_pages <= 1) return;
+    // dolna granica: pełne strony bez ostatniej (nie znamy liczby na ostatniej stronie)
+    var atLeast = (res.all_pages - 1) * perPage;
+    if (atLeast >= PVP.RAPS_LIMIT) {
+        console.log("clean raps - raportów co najmniej " + atLeast + " (>= " + PVP.RAPS_LIMIT + "), kasuję wszystkie");
+        GAME.emitOrder({ a: 11, type: 5, cat: 0 });
+    }
 };
 PVP.speed = () => {
     var list = localStorage.getItem('pvp_speed');
