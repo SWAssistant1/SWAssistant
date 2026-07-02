@@ -33,6 +33,8 @@ var RESP = {
     bless: false,
     checkOST_timer: 0,
     normal: false,
+    destroying: false,
+    EKW_DESTROY_THRESHOLD: 200,   // niszcz eq gdy zajętych slotów >= tyle (gdy Resp/exp ON)
     rare: false,
     leg: false,
     b1: false,
@@ -78,19 +80,23 @@ RESP.check = () => {
         RESP.checkOST_timer = GAME.getTime() + 60;
         return false;
     } else if (RESP.normal) {
+
+        if (RESP.destroying) return false;
         GAME.emitOrder({a:12,page:GAME.ekw_page});
         let ekwUsedElement = document.getElementById('ekw_used');
-        let ekwUsedValue = ekwUsedElement.textContent;
+        let ekwUsedValue = parseInt(ekwUsedElement.textContent) || 0;
 
-        if ((($(".resp_rare .resp_status").hasClass("green")) && ekwUsedValue < 1000) ||
-        (($(".resp_resp1 .resp_status").hasClass("green")) && ekwUsedValue < 1000)) {
+        if ((($(".resp_rare .resp_status").hasClass("green")) && ekwUsedValue < RESP.EKW_DESTROY_THRESHOLD) ||
+        (($(".resp_resp1 .resp_status").hasClass("green")) && ekwUsedValue < RESP.EKW_DESTROY_THRESHOLD)) {
             return false;
         }
+        RESP.destroying = true;
         const komElements = document.querySelectorAll('#kom_con .kom');
-    
+
         komElements.forEach(kom => {
             const closeButton = kom.querySelector('.close_kom');
-            closeButton.click();
+
+            if (closeButton) closeButton.click();
         });
         window.setTimeout(function() {
             GAME.emitOrder({a:12,page:2});
@@ -127,7 +133,10 @@ RESP.check = () => {
             }, 111);
         }, 2005);
 
-
+        // zwolnij blokadę po zakończeniu całej kaskady (ostatnia strona ~2005ms + odczyt DOM)
+        window.setTimeout(function() {
+            RESP.destroying = false;
+        }, 2400);
     }
     return false;
 };

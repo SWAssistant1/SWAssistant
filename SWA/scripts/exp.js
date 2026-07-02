@@ -42,6 +42,7 @@ let down = false
 let antybotPath = false
 let stop_exp = true
 let moveTimeout
+let reactTimer
 
 // -----------------------------------
 
@@ -364,6 +365,8 @@ function move () {
     } else {
         stop_exp = false;
     }
+    // wchodzimy w ruch - anuluj ewentualną zaplanowaną reakcję, żeby nie zdublować łańcucha
+    if (reactTimer) { clearTimeout(reactTimer); reactTimer = null }
     if (moveTimeout) clearTimeout(moveTimeout)
     moveTimeout = setTimeout(move, 700) // trigger move after 7 seconds without move action
 
@@ -409,29 +412,32 @@ function move () {
 
 // ===================================
 // RESPONSE HANDLING
+// Pojedyncza, zdeduplikowana reakcja na odpowiedź serwera. Bez tego każda odpowiedź
+// (a jest ich mnóstwo - nasz ruch, walka, a nawet emity a:12 z afo RESP) startowała
+// osobny łańcuch move()/fight() co ~2ms; łańcuchy tylko się dokładały -> storm i lag.
+// clearTimeout scala nachodzące na siebie reakcje w jedną zaplanowaną akcję.
+function scheduleReact (fn, delay) {
+    if (reactTimer) clearTimeout(reactTimer)
+    reactTimer = setTimeout(() => {
+        reactTimer = null
+        fn()
+    }, delay)
+}
+function moveOrFight () {
+    const mobs = areMobsOnField()
+    if (mobs) {
+        fight(mobs.mob_num)
+        return
+    }
+    move()
+}
+
 function handleResponse (res) {
     // on move response
-    console.log("exp response");
-    if (res.a === 4 && res.char_id === GAME.char_id) setTimeout(() => {
-        // when in the cell are some mobs
-        const mobs = areMobsOnField()
-        if (mobs) {
-            fight(mobs.mob_num)
-            return
-        }
-        move()
-    }, wait2_exp);
+    if (res.a === 4 && res.char_id === GAME.char_id) scheduleReact(moveOrFight, wait2_exp);
 
     // on fight response (single attack or multi attack)
-    else if (res.a === 7 || res.a === 13) setTimeout(() => {
-        // when in the cell are some mobs
-        const mobs = areMobsOnField()
-        if (mobs) {
-            fight(mobs.mob_num)
-            return
-        }
-        move()
-    }, wait2_exp);
+    else if (res.a === 7 || res.a === 13) scheduleReact(moveOrFight, wait2_exp);
 
     // on speed potion use response
     else if (res.a === 12 && res.type === 8) move()
@@ -445,8 +451,7 @@ function handleResponse (res) {
     }
 
     // on empty response (e.g. when player can't move)
-    else if (res.a === undefined) setTimeout(() => {
-        console.log('try to move')
+    else if (res.a === undefined) scheduleReact(() => {
         antybotPath = false
         move()
     }, 50);
