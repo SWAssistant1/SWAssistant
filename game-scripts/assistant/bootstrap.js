@@ -78,10 +78,9 @@ GAME.cached_data = function () {
     arena_count = 0;
     pvp_count = 0;
     if (window.PVP) {
-        window.PVP.war_no_perms = !!window.PVP.war_no_perms_chars[GAME.char_id];
-        window.PVP.org_no_perms = !!window.PVP.org_no_perms_chars[GAME.char_id];
-        window.PVP.org_skip = {};
-        window.PVP.org_pending = {};
+        window.PVP.komBusy = false;
+        // Wymuś świeże emp_wars dla nowej postaci (mogłaby być w innej wiosce).
+        window.PVP.emp_wars_next_refresh = 0;
     }
     setTimeout(() => {
         if ((GAME.char_data.reborn == 4 || GAME.char_data.reborn == 5) && GAME.char_data.alt_transform_expiry < GAME.getTime()) {
