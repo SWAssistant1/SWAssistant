@@ -377,7 +377,7 @@ PVP.kill_players1 = () => {
         window.setTimeout(PVP.kill_players1, 110);
     } else {
         PVP.killing = false;
-        console.log("koniec wroguw", PVP.attackableEnemies().length);
+        // console.log("koniec wroguw", PVP.attackableEnemies().length);
         kom_clear();
     }
 };
@@ -454,7 +454,7 @@ PVP.zmien_postc = () => {
         }
     }
 
-    console.log("PVP ", PVP.start_char, PVP.chars.length)
+    // console.log("PVP ", PVP.start_char, PVP.chars.length)
     if (PVP.start_char == PVP.chars.length) {
         PVP.start_char = 0;
         var charId0 = parseInt(PVP.chars[PVP.start_char++]);
@@ -622,10 +622,10 @@ PVP.check = () => {
 };
 PVP.check2 = () => {
     if (PVP.checkkkk()) {
-        console.log("pvp check 1");
+        // console.log("pvp check 1");
         window.setTimeout(PVP.check2, 1800);
     } else {
-        console.log("pvp check 2");
+        // console.log("pvp check 2");
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
 };

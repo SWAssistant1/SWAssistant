@@ -60,9 +60,9 @@ var RESP = {
     loc: GAME.char_data.loc
 };
 RESP.check = () => {
-    console.log('checking resp');
+    // console.log('checking resp');
     if (GAME.char_data.pr <= RESP.min_pa()) {
-        console.log("resp use sensu");
+        // console.log("resp use sensu");
         RESP.useSenzu();
         return true;
     } else if (RESP.checkOST && $("#doubler_bar").css("display") === "none") {
@@ -212,7 +212,7 @@ RESP.populateSubSelect = () => {
     }
 };
 RESP.action = () => {
-    console.log('resp action');
+    // console.log('resp action');
     if (!RESP.stop) {
         if (!RESP.check()) {
             setTimeout(() => {
@@ -311,7 +311,7 @@ RESP.feedStep = () => {
     setTimeout(RESP.feedStep, 250);
 };
 RESP.useSenzu = () => {
-    console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
+    // console.log("use senzu", RESP.stop, RESP.CONF_SENZU);
     if (RESP.feeding) return;
     if (RESP.maxRamen > 0 && RESP.usedRamen >= RESP.maxRamen) return;
     RESP.feeding = true;
@@ -332,7 +332,7 @@ RESP.useBlue = () => {
 };
 RESP.useGreen = () => {
     const green = RESP.getSenzu(RESP.SENZU_GREEN);
-    console.log("use green", green);
+    // console.log("use green", green);
     if (!green) {
         return;
     }
