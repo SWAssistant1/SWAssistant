@@ -40,6 +40,10 @@ var PVP = {
     start_char_disabled:false,
     stale_enemy_count:null,
     stale_enemy_since:0,
+    war_no_perms:false,
+    org_no_perms:false,
+    war_no_perms_chars:{},
+    org_no_perms_chars:{},
 };
 PVP.checkkkk = () => {
     let imp = $("#leader_player").find("[data-option=show_player]").attr("data-char_id");
@@ -175,39 +179,39 @@ PVP.action = () => {
             break;
         case 3:
             PVP.caseNumber++;
-            PVP.check_players();
+            PVP.dec_wars();
             break;
         case 4:
             PVP.caseNumber++;
-            PVP.kill_players();
+            PVP.orgi();
             break;
         case 5:
             PVP.caseNumber++;
-            PVP.check_players2();
+            PVP.check_players();
             break;
         case 6:
             PVP.caseNumber++;
-            PVP.wojny1();
+            PVP.kill_players();
             break;
         case 7:
             PVP.caseNumber++;
-            PVP.check_location();
+            PVP.check_players2();
             break;
         case 8:
             PVP.caseNumber++;
-            PVP.check2();
+            PVP.wojny1();
             break;
         case 9:
             PVP.caseNumber++;
-            PVP.check_players2();
+            PVP.check_location();
             break;
         case 10:
             PVP.caseNumber++;
-            PVP.dec_wars();
+            PVP.check2();
             break;
         case 11:
             PVP.caseNumber++;
-            PVP.orgi();
+            PVP.check_players2();
             break;
         case 12:
             PVP.caseNumber = 0;
@@ -435,7 +439,7 @@ PVP.zmien_postc = () => {
         }
         PVP.attacked_this_round = false;
 
-        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id) {
+        if (PVP.empty_rounds[currentCharId] >= 2 && PVP.start_char_id != null && !PVP.start_char_disabled && currentCharId != PVP.start_char_id && !PVP.war_no_perms) {
             console.log("PVP zmieniaj - postać " + currentCharId + " 2 rundy bez ataku, wracam na postać startową i czekam na atak");
             PVP.empty_rounds[currentCharId] = 0;
             PVP.waiting_for_attack = true;
@@ -443,6 +447,8 @@ PVP.zmien_postc = () => {
             GAME.emitOrder({ a: 2, char_id: PVP.start_char_id });
             window.setTimeout(PVP.start, 2000);
             return;
+        } else if (PVP.empty_rounds[currentCharId] >= 2) {
+            PVP.empty_rounds[currentCharId] = 0;
         }
     }
 
@@ -639,6 +645,17 @@ PVP.waitForOrgHireResult = (warId, attemptsLeft) => {
     if (failed) {
         PVP.org_skip[warId] = true;
         delete PVP.org_pending[warId];
+        var wars = document.getElementsByClassName("war_win");
+        var allSkipped = wars.length > 0;
+        for (var i = 0; i < wars.length; i++) {
+            var wid = wars[i].getElementsByTagName("button")[0].getAttribute("data-war");
+            if (!PVP.org_skip[wid]) { allSkipped = false; break; }
+        }
+        if (allSkipped) {
+            console.log("org - brak uprawnień do wszystkich potyczek na tej postaci (" + GAME.char_id + ")");
+            PVP.org_no_perms = true;
+            PVP.org_no_perms_chars[GAME.char_id] = true;
+        }
         return;
     }
     if (attemptsLeft > 0) {
@@ -649,7 +666,7 @@ PVP.waitForOrgHireResult = (warId, attemptsLeft) => {
 };
 PVP.orgi = () => {
     console.log("org ", $("#pvp_Panel select[name=org_id]").val());
-    if (!PVP.org) {
+    if (!PVP.org || PVP.org_no_perms) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
@@ -676,8 +693,10 @@ PVP.orgi = () => {
             GAME.emitOrder({a:50,type:13,war:warx,org:org_id});
             setTimeout(() => PVP.waitForOrgHireResult(target, 6), 300);
         }, 100);
+        window.setTimeout(PVP.start, 2200);
+    } else {
+        window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
     }
-    window.setTimeout(PVP.start, 300);
 }
 PVP.isAtWarWith = (targetId) => {
     var targetName = LNG['village' + targetId];
@@ -694,15 +713,29 @@ PVP.isAtWarWith = (targetId) => {
     return found;
 };
 PVP.checkWarCooldownMsg = () => {
+    var denied = false;
+    $('#kom_con .kom .content').each(function () {
+        if ($(this).text().indexOf('Nie masz uprawnień') !== -1) denied = true;
+    });
+    if (denied) {
+        console.log("dec wars - brak uprawnień na tej postaci (" + GAME.char_id + ")");
+        PVP.war_no_perms = true;
+        PVP.war_no_perms_chars[GAME.char_id] = true;
+        return;
+    }
     var $timer = $('#kom_con .kom .content .timer');
     if ($timer.length) {
         var end = parseInt($timer.attr('data-end'));
-        if (end) PVP.war_cooldown_until = end;
+        var now = GAME.getTime();
+        if (end && end > now && end < now + 120) {
+            console.log("dec wars cooldown ustawiony na", end - now, "s");
+            PVP.war_cooldown_until = end;
+        }
     }
 };
 PVP.dec_wars = () => {
     console.log("dec wars");
-    if (!PVP.wi) {
+    if (!PVP.wi || PVP.war_no_perms) {
         window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
         return;
     }
@@ -714,6 +747,7 @@ PVP.dec_wars = () => {
     if (PVP.war_cnt == PVP.emp)
         PVP.war_cnt++;
 
+    var warDeclared = false;
     if (PVP.isAtWarWith(PVP.war_cnt)) {
         console.log("already at war with", PVP.war_cnt, "- skipping without cooldown");
         PVP.war_cnt += 1;
@@ -723,6 +757,17 @@ PVP.dec_wars = () => {
         GAME.emitOrder({a:50,type:7,target:PVP.war_cnt});
         PVP.war_cnt += 1;
         setTimeout(PVP.checkWarCooldownMsg, 500);
+        warDeclared = true;
+        PVP.org_skip = {};
+        PVP.org_pending = {};
+        PVP.org_no_perms = false;
+        delete PVP.org_no_perms_chars[GAME.char_id];
+    } else {
+        var remaining = PVP.war_cooldown_until - GAME.getTime();
+        if (remaining > 120) {
+            console.log("dec wars cooldown nieprawidłowy (" + remaining + "s), resetuję");
+            PVP.war_cooldown_until = 0;
+        }
     }
 
     if (PVP.war_list > $("#ewar_list .timer").length || PVP.war_list < $("#ewar_list .timer").length) {
@@ -734,7 +779,7 @@ PVP.dec_wars = () => {
             }, 1);
         });
     }
-    window.setTimeout(PVP.start, PVP.wait_pvp / PVP.WSPP());
+    window.setTimeout(PVP.start, warDeclared ? 1500 : PVP.wait_pvp / PVP.WSPP());
 };
 PVP.speed = () => {
     var list = localStorage.getItem('pvp_speed');
